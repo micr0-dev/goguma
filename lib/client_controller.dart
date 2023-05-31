@@ -773,6 +773,17 @@ class ClientController {
 			}).then((unreadCount) {
 				buffer.unreadCount = unreadCount;
 			});
+		case 'REDACT':
+			var target = msg.params[0];
+			var msgid = msg.params[1];
+
+			var buffer = _bufferList.get(target, network);
+			if (buffer == null) {
+				break;
+			}
+
+			// TODO: handle REDACT in a chathistory batch
+			return _handleRedact(buffer, msgid);
 		case RPL_MONONLINE:
 		case RPL_MONOFFLINE:
 			var online = msg.cmd == RPL_MONONLINE;
@@ -903,6 +914,18 @@ class ClientController {
 		if (isNewBuffer && client.isNick(buf.name)) {
 			_provider.fetchBufferUser(buf);
 		}
+	}
+
+	Future<void> _handleRedact(BufferModel buffer, String msgid) async {
+		var msg = await _db.fetchMessageByNetworkMsgid(buffer.id, msgid);
+		if (msg == null) {
+			log.print('Received REDACT for unknown msgid "$msgid"');
+			return;
+		}
+		msg.redacted = true;
+		await _db.storeMessages([msg]);
+
+		buffer.redactMessage(msgid);
 	}
 
 	Future<void> _handleBouncerNetworksBatch(ClientBatch batch) async {

@@ -105,6 +105,7 @@ Set<String> _getDefaultCaps(ConnectParams params) {
 		'draft/chathistory',
 		'draft/extended-monitor',
 		'draft/pre-away',
+		'draft/message-redaction',
 		'draft/read-marker',
 
 		'soju.im/bouncer-networks',

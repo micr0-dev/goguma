@@ -972,13 +972,23 @@ class _MessageItem extends StatelessWidget {
 				);
 			}
 
-			body = stripAnsiFormatting(body);
+			TextSpan bodyTextSpan;
+			if (entry.redacted) {
+				bodyTextSpan = TextSpan(
+					text: 'This message has been deleted.',
+					style: TextStyle(fontStyle: FontStyle.italic),
+				);
+			} else {
+				body = stripAnsiFormatting(body);
+				bodyTextSpan = linkify(context, body, linkStyle: linkStyle);
+			}
+
 			content = [
 				if (isFirstInGroup) senderTextSpan,
 				if (isFirstInGroup) TextSpan(text: '\n'),
 				if (replyChip != null) replyChip,
 				if (replyChip != null) WidgetSpan(child: SizedBox(width: 5, height: 5)),
-				linkify(context, body, linkStyle: linkStyle),
+				bodyTextSpan,
 			];
 
 			if (prefs.linkPreview) {

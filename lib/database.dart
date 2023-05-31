@@ -198,6 +198,7 @@ class MessageEntry {
 	final String? networkMsgid;
 	final int buffer;
 	final String raw;
+	bool redacted;
 
 	IrcMessage? _msg;
 	DateTime? _dateTime;
@@ -209,6 +210,7 @@ class MessageEntry {
 			'network_msgid': networkMsgid,
 			'buffer': buffer,
 			'raw': raw,
+			'redacted': redacted ? 1 : 0,
 		};
 	}
 
@@ -216,6 +218,7 @@ class MessageEntry {
 		time = msg.tags['time'] ?? formatIrcTime(DateTime.now()),
 		networkMsgid = msg.tags['msgid'],
 		raw = msg.toString(),
+		redacted = false,
 		_msg = msg;
 
 	MessageEntry.fromMap(Map<String, dynamic> m) :
@@ -223,7 +226,8 @@ class MessageEntry {
 		time = m['time'] as String,
 		networkMsgid = m['network_msgid'] as String?,
 		buffer = m['buffer'] as int,
-		raw = m['raw'] as String;
+		raw = m['raw'] as String,
+		redacted = m['redacted'] == 1;
 
 	IrcMessage get msg {
 		_msg ??= IrcMessage.parse(raw);
@@ -435,6 +439,7 @@ const _schema = [
 			network_msgid TEXT,
 			buffer INTEGER NOT NULL,
 			raw TEXT NOT NULL,
+			redacted INTEGER NOT NULL DEFAULT 0,
 			FOREIGN KEY (buffer) REFERENCES Buffer(id) ON DELETE CASCADE
 		)
 	''',
@@ -538,6 +543,7 @@ const _migrations = [
 		)
 	''',
 	'CREATE INDEX index_reaction_reply_network_msgid on Reaction(reply_network_msgid)',
+	'ALTER TABLE Message ADD COLUMN redacted INTEGER NOT NULL DEFAULT 0',
 ];
 
 class DB {
@@ -782,6 +788,11 @@ class DB {
 			messages[entry.networkMsgid!] = entry;
 		}
 		return messages;
+	}
+
+	Future<MessageEntry?> fetchMessageByNetworkMsgid(int buffer, String msgid) async {
+		var messages = await fetchMessageSetByNetworkMsgid(buffer, [msgid]);
+		return messages[msgid];
 	}
 
 	Future<void> storeMessages(List<MessageEntry> entries) async {

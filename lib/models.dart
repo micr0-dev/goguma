@@ -547,6 +547,16 @@ class BufferModel extends ChangeNotifier {
 		notifyListeners();
 	}
 
+	void redactMessage(String msgid) {
+		var msg = _messagesByNetworkMsgid[msgid];
+		if (msg == null) {
+			return;
+		}
+
+		msg.entry.redacted = true;
+		notifyListeners();
+	}
+
 	void populateMessageHistory(List<MessageModel> l) {
 		// The messages passed here must be already sorted by the caller, and
 		// must always come before the existing messages
