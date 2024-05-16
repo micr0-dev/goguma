@@ -31,6 +31,8 @@ const _debugWorkManager = bool.fromEnvironment('debugWorkManager', defaultValue:
 Future<PushController> Function() initPush = UnifiedPushController.init;
 
 void main() async {
+	print('RUN main()');
+
 	FlutterError.onError = log.reportFlutterError;
 	PlatformDispatcher.instance.onError = (error, stack) {
 		FlutterError.reportError(FlutterErrorDetails(
@@ -154,6 +156,12 @@ void main() async {
 		providers: [
 			Provider<DB>.value(value: db),
 			Provider<ClientProvider>.value(value: clientProvider),
+			/*Provider<String>(lazy: false, create: (context) {
+				print('CREATE');
+				return 'HEY';
+			}, dispose: (context, value) {
+				print('DISPOSE');
+			}),*/
 			Provider<NotificationController>.value(value: notifController),
 			Provider<Prefs>.value(value: prefs),
 			Provider<AppLinks>.value(value: appLinks),
@@ -269,6 +277,7 @@ Future<void> _syncChatHistory(ClientProvider clientProvider, NetworkListModel ne
 // This function is called from a separate Isolate.
 @pragma('vm:entry-point')
 void _dispatchWorkManager() {
+	print('RUN _dispatchWorkManager()');
 	Workmanager().executeTask((taskName, data) async {
 		try {
 			await log.init();

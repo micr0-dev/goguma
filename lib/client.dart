@@ -221,6 +221,7 @@ class Client {
 			// This callback is invoked when the incoming side of the
 			// bi-directional connection is closed. We close the outgoing side
 			// here.
+			_log('onDone');
 			_socket?.close().ignore();
 		}, onError: (Object err, StackTrace stack) {
 			_log('Connection error', error: err);

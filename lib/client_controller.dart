@@ -168,7 +168,7 @@ class ClientProvider {
 
 		var freq = Duration(minutes: 15);
 		if (lowFreq) {
-			freq = Duration(hours: 4);
+			freq = Duration(minutes: 30 /* hours: 4 */);
 		}
 
 		log.print('Enabling sync work manager (frequency: $freq)');

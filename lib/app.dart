@@ -61,6 +61,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 		WidgetsBinding.instance.addObserver(this);
 
 		var state = WidgetsBinding.instance.lifecycleState;
+		print('APP INIT STATE $state');
 		_handleAppLifecycleState(state ?? AppLifecycleState.resumed);
 
 		var notifController = context.read<NotificationController>();
@@ -116,6 +117,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 
 		_connectivitySub = Connectivity().onConnectivityChanged.listen((result) {
 			var isConnected = result.length > 0 && !result.contains(ConnectivityResult.none);
+			print('connectivity changed: $isConnected');
 			if (isConnected && _shouldAutoReconnectInState(WidgetsBinding.instance.lifecycleState)) {
 				_pingAll();
 			}
@@ -150,6 +152,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 
 	@override
 	void dispose() {
+		print('APP DISPOSE');
 		WidgetsBinding.instance.removeObserver(this);
 		_pingTimer?.cancel();
 		_autoReconnectLock?.release();
@@ -168,6 +171,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 	void didChangeAppLifecycleState(AppLifecycleState state) {
 		super.didChangeAppLifecycleState(state);
 
+		print('NEW APP STATE $state');
 		_handleAppLifecycleState(state);
 
 		if (state == AppLifecycleState.resumed) {
