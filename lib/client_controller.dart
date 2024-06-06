@@ -1017,6 +1017,9 @@ class ClientController {
 		}
 
 		var targets = await client.fetchChatHistoryTargets(from, to);
+		print('FETCH BACKLOG -> ${targets.length}');
+		print('  from: $from');
+		print('  to:   $to');
 		await Future.wait(targets.map((target) async {
 			// Query read marker if this is a user (ie, we haven't received the
 			// read marker as part of an auto-JOIN) and we haven't queried it
@@ -1029,6 +1032,7 @@ class ClientController {
 			}
 
 			var batch = await client.fetchChatHistoryBetween(target.name, from, to, max);
+			print('FETCH BACKLOG TARGET ${target.name} -> ${batch.messages.length}');
 			await readMarkerFuture;
 			await _handleChatMessages(target.name, batch.messages);
 		}));
