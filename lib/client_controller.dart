@@ -3,7 +3,6 @@ import 'dart:collection';
 import 'dart:io';
 
 import 'package:flutter/widgets.dart';
-import 'package:flutter_background/flutter_background.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:workmanager/workmanager.dart';
 
@@ -186,18 +185,22 @@ class ClientProvider {
 			return;
 		}
 
+		var plugin = FlutterLocalNotificationsPlugin();
+		var androidPlugin = plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+		if (androidPlugin == null) {
+			return;
+		}
+
 		if (!enable) {
 			needBackgroundServicePermissions.value = false;
 			_backgroundServiceAutoReconnectLock?.release();
 			_backgroundServiceAutoReconnectLock = null;
-			if (FlutterBackground.isBackgroundExecutionEnabled) {
-				log.print('Disabling sync background service');
-				unawaited(FlutterBackground.disableBackgroundExecution());
-			}
+			log.print('Disabling sync background service');
+			unawaited(androidPlugin.stopForegroundService());
 			return;
 		}
 
-		if (FlutterBackground.isBackgroundExecutionEnabled) {
+		if (androidPlugin.areNotificationsEnabled()) {
 			_backgroundServiceAutoReconnectLock?.release();
 			_backgroundServiceAutoReconnectLock = ClientAutoReconnectLock.acquire(this);
 			return;
