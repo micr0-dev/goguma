@@ -10,7 +10,7 @@ packages:
 sources:
   - https://git.sr.ht/~emersion/goguma
 secrets:
-  - 77c7956b-003e-44f7-bb5c-2944b2047654 # deploy SSH key
+  - fa5c1c68-d266-4770-bfc3-a4068b1676a0 # deploy SSH key
   - 6d21b97d-cd64-4490-b325-acf8b05a542f # keystore.jks
   - 431b0b53-2af2-441b-b879-86c5913bab4d # keystore.properties
   - 4e454305-057f-44c3-9a4e-eeb74d54545b # google-services.json
@@ -64,6 +64,6 @@ tasks:
       [ "$(git rev-parse origin/master)" = "$(git rev-parse HEAD)" ] || complete-build
       build_number="$(git rev-list --first-parent --count origin/master)"
       ssh_opts="-o StrictHostKeyChecking=no"
-      ssh_host="deploy@sheeta.emersion.fr"
-      scp $ssh_opts build/app/outputs/flutter-apk/app-release.apk "$ssh_host":fdroid-goguma-nightly/repo/goguma-"$build_number".apk
-      ssh $ssh_opts "$ssh_host" "cd fdroid-goguma-nightly && (ls -t repo/*.apk | tail -n +5 | xargs -r rm --) && fdroid update"
+      ssh_host="deploy-goguma@sheeta.emersion.fr"
+      scp $ssh_opts build/app/outputs/flutter-apk/app-release.apk "$ssh_host":fdroid-nightly/repo/goguma-"$build_number".apk
+      ssh $ssh_opts "$ssh_host" "cd fdroid-nightly && (ls -t repo/*.apk | tail -n +5 | xargs -r rm --) && fdroid update"
