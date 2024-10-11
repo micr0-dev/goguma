@@ -30,7 +30,7 @@ more are supported via other [IRCv3 extensions]. See the [IRCv3 support matrix]
 for more information.
 
 [soju]: https://soju.im
-[webpush]: https://git.sr.ht/~emersion/soju/tree/master/item/doc/ext/webpush.md
+[webpush]: https://codeberg.org/emersion/soju/src/branch/master/doc/ext/webpush.md
 [chathistory]: https://ircv3.net/specs/extensions/chathistory
 [IRCv3 extensions]: https://ircv3.net/irc/
 [IRCv3 support matrix]: https://ircv3.net/software/clients#mobile-clients

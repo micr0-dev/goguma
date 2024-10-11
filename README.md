@@ -1,7 +1,5 @@
 # [goguma]
 
-[![builds.sr.ht status](https://builds.sr.ht/~emersion/goguma/commits/master.svg)](https://builds.sr.ht/~emersion/goguma/commits/master?)
-
 An IRC client for mobile devices.
 
 Goals:
@@ -66,8 +64,8 @@ distribute Goguma yourself on the App Store, or a third-party platform.
 
 ## Contributing
 
-Send patches on [Codeberg] or to the [mailing list], report bugs on the
-[issue tracker]. Discuss in [#emersion on Libera Chat].
+Send patches on [Codeberg], report bugs on the [issue tracker]. Discuss
+in [#emersion on Libera Chat].
 
 ## License
 
@@ -80,14 +78,13 @@ restrictive terms and conditions.
 
 Copyright (C) 2021 The goguma Contributors
 
-[goguma]: https://sr.ht/~emersion/goguma/
+[goguma]: https://codeberg.org/emersion/goguma
 [our F-Droid repository]: https://fdroid.emersion.fr/#goguma-nightly
 [official F-Droid repository]: https://f-droid.org/packages/fr.emersion.goguma/
 [Google Play Store]: https://play.google.com/store/apps/details?id=fr.emersion.goguma.play
 [Apple App Store]: https://apps.apple.com/fr/app/goguma-irc/id6470394620
 [documentation]: doc/README.md
 [Codeberg]: https://codeberg.org/emersion/goguma
-[mailing list]: https://lists.sr.ht/~emersion/goguma-dev
 [issue tracker]: https://todo.sr.ht/~emersion/goguma
 [#emersion on Libera Chat]: ircs://irc.libera.chat/#emersion
 [Transporter]: https://apps.apple.com/us/app/transporter/id1450874784

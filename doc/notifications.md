@@ -47,7 +47,7 @@ power from the battery.
 Goguma will ask additional permissions to achieve this. When enabled, a
 persistent notification will be displayed.
 
-[webpush]: https://git.sr.ht/~emersion/soju/tree/master/item/doc/ext/webpush.md
+[webpush]: https://codeberg.org/emersion/soju/src/branch/master/doc/ext/webpush.md
 [UnifiedPush]: https://unifiedpush.org/
 [chathistory]: https://ircv3.net/specs/extensions/chathistory
 [workmanager]: https://pub.dev/packages/workmanager
