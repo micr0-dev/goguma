@@ -17,8 +17,15 @@ import 'buffer_list.dart';
 class _ServerFeatures {
 	bool passwordRequired;
 	bool passwordUnsupported;
+	String? networkName;
+	int? nickLen;
 
-	_ServerFeatures({ this.passwordRequired = false, this.passwordUnsupported = false });
+	_ServerFeatures({
+		this.passwordRequired = false,
+		this.passwordUnsupported = false,
+		this.networkName,
+		this.nickLen,
+	});
 }
 
 class ConnectPage extends StatefulWidget {
@@ -190,14 +197,24 @@ class _ConnectPageState extends State<ConnectPage> {
 		var client = Client(clientParams, autoReconnect: false, requestCaps: {});
 		_fetchFeaturesClient = client;
 		IrcAvailableCapRegistry availableCaps;
+		IrcIsupportRegistry isupport;
 		try {
 			await client.connect(register: false);
-			availableCaps = await client.fetchAvailableCaps();
-		} on IrcException catch (err) {
-			if (err.msg.cmd == ERR_UNKNOWNCOMMAND) {
-				availableCaps = IrcAvailableCapRegistry();
+			try {
+				availableCaps = await client.fetchAvailableCaps();
+			} on IrcException catch (err) {
+				if (err.msg.cmd == ERR_UNKNOWNCOMMAND) {
+					availableCaps = IrcAvailableCapRegistry();
+				} else {
+					rethrow;
+				}
+			}
+
+			if (client.caps.available.containsKey('draft/extended-isupport') && client.caps.available.containsKey('batch')) {
+				client.send(IrcMessage('CAP', ['REQ', 'batch draft/extended-isupport']));
+				isupport = await client.fetchIsupport();
 			} else {
-				rethrow;
+				isupport = IrcIsupportRegistry();
 			}
 		} finally {
 			client.dispose();
@@ -208,6 +225,8 @@ class _ConnectPageState extends State<ConnectPage> {
 		return _ServerFeatures(
 			passwordUnsupported: !availableCaps.containsSasl('PLAIN'),
 			passwordRequired: availableCaps.accountRequired,
+			networkName: isupport.network,
+			nickLen: isupport.nickLen,
 		);
 	}
 
@@ -304,6 +323,7 @@ class _ConnectPageState extends State<ConnectPage> {
 						validator: (value) {
 							return (value!.isEmpty) ? 'Required' : null;
 						},
+						maxLength: _serverFeatures.nickLen,
 					),
 					if (!_serverFeatures.passwordUnsupported) TextFormField(
 						obscureText: true,
@@ -325,7 +345,7 @@ class _ConnectPageState extends State<ConnectPage> {
 						? CircularProgressIndicator()
 						: FloatingActionButton.extended(
 							onPressed: _submit,
-							label: Text('Connect'),
+							label: Text(_serverFeatures.networkName != null ? 'Connect to ${_serverFeatures.networkName}' : 'Connect'),
 						),
 				])),
 			),
