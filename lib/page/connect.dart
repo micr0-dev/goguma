@@ -14,6 +14,13 @@ import '../models.dart';
 import '../prefs.dart';
 import 'buffer_list.dart';
 
+class _ServerFeatures {
+	bool passwordRequired;
+	bool passwordUnsupported;
+
+	_ServerFeatures({ this.passwordRequired = false, this.passwordUnsupported = false });
+}
+
 class ConnectPage extends StatefulWidget {
 	static const routeName = '/connect';
 
@@ -28,9 +35,8 @@ class ConnectPage extends StatefulWidget {
 class _ConnectPageState extends State<ConnectPage> {
 	bool _loading = false;
 	Exception? _error;
-	bool _passwordRequired = false;
-	bool _passwordUnsupported = false;
-	Client? _fetchCapsClient;
+	_ServerFeatures _serverFeatures = _ServerFeatures();
+	Client? _fetchFeaturesClient;
 	String? _pinnedCertSHA1;
 
 	final formKey = GlobalKey<FormState>();
@@ -80,8 +86,8 @@ class _ConnectPageState extends State<ConnectPage> {
 			return;
 		}
 
-		_fetchCapsClient?.disconnect().ignore();
-		_fetchCapsClient = null;
+		_fetchFeaturesClient?.disconnect().ignore();
+		_fetchFeaturesClient = null;
 
 		var serverEntry = _generateServerEntry();
 
@@ -108,7 +114,7 @@ class _ConnectPageState extends State<ConnectPage> {
 				_error = err;
 				if (err is IrcException) {
 					if (err.msg.cmd == 'FAIL' && err.msg.params[1] == 'ACCOUNT_REQUIRED') {
-						_passwordRequired = true;
+						_serverFeatures.passwordRequired = true;
 					}
 				}
 			});
@@ -138,9 +144,9 @@ class _ConnectPageState extends State<ConnectPage> {
 
 		var serverText = serverController.text;
 
-		IrcAvailableCapRegistry availableCaps;
+		_ServerFeatures features;
 		try {
-			availableCaps = await _fetchAvailableCaps();
+			features = await _fetchServerFeatures();
 		} on Exception catch (err) {
 			if (serverText != serverController.text || !mounted) {
 				return;
@@ -163,24 +169,23 @@ class _ConnectPageState extends State<ConnectPage> {
 
 		setState(() {
 			_error = null;
-			_passwordUnsupported = !availableCaps.containsSasl('PLAIN');
-			_passwordRequired = availableCaps.accountRequired;
+			_serverFeatures = features;
 		});
 
-		if (!_passwordUnsupported) {
+		if (!features.passwordUnsupported) {
 			passwordController.text = '';
 		}
 	}
 
-	Future<IrcAvailableCapRegistry> _fetchAvailableCaps() async {
-		_fetchCapsClient?.disconnect().ignore();
-		_fetchCapsClient = null;
+	Future<_ServerFeatures> _fetchServerFeatures() async {
+		_fetchFeaturesClient?.disconnect().ignore();
+		_fetchFeaturesClient = null;
 
 		var serverEntry = _generateServerEntry();
 		var prefs = context.read<Prefs>();
 		var clientParams = connectParamsFromServerEntry(serverEntry, prefs);
 		var client = Client(clientParams, autoReconnect: false, requestCaps: {});
-		_fetchCapsClient = client;
+		_fetchFeaturesClient = client;
 		IrcAvailableCapRegistry availableCaps;
 		try {
 			await client.connect(register: false);
@@ -193,16 +198,19 @@ class _ConnectPageState extends State<ConnectPage> {
 			}
 		} finally {
 			client.dispose();
-			if (_fetchCapsClient == client) {
-				_fetchCapsClient = null;
+			if (_fetchFeaturesClient == client) {
+				_fetchFeaturesClient = null;
 			}
 		}
-		return availableCaps;
+		return _ServerFeatures(
+			passwordUnsupported: !availableCaps.containsSasl('PLAIN'),
+			passwordRequired: availableCaps.accountRequired,
+		);
 	}
 
 	@override
 	void dispose() {
-		_fetchCapsClient?.disconnect();
+		_fetchFeaturesClient?.disconnect();
 		serverController.dispose();
 		nicknameController.dispose();
 		passwordController.dispose();
@@ -266,8 +274,7 @@ class _ConnectPageState extends State<ConnectPage> {
 						onEditingComplete: () => focusNode.nextFocus(),
 						onChanged: (value) {
 							setState(() {
-								_passwordUnsupported = false;
-								_passwordRequired = false;
+								_serverFeatures = _ServerFeatures();
 								_pinnedCertSHA1 = null;
 							});
 						},
@@ -295,10 +302,10 @@ class _ConnectPageState extends State<ConnectPage> {
 							return (value!.isEmpty) ? 'Required' : null;
 						},
 					),
-					if (!_passwordUnsupported) TextFormField(
+					if (!_serverFeatures.passwordUnsupported) TextFormField(
 						obscureText: true,
 						decoration: InputDecoration(
-							labelText: _passwordRequired ? 'Password' : 'Password (optional)',
+							labelText: _serverFeatures.passwordRequired ? 'Password' : 'Password (optional)',
 							errorText: passwordErr,
 						),
 						controller: passwordController,
@@ -307,7 +314,7 @@ class _ConnectPageState extends State<ConnectPage> {
 							_submit();
 						},
 						validator: (value) {
-							return (_passwordRequired && value!.isEmpty) ? 'Required' : null;
+							return (_serverFeatures.passwordRequired && value!.isEmpty) ? 'Required' : null;
 						},
 					),
 					SizedBox(height: 20),
