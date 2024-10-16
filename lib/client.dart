@@ -849,6 +849,19 @@ class Client {
 		return ok;
 	}
 
+	Future<IrcIsupportRegistry> fetchIsupport() async {
+		var cmd = IrcMessage('ISUPPORT', []);
+		var batch = await _roundtripBatch(cmd, (batch) {
+			return batch.type == 'draft/isupport';
+		});
+
+		var registry = IrcIsupportRegistry();
+		for (var msg in batch.messages) {
+			registry.parse(msg.params.sublist(1, msg.params.length - 1));
+		}
+		return registry;
+	}
+
 	Future<List<ChatHistoryTarget>> fetchChatHistoryTargets(String t1, String t2) async {
 		// TODO: paging
 		var msg = IrcMessage(
