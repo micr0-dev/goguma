@@ -200,9 +200,9 @@ class _BufferListPageState extends State<BufferListPage> {
 						},
 						itemBuilder: (context) {
 							return [
-								PopupMenuItem(child: Text('New conversation'), value: 'join'),
-								if (hasUnreadBuffer) PopupMenuItem(child: Text('Mark all as read'), value: 'mark-all-read'),
-								PopupMenuItem(child: Text('Settings'), value: 'settings'),
+								PopupMenuItem(value: 'join', child: Text('New conversation')),
+								if (hasUnreadBuffer) PopupMenuItem(value: 'mark-all-read', child: Text('Mark all as read')),
+								PopupMenuItem(value: 'settings', child: Text('Settings')),
 							];
 						},
 					),

@@ -23,4 +23,3 @@ linter:
     prefer_is_not_empty: false
     prefer_is_not_operator: false
     prefer_interpolation_to_compose_strings: false
-    sort_child_properties_last: false

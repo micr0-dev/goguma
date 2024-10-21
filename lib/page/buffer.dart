@@ -484,12 +484,12 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Si
 					mini: true,
 					tooltip: 'Jump to bottom',
 					heroTag: null,
-					child: const Icon(Icons.keyboard_double_arrow_down, size: 18),
 					backgroundColor: Colors.grey,
 					foregroundColor: Colors.white,
 					onPressed: () {
 						_itemScrollController.jumpTo(index: 0);
 					},
+					child: const Icon(Icons.keyboard_double_arrow_down, size: 18),
 				),
 			);
 		}
@@ -550,11 +550,11 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Si
 						},
 						itemBuilder: (context) {
 							return [
-								PopupMenuItem(child: Text('Details'), value: 'details'),
-								PopupMenuItem(child: Text(buffer.pinned ? 'Unpin' : 'Pin'), value: 'pin'),
-								PopupMenuItem(child: Text(buffer.muted ? 'Unmute' : 'Mute'), value: 'mute'),
-								if (!buffer.archived && (isOnline || !isChannel)) PopupMenuItem(child: Text(buffer.joined ? 'Leave' : 'Archive'), value: 'part'),
-								if (buffer.archived) PopupMenuItem(child: Text('Delete'), value: 'delete'),
+								PopupMenuItem(value: 'details', child: Text('Details')),
+								PopupMenuItem(value: 'pin', child: Text(buffer.pinned ? 'Unpin' : 'Pin')),
+								PopupMenuItem(value: 'mute', child: Text(buffer.muted ? 'Unmute' : 'Mute')),
+								if (!buffer.archived && (isOnline || !isChannel)) PopupMenuItem(value: 'part', child: Text(buffer.joined ? 'Leave' : 'Archive')),
+								if (buffer.archived) PopupMenuItem(value: 'delete', child: Text('Delete')),
 							];
 						},
 					),
@@ -963,7 +963,6 @@ class _MessageItem extends StatelessWidget {
 
 		if (!client.isMyNick(sender)) {
 			decoratedMessage = SwipeAction(
-				child: decoratedMessage,
 				background: Align(
 					alignment: Alignment.centerLeft,
 					child: Opacity(
@@ -972,6 +971,7 @@ class _MessageItem extends StatelessWidget {
 					),
 				),
 				onSwipe: onSwipe,
+				child: decoratedMessage,
 			);
 		}
 

@@ -47,14 +47,14 @@ class _NetworkDetailsPageState extends State<NetworkDetailsPage> {
 				content: Text('Are you sure you want to delete this network?'),
 				actions: [
 					TextButton(
-						child: Text('CANCEL'),
 						onPressed: () {
 							Navigator.pop(context);
 						},
+						child: Text('CANCEL'),
 					),
 					ElevatedButton(
-						child: Text('DELETE'),
 						onPressed: _delete,
+						child: Text('DELETE'),
 					),
 				],
 			),
@@ -81,14 +81,14 @@ class _NetworkDetailsPageState extends State<NetworkDetailsPage> {
 				content: Text('Are you sure you want to log out from this network?'),
 				actions: [
 					TextButton(
-						child: Text('CANCEL'),
 						onPressed: () {
 							Navigator.pop(context);
 						},
+						child: Text('CANCEL'),
 					),
 					ElevatedButton(
-						child: Text('LOG OUT'),
 						onPressed: _logout,
+						child: Text('LOG OUT'),
 					),
 				],
 			),

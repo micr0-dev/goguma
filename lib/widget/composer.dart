@@ -664,10 +664,10 @@ class ComposerState extends State<Composer> {
 				_submit();
 			},
 			tooltip: _isCommand ? 'Execute' : 'Send',
-			child: Icon(_isCommand ? Icons.done : Icons.send, size: 18),
 			backgroundColor: _isCommand ? Colors.red : null,
 			mini: true,
 			elevation: 0,
+			child: Icon(_isCommand ? Icons.done : Icons.send, size: 18),
 		);
 
 		Widget? addMenu;

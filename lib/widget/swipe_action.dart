@@ -84,10 +84,10 @@ class _SwipeActionState extends State<SwipeAction> with TickerProviderStateMixin
 		}
 
 		return GestureDetector(
-			child: content,
 			onHorizontalDragStart: _handleDragStart,
 			onHorizontalDragUpdate: _handleDragUpdate,
 			onHorizontalDragEnd: _handleDragEnd,
+			child: content,
 		);
 	}
 }
