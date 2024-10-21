@@ -216,7 +216,7 @@ class _ConnectPageState extends State<ConnectPage> {
 	Widget build(BuildContext context) {
 		String? serverErr, nicknameErr, passwordErr;
 		if (_error is IrcException) {
-			final ircErr = _error as IrcException;
+			var ircErr = _error as IrcException;
 			switch (ircErr.msg.cmd) {
 			case 'FAIL':
 				var code = ircErr.msg.params[1];
@@ -249,7 +249,7 @@ class _ConnectPageState extends State<ConnectPage> {
 			serverErr = _error?.toString();
 		}
 
-		final focusNode = FocusScope.of(context);
+		var focusNode = FocusScope.of(context);
 		return Scaffold(
 			appBar: AppBar(
 				title: Text('Goguma'),

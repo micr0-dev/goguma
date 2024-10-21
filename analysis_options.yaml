@@ -14,6 +14,7 @@ linter:
     directives_ordering: true
     avoid_catches_without_on_clauses: true
     unawaited_futures: true
+    unnecessary_final: true
     # Disabled because of IRC command constants
     constant_identifier_names: false
     # Disabled because we have so many of these

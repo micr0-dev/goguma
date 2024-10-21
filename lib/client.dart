@@ -206,7 +206,7 @@ class Client {
 			);
 		}
 
-		final connectTimeout = Duration(seconds: 15);
+		const connectTimeout = Duration(seconds: 15);
 		Socket socket;
 		try {
 			var connectionTask = await connectionTaskFuture;
