@@ -41,7 +41,7 @@ dependencies:
   html: ^0.15.2
   geolocator: ^13.0.1
   image_picker: ^1.0.4
-  mime: ^1.0.4
+  mime: ^2.0.0
   file_selector: ^1.0.1
   flutter_apns_only: ^1.6.0
   share_handler: ^0.0.21
