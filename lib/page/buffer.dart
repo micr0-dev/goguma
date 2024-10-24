@@ -195,13 +195,10 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Si
 		var models = await buildMessageModelList(db, entries);
 		buffer.populateMessageHistory(models.toList());
 
-		if (entries.length >= limit) {
-			setState(_setInitialChatHistoryLoaded);
-			return;
-		}
-
-		if (!client.caps.enabled.contains('draft/chathistory')) {
-			setState(_setInitialChatHistoryLoaded);
+		if (entries.length >= limit || !client.caps.enabled.contains('draft/chathistory')) {
+			if (mounted) {
+				setState(_setInitialChatHistoryLoaded);
+			}
 			return;
 		}
 
