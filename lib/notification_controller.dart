@@ -160,7 +160,7 @@ class NotificationController {
 
 		String title;
 		if (replace == null) {
-			title = '${entry.msg.source!.name} mentionned you in ${buffer.name}';
+			title = '${entry.msg.source!.name} mentioned you in ${buffer.name}';
 		} else {
 			title = _incrementTitleCount(replace.title, entries.length, ' mentions in ${buffer.name}');
 		}
@@ -174,7 +174,7 @@ class NotificationController {
 			channel: _NotificationChannel(
 				id: 'highlight',
 				name: 'Mentions',
-				description: 'Messages mentionning your nickname in a channel',
+				description: 'Messages mentioning your nickname in a channel',
 			),
 			dateTime: entry.dateTime,
 			messagingStyleInfo: _buildMessagingStyleInfo(messages, buffer, true),
