@@ -53,6 +53,8 @@ tasks:
       fi
       sentry_dsn=""
       [ -e ~/sentry-dsn.txt ] && sentry_dsn="$(cat ~/sentry-dsn.txt)"
+      # limit heap size otherwise Gradle gets OOM killed
+      export JAVA_TOOL_OPTIONS="-Xmx1G"
       flutter build apk \
         --build-name="$build_name" \
         --build-number="$build_number" \
