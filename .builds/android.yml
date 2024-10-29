@@ -27,6 +27,8 @@ tasks:
       sudo chown -R $USER /opt/android-sdk
       yes | flutter doctor --android-licenses >/dev/null
       flutter doctor -v
+      # the gradle daemon sometimes crashes
+      mkdir -p ~/.gradle && echo "org.gradle.daemon=false" >>~/.gradle/gradle.properties
   - configure: |
       cd goguma
       [ -e ~/keystore.properties ] && ln -s ~/keystore.properties android/keystore.properties
