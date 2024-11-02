@@ -300,10 +300,6 @@ class ComposerState extends State<Composer> {
 		var client = context.read<Client>();
 		var bufferList = context.read<BufferListModel>();
 
-		if (buffer.members == null && client.isChannel(buffer.name)) {
-			await client.names(buffer.name);
-		}
-
 		if (text.startsWith('/') && !text.contains(' ')) {
 			text = text.toLowerCase();
 			return commands.keys.where((cmd) {

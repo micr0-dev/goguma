@@ -66,9 +66,6 @@ class BufferPage extends StatefulWidget {
 
 		if (client.isChannel(name)) {
 			_join(client, buffer);
-		} else {
-			clientProvider.fetchBufferUser(buffer);
-			client.monitor([name]);
 		}
 	}
 }
@@ -126,6 +123,8 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Si
 			return;
 		}
 
+		_fetchMetadata();
+
 		// Timer.run prevents calling setState() from inside initState()
 		Timer.run(() async {
 			try {
@@ -170,6 +169,23 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Si
 		if (_initialScrollIndex != 0 && positions.any((pos) => pos.index == 0 && pos.itemLeadingEdge == 0)) {
 			_itemScrollController.jumpTo(index: 0, alignment: 0);
 			_initialScrollIndex = 0;
+		}
+	}
+
+	void _fetchMetadata() async {
+		var clientProvider = context.read<ClientProvider>();
+		var buffer = context.read<BufferModel>();
+		var client = context.read<Client>();
+
+		if (client.isChannel(buffer.name)) {
+			if (buffer.members != null) {
+				return;
+			}
+
+			await client.names(buffer.name);
+		} else {
+			clientProvider.fetchBufferUser(buffer);
+			client.monitor([buffer.name]);
 		}
 	}
 
