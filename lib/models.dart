@@ -249,10 +249,6 @@ class BufferKey {
 	BufferKey(String name, this.network, CaseMapping cm) :
 		name = cm.canonicalize(name);
 
-	BufferKey.fromBuffer(BufferModel buffer, CaseMapping cm) :
-		name = cm.canonicalize(buffer.name),
-		network = buffer.network;
-
 	@override
 	bool operator ==(Object other) {
 		if (identical(this, other)) {
@@ -270,7 +266,7 @@ class BufferKey {
 class BufferListModel extends ChangeNotifier {
 	Map<BufferKey, BufferModel> _buffers = {};
 	List<BufferModel> _sorted = [];
-	CaseMapping _cm = defaultCaseMapping;
+	final Map<NetworkModel, CaseMapping> _cm = {};
 
 	UnmodifiableListView<BufferModel> get buffers => UnmodifiableListView(_sorted);
 
@@ -283,19 +279,20 @@ class BufferListModel extends ChangeNotifier {
 	}
 
 	void add(BufferModel buf) {
-		_buffers[BufferKey.fromBuffer(buf, _cm)] = buf;
+		_buffers[_getBufferKey(buf.name, buf.network)] = buf;
 		_rebuildSorted();
 		notifyListeners();
 	}
 
 	void remove(BufferModel buf) {
-		_buffers.remove(BufferKey.fromBuffer(buf, _cm));
+		_buffers.remove(_getBufferKey(buf.name, buf.network));
 		_rebuildSorted();
 		notifyListeners();
 	}
 
 	void removeByNetwork(NetworkModel network) {
 		_buffers.removeWhere((_, buf) => buf.network == network);
+		_cm.remove(network);
 		_rebuildSorted();
 		notifyListeners();
 	}
@@ -303,6 +300,7 @@ class BufferListModel extends ChangeNotifier {
 	void clear() {
 		_buffers.clear();
 		_sorted.clear();
+		_cm.clear();
 		notifyListeners();
 	}
 
@@ -316,7 +314,7 @@ class BufferListModel extends ChangeNotifier {
 	}
 
 	BufferModel? get(String name, NetworkModel network) {
-		return _buffers[BufferKey(name, network, _cm)];
+		return _buffers[_getBufferKey(name, network)];
 	}
 
 	void bumpLastDeliveredTime(BufferModel buf, String t) {
@@ -370,13 +368,17 @@ class BufferListModel extends ChangeNotifier {
 		_sorted = l;
 	}
 
-	void setCaseMapping(CaseMapping cm) {
-		if (cm == _cm) {
+	BufferKey _getBufferKey(String name, NetworkModel network) {
+		return BufferKey(name, network, _cm[network] ?? defaultCaseMapping);
+	}
+
+	void setCaseMapping(NetworkModel network, CaseMapping cm) {
+		if (cm == _cm[network]) {
 			return;
 		}
-		_cm = cm;
+		_cm[network] = cm;
 		_buffers = Map.fromIterables(
-			_buffers.values.map((buffer) => BufferKey.fromBuffer(buffer, cm)),
+			_buffers.values.map((buffer) => _getBufferKey(buffer.name, buffer.network)),
 			_buffers.values,
 		);
 	}

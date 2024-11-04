@@ -414,7 +414,7 @@ class ClientController {
 			} else {
 				network.bouncerNetwork = null;
 			}
-			_bufferList.setCaseMapping(client.isupport.caseMapping);
+			_bufferList.setCaseMapping(network, client.isupport.caseMapping);
 
 			network.networkEntry.isupport = client.isupport;
 			_db.storeNetwork(network.networkEntry);
