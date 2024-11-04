@@ -278,6 +278,11 @@ class ClientProvider {
 		buffer.realname = reply.realname;
 		buffer.away = reply.away;
 		unawaited(_db.storeBuffer(buffer.entry));
+
+		buffer.network.users.updateUser(UserModel(
+			nickname: reply.nickname,
+			realname: reply.realname,
+		));
 	}
 
 	Future<void> fetchChatHistory(BufferModel buffer) async {
@@ -414,7 +419,7 @@ class ClientController {
 			} else {
 				network.bouncerNetwork = null;
 			}
-			_bufferList.setCaseMapping(network, client.isupport.caseMapping);
+			setCaseMapping(_bufferList, network, client.isupport.caseMapping);
 
 			network.networkEntry.isupport = client.isupport;
 			_db.storeNetwork(network.networkEntry);
@@ -503,6 +508,7 @@ class ClientController {
 			break;
 		case 'JOIN':
 			var channel = msg.params[0];
+			// TODO: append to network.users with extended-join
 			if (client.isMyNick(msg.source.name)) {
 				return _createBuffer(channel).then((buffer) {
 					buffer.joined = true;
@@ -527,6 +533,8 @@ class ClientController {
 					buffer.members?.remove(msg.source.name);
 				}
 			}
+
+			network.users.removeUser(msg.source.name);
 			break;
 		case 'KICK':
 			var channel = msg.params[0];
@@ -561,16 +569,20 @@ class ClientController {
 			_bufferList.get(msg.source.name, network)?.away = away;
 			break;
 		case 'NICK':
+			var newNickname = msg.params[0];
+
 			if (client.isupport.caseMapping.equals(network.nickname, msg.source.name)) {
-				network.nickname = msg.params[0];
+				network.nickname = newNickname;
 			}
 
 			for (var buffer in _bufferList.buffers) {
 				if (buffer.network == network && buffer.members?.members.containsKey(msg.source.name) == true) {
-					buffer.members!.set(msg.params[0], buffer.members!.members[msg.source.name]!);
+					buffer.members!.set(newNickname, buffer.members!.members[msg.source.name]!);
 					buffer.members!.remove(msg.source.name);
 				}
 			}
+
+			network.users.updateNickname(msg.source.name, newNickname);
 			break;
 		case 'SETNAME':
 			var realname = msg.params[0];
@@ -584,6 +596,11 @@ class ClientController {
 				buffer.realname = realname;
 				_db.storeBuffer(buffer.entry);
 			}
+
+			network.users.updateUser(UserModel(
+				nickname: msg.source.name,
+				realname: realname,
+			));
 			break;
 		case RPL_LOGGEDIN:
 			var account = msg.params[2];

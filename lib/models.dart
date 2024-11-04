@@ -56,6 +56,8 @@ class NetworkModel extends ChangeNotifier {
 	String? _account;
 	String? _connectError;
 
+	final UserListModel _users = UserListModel(defaultCaseMapping);
+
 	NetworkModel(this.serverEntry, this.networkEntry, String nickname, String realname) :
 			_nickname = nickname,
 			_realname = realname {
@@ -74,6 +76,7 @@ class NetworkModel extends ChangeNotifier {
 	String get realname => _realname;
 	String? get account => _account;
 	String? get connectError => _connectError;
+	UserListModel get users => _users;
 
 	String get displayName {
 		// If the user has set a custom bouncer network name, use that
@@ -372,7 +375,7 @@ class BufferListModel extends ChangeNotifier {
 		return BufferKey(name, network, _cm[network] ?? defaultCaseMapping);
 	}
 
-	void setCaseMapping(NetworkModel network, CaseMapping cm) {
+	void _setCaseMapping(NetworkModel network, CaseMapping cm) {
 		if (cm == _cm[network]) {
 			return;
 		}
@@ -589,6 +592,62 @@ class MemberListModel extends ChangeNotifier {
 	}
 }
 
+class UserListModel extends ChangeNotifier {
+	final IrcNameMap<UserModel> _map;
+
+	UserListModel(CaseMapping cm) : _map = IrcNameMap(cm);
+
+	UnmodifiableMapView<String, UserModel> get map => UnmodifiableMapView(_map);
+
+	void updateUser(UserModel updatedUser) {
+		var user = _map[updatedUser.nickname];
+		if (user == null) {
+			_map[updatedUser.nickname] = updatedUser;
+			notifyListeners();
+			return;
+		}
+		if (updatedUser.realname != null) {
+			user.realname = updatedUser.realname;
+			notifyListeners();
+		}
+	}
+
+	void updateNickname(String oldNickname, String newNickname) {
+		var user = _map[oldNickname];
+		if (user == null) {
+			return;
+		}
+		_map[newNickname] = user;
+		user._nickname = newNickname;
+		_map.remove(oldNickname);
+		user.notifyListeners();
+		notifyListeners();
+	}
+
+	void removeUser(String nickname) {
+		_map.remove(nickname);
+		notifyListeners();
+	}
+}
+
+class UserModel extends ChangeNotifier {
+	String _nickname;
+	String? _realname;
+
+	UserModel({
+		required String nickname,
+		String? realname,
+	}) : _nickname = nickname, _realname = realname;
+
+	String get nickname => _nickname;
+	String? get realname => _realname;
+
+	set realname(String? realname) {
+		_realname = realname;
+		notifyListeners();
+	}
+}
+
 String networkStateDescription(NetworkState state) {
 	switch (state) {
 	case NetworkState.offline:
@@ -613,4 +672,9 @@ String bouncerNetworkStateDescription(BouncerNetworkState state) {
 	case BouncerNetworkState.connected:
 		return 'Connected';
 	}
+}
+
+void setCaseMapping(BufferListModel bufferList, NetworkModel network, CaseMapping cm) {
+	bufferList._setCaseMapping(network, cm);
+	network._users._map.setCaseMapping(cm);
 }

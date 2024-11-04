@@ -176,13 +176,32 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Si
 		var clientProvider = context.read<ClientProvider>();
 		var buffer = context.read<BufferModel>();
 		var client = context.read<Client>();
+		var userList = context.read<NetworkModel>().users;
 
 		if (client.isChannel(buffer.name)) {
 			if (buffer.members != null) {
 				return;
 			}
 
-			await client.names(buffer.name);
+			List<WhoReply> replies;
+			try {
+				replies = await client.who(buffer.name);
+			} on Exception catch (err) {
+				log.print('Failed to fetch channel WHO', error: err);
+				await client.names(buffer.name);
+				return;
+			}
+
+			var members = MemberListModel(client.isupport.caseMapping);
+			for (var reply in replies) {
+				members.set(reply.nickname, reply.membershipPrefix!);
+				userList.updateUser(UserModel(
+					nickname: reply.nickname,
+					realname: reply.realname,
+				));
+			}
+
+			buffer.members = members;
 		} else {
 			clientProvider.fetchBufferUser(buffer);
 			client.monitor([buffer.name]);
