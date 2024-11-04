@@ -388,7 +388,9 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Si
 
 							bufferList.setArchived(buffer, false);
 							db.storeBuffer(buffer.entry);
+
 							_join(client, buffer);
+							_fetchMetadata();
 						},
 					),
 				],
@@ -402,13 +404,12 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Si
 						child: Text('UNARCHIVE'),
 						onPressed: () {
 							var bufferList = context.read<BufferListModel>();
-							var clientProvider = context.read<ClientProvider>();
 							var db = context.read<DB>();
 
 							bufferList.setArchived(buffer, false);
 							db.storeBuffer(buffer.entry);
-							clientProvider.fetchBufferUser(buffer);
-							client.monitor([buffer.name]);
+
+							_fetchMetadata();
 						},
 					),
 				],
