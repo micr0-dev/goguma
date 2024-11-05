@@ -29,6 +29,9 @@ tasks:
       flutter doctor -v
       # the gradle daemon sometimes crashes
       mkdir -p ~/.gradle && echo "org.gradle.daemon=false" >>~/.gradle/gradle.properties
+      # workaround for OOM
+      sudo mkswap -U clear --size 4G --file /swapfile
+      sudo swapon /swapfile
   - configure: |
       cd goguma
       [ -e ~/keystore.properties ] && ln -s ~/keystore.properties android/keystore.properties
@@ -53,8 +56,6 @@ tasks:
       fi
       sentry_dsn=""
       [ -e ~/sentry-dsn.txt ] && sentry_dsn="$(cat ~/sentry-dsn.txt)"
-      # limit heap size otherwise Gradle gets OOM killed
-      export JAVA_TOOL_OPTIONS="-Xmx1G"
       flutter build apk \
         --build-name="$build_name" \
         --build-number="$build_number" \
