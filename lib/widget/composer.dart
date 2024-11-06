@@ -294,8 +294,9 @@ class ComposerState extends State<Composer> {
 		});
 	}
 
-	Future<Iterable<String>> _buildOptions(TextEditingValue textEditingValue) async {
+	Future<Iterable<_AutocompleteOption>> _buildOptions(TextEditingValue textEditingValue) async {
 		var text = textEditingValue.text;
+		var network = context.read<NetworkModel>();
 		var buffer = context.read<BufferModel>();
 		var client = context.read<Client>();
 		var bufferList = context.read<BufferListModel>();
@@ -304,7 +305,7 @@ class ComposerState extends State<Composer> {
 			text = text.toLowerCase();
 			return commands.keys.where((cmd) {
 				return cmd.startsWith(text);
-			});
+			}).map((cmd) => _AutocompleteOption(cmd));
 		}
 
 		String pattern;
@@ -320,35 +321,36 @@ class ComposerState extends State<Composer> {
 			return [];
 		}
 
-		Iterable<String> result;
+		Iterable<_AutocompleteOption> result;
 		if (client.isChannel(pattern)) {
-			result = bufferList.buffers.map((buffer) => buffer.name);
+			result = bufferList.buffers.map((buffer) => _AutocompleteOption(buffer.name, buffer.topic));
 		} else {
-			result = buffer.members?.members.keys ?? [];
+			var members = buffer.members?.members.keys ?? [];
+			result = members.map((nickname) => _AutocompleteOption(nickname, network.users.map[nickname]?.realname));
 		}
 
-		return result.where((name) {
-			return name.toLowerCase().startsWith(pattern);
-		}).take(10).map((name) {
-			if (name.startsWith('/')) {
+		return result.where((option) {
+			return option.value.toLowerCase().startsWith(pattern);
+		}).take(10).map((option) {
+			if (option.value.startsWith('/')) {
 				// Insert a zero-width space to ensure this doesn't end up
 				// being executed as a command
-				return '\u200B$name';
+				return _AutocompleteOption('\u200B' + option.value, option.description);
 			}
-			return name;
+			return option;
 		});
 	}
 
-	String _displayStringForOption(String option) {
+	String _displayStringForOption(_AutocompleteOption option) {
 		var text = _controller.text;
 
 		var i = text.lastIndexOf(' ');
 		if (i >= 0) {
-			return text.substring(0, i + 1) + option + ' ';
-		} else if (option.startsWith('/')) { // command
-			return option + ' ';
+			return text.substring(0, i + 1) + option.value + ' ';
+		} else if (option.value.startsWith('/')) { // command
+			return option.value + ' ';
 		} else {
-			return option + ': ';
+			return option.value + ': ';
 		}
 	}
 
@@ -603,7 +605,7 @@ class ComposerState extends State<Composer> {
 		);
 	}
 
-	Widget _buildOptionsView(BuildContext context, AutocompleteOnSelected<String> onSelected, Iterable<String> options) {
+	Widget _buildOptionsView(BuildContext context, AutocompleteOnSelected<_AutocompleteOption> onSelected, Iterable<_AutocompleteOption> options) {
 		var listView = ListView.builder(
 			padding: EdgeInsets.zero,
 			shrinkWrap: true,
@@ -626,7 +628,13 @@ class ComposerState extends State<Composer> {
 							return Container(
 								color: highlight ? Theme.of(context).focusColor : null,
 								padding: const EdgeInsets.all(16.0),
-								child: Text(option),
+								child: Text.rich(TextSpan(children: [
+									TextSpan(text: option.value),
+									if (option.description != null) TextSpan(
+										text: '  ' + option.description!,
+										style: TextStyle(color: Theme.of(context).colorScheme.secondary)
+									),
+								]), overflow: TextOverflow.ellipsis),
 							);
 						},
 					),
@@ -735,4 +743,11 @@ class ComposerState extends State<Composer> {
 			fab,
 		])));
 	}
+}
+
+class _AutocompleteOption {
+	final String value;
+	final String? description;
+
+	const _AutocompleteOption(this.value, [this.description]);
 }
