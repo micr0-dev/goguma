@@ -1273,7 +1273,7 @@ class WhoReply {
 			op: flags.op,
 			realname: realname!,
 			channel: channel,
-			membershipPrefix: channel != null ? flags.membershipPrefix : null,
+			membershipPrefix: flags.membershipPrefix,
 			account: account,
 		);
 	}
