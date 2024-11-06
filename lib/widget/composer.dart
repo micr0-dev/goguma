@@ -323,7 +323,9 @@ class ComposerState extends State<Composer> {
 
 		Iterable<_AutocompleteOption> result;
 		if (client.isChannel(pattern)) {
-			result = bufferList.buffers.map((buffer) => _AutocompleteOption(buffer.name, buffer.topic));
+			result = bufferList.buffers
+				.where((buffer) => buffer.network == network)
+				.map((buffer) => _AutocompleteOption(buffer.name, buffer.topic));
 		} else {
 			var members = buffer.members?.members.keys ?? [];
 			result = members.map((nickname) => _AutocompleteOption(nickname, network.users.map[nickname]?.realname));
