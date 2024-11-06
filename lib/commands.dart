@@ -6,13 +6,40 @@ import 'database.dart';
 import 'irc.dart';
 import 'models.dart';
 
-typedef CommandFunction = String? Function(BuildContext context, String? param);
+typedef CommandIsAvailable = bool Function(BuildContext context);
+typedef CommandExec = String? Function(BuildContext context, String? param);
 
 class Command {
-	final CommandFunction exec;
+	final CommandExec _exec;
 	final String description;
+	final CommandIsAvailable isAvailable;
 
-	const Command(this.exec, { required this.description });
+	const Command(this._exec, {
+		required this.description,
+		this.isAvailable = _alwaysAvailable,
+	});
+
+	String? exec(BuildContext context, String? param) {
+		if (!isAvailable(context)) {
+			throw CommandException('Command unavailable in this context');
+		}
+		return _exec(context, param);
+	}
+}
+
+bool _alwaysAvailable(BuildContext context) {
+	return true;
+}
+
+bool _availableInChannels(BuildContext context) {
+	var client = context.read<Client>();
+	var buffer = context.read<BufferModel>();
+	return client.isChannel(buffer.name);
+}
+
+bool _availableIfChannelsAreSupported(BuildContext context) {
+	var client = context.read<Client>();
+	return !client.isupport.chanTypes.isEmpty;
 }
 
 class CommandException implements Exception {
@@ -56,9 +83,6 @@ String? _join(BuildContext context, String? param) {
 String? _kick(BuildContext context, String? param) {
 	var client = context.read<Client>();
 	var buffer = context.read<BufferModel>();
-	if (!client.isChannel(buffer.name)) {
-		throw CommandException('This command can only be used in channels');
-	}
 	var parts = _requireParam(param).split(' ');
 	var nick = parts[0];
 	var reason = parts.length > 1 ? [parts.sublist(1).join(' ')] : <String>[];
@@ -73,9 +97,6 @@ String? _me(BuildContext context, String? param) {
 String? _mode(BuildContext context, String? param) {
 	var client = context.read<Client>();
 	var buffer = context.read<BufferModel>();
-	if (!client.isChannel(buffer.name)) {
-		throw CommandException('This command can only be used in channels');
-	}
 	client.send(IrcMessage('MODE', [buffer.name, ..._requireParam(param).split(' ')]));
 	return null;
 }
@@ -97,9 +118,6 @@ String? _part(BuildContext context, String? param) {
 	var bufferList = context.read<BufferListModel>();
 	var buffer = context.read<BufferModel>();
 	var db = context.read<DB>();
-	if (!client.isChannel(buffer.name)) {
-		throw CommandException('This command can only be used in channels');
-	}
 	if (param != null) {
 		client.send(IrcMessage('PART', [buffer.name, param]));
 	} else {
@@ -123,11 +141,11 @@ String? _quote(BuildContext context, String? param) {
 }
 
 const Map<String, Command> commands = {
-	'join': Command(_join, description: 'Join a channel'),
-	'kick': Command(_kick, description: 'Remove another user from the channel'),
+	'join': Command(_join, description: 'Join a channel', isAvailable: _availableIfChannelsAreSupported),
+	'kick': Command(_kick, description: 'Remove another user from the channel', isAvailable: _availableInChannels),
 	'me': Command(_me, description: 'Send an action message'),
 	'mode': Command(_mode, description: 'Change a channel or user mode'),
 	'oper': Command(_oper, description: 'Obtain server operator privileges'),
-	'part': Command(_part, description: 'Leave a channel'),
+	'part': Command(_part, description: 'Leave a channel', isAvailable: _availableInChannels),
 	'quote': Command(_quote, description: 'Execute a raw IRC command'),
 };

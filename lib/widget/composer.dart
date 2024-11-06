@@ -304,7 +304,7 @@ class ComposerState extends State<Composer> {
 		if (text.startsWith('/') && !text.contains(' ')) {
 			text = text.toLowerCase().substring(1);
 			return commands.entries.where((entry) {
-				return entry.key.startsWith(text);
+				return entry.key.startsWith(text) && entry.value.isAvailable(context);
 			}).map((entry) => _AutocompleteOption('/' + entry.key, entry.value.description));
 		}
 
