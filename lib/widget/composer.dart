@@ -201,7 +201,7 @@ class ComposerState extends State<Composer> {
 
 		String? msgText;
 		try {
-			msgText = cmd(context, param);
+			msgText = cmd.exec(context, param);
 		} on CommandException catch (err) {
 			ScaffoldMessenger.of(context).showSnackBar(SnackBar(
 				content: Text(err.message),
@@ -302,10 +302,10 @@ class ComposerState extends State<Composer> {
 		var bufferList = context.read<BufferListModel>();
 
 		if (text.startsWith('/') && !text.contains(' ')) {
-			text = text.toLowerCase();
-			return commands.keys.where((cmd) {
-				return cmd.startsWith(text);
-			}).map((cmd) => _AutocompleteOption(cmd));
+			text = text.toLowerCase().substring(1);
+			return commands.entries.where((entry) {
+				return entry.key.startsWith(text);
+			}).map((entry) => _AutocompleteOption('/' + entry.key, entry.value.description));
 		}
 
 		String pattern;

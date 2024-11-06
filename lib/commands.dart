@@ -6,7 +6,14 @@ import 'database.dart';
 import 'irc.dart';
 import 'models.dart';
 
-typedef Command = String? Function(BuildContext context, String? param);
+typedef CommandFunction = String? Function(BuildContext context, String? param);
+
+class Command {
+	final CommandFunction exec;
+	final String description;
+
+	const Command(this.exec, { required this.description });
+}
 
 class CommandException implements Exception {
 	final String message;
@@ -116,11 +123,11 @@ String? _quote(BuildContext context, String? param) {
 }
 
 const Map<String, Command> commands = {
-	'join': _join,
-	'kick': _kick,
-	'me': _me,
-	'mode': _mode,
-	'oper': _oper,
-	'part': _part,
-	'quote': _quote,
+	'join': Command(_join, description: 'Join a channel'),
+	'kick': Command(_kick, description: 'Remove another user from the channel'),
+	'me': Command(_me, description: 'Send an action message'),
+	'mode': Command(_mode, description: 'Change a channel or user mode'),
+	'oper': Command(_oper, description: 'Obtain server operator privileges'),
+	'part': Command(_part, description: 'Leave a channel'),
+	'quote': Command(_quote, description: 'Execute a raw IRC command'),
 };
