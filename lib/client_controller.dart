@@ -508,7 +508,14 @@ class ClientController {
 			break;
 		case 'JOIN':
 			var channel = msg.params[0];
-			// TODO: append to network.users with extended-join
+			if (client.caps.enabled.contains('extended-join')) {
+				var realname = msg.params[2];
+				network.users.updateUser(UserModel(
+					nickname: msg.source.name,
+					realname: realname,
+				));
+			}
+
 			if (client.isMyNick(msg.source.name)) {
 				return _createBuffer(channel).then((buffer) {
 					buffer.joined = true;

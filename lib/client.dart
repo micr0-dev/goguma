@@ -78,6 +78,7 @@ Set<String> _getDefaultCaps(ConnectParams params) {
 		'away-notify',
 		'batch',
 		'echo-message',
+		'extended-join',
 		'extended-monitor',
 		'labeled-response',
 		'message-tags',
