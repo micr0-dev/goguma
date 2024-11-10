@@ -508,7 +508,9 @@ class ClientController {
 			break;
 		case 'JOIN':
 			var channel = msg.params[0];
-			if (client.caps.enabled.contains('extended-join')) {
+			// TODO: drop the length check once this is widely deployed:
+			// https://codeberg.org/emersion/soju/commit/a2a4181440824b29bf2b317cbcf77a527f54e10c
+			if (client.caps.enabled.contains('extended-join') && msg.params.length >= 3) {
 				var realname = msg.params[2];
 				network.users.updateUser(UserModel(
 					nickname: msg.source.name,
