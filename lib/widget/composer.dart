@@ -328,7 +328,13 @@ class ComposerState extends State<Composer> {
 				.map((buffer) => _AutocompleteOption(buffer.name, buffer.topic));
 		} else {
 			var members = buffer.members?.members.keys ?? [];
-			result = members.map((nickname) => _AutocompleteOption(nickname, network.users.map[nickname]?.realname));
+			result = members.map((nickname) {
+				var realname = network.users.map[nickname]?.realname;
+				if (realname != null && isStubRealname(realname, nickname)) {
+					realname = null;
+				}
+				return _AutocompleteOption(nickname, realname);
+			});
 		}
 
 		return result.where((option) {
