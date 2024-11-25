@@ -36,7 +36,7 @@ class _ConnectPageState extends State<ConnectPage> {
 	bool _loading = false;
 	Exception? _error;
 	_ServerFeatures _serverFeatures = _ServerFeatures();
-	Client? _fetchFeaturesClient;
+	Client? _client;
 	String? _pinnedCertSHA1;
 
 	final formKey = GlobalKey<FormState>();
@@ -81,33 +81,72 @@ class _ConnectPageState extends State<ConnectPage> {
 		);
 	}
 
+	Future<Client> _connect() async {
+		var prefs = context.read<Prefs>();
+
+		var client = _client;
+		if (client != null && client.state == ClientState.connected) {
+			try {
+				// Make sure the connection is still alive and usable
+				// Note, some servers reject PING before registration
+				await client.fetchAvailableCaps();
+				return client;
+			} on Exception {
+				log.print('Failed to reuse client, creating a new one');
+			}
+		}
+
+		_disconnect();
+
+		var serverEntry = _generateServerEntry();
+		var clientParams = connectParamsFromServerEntry(serverEntry, prefs);
+		client = Client(clientParams, autoReconnect: false, requestCaps: {});
+		_client = client;
+		try {
+			await client.connect(register: false);
+			return client;
+		} on Exception {
+			client.dispose();
+			if (_client == client) {
+				_client = null;
+			}
+			rethrow;
+		}
+	}
+
+	void _disconnect() {
+		_client?.disconnect().ignore();
+		_client = null;
+	}
+
 	void _submit() async {
 		if (!formKey.currentState!.validate() || _loading) {
 			return;
 		}
-
-		_fetchFeaturesClient?.disconnect().ignore();
-		_fetchFeaturesClient = null;
-
-		var serverEntry = _generateServerEntry();
-
-		setState(() {
-			_loading = true;
-		});
 
 		var db = context.read<DB>();
 		var prefs = context.read<Prefs>();
 		var networkList = context.read<NetworkListModel>();
 		var clientProvider = context.read<ClientProvider>();
 
+		var serverEntry = _generateServerEntry();
+		var clientParams = connectParamsFromServerEntry(serverEntry, prefs);
+
+		setState(() {
+			_loading = true;
+		});
+
 		prefs.nickname = nicknameController.text;
 
 		// TODO: only connect once (but be careful not to loose messages
-		// sent immediately after RPL_WELCOME)
-		var clientParams = connectParamsFromServerEntry(serverEntry, prefs);
-		var client = Client(clientParams, autoReconnect: false, requestCaps: {'sasl'});
+		// sent immediately after RPL_WELCOME, and request all caps)
+		Client client;
 		try {
-			await client.connect();
+			client = await _connect();
+			if (clientParams.saslPlain != null) {
+				client.send(IrcMessage('CAP', ['REQ', 'sasl']));
+			}
+			await client.register(clientParams);
 		} on Exception catch (err) {
 			setState(() {
 				_loading = false;
@@ -120,7 +159,7 @@ class _ConnectPageState extends State<ConnectPage> {
 			});
 			return;
 		} finally {
-			client.dispose();
+			_disconnect();
 		}
 
 		await db.storeServer(serverEntry);
@@ -178,28 +217,16 @@ class _ConnectPageState extends State<ConnectPage> {
 	}
 
 	Future<_ServerFeatures> _fetchServerFeatures() async {
-		_fetchFeaturesClient?.disconnect().ignore();
-		_fetchFeaturesClient = null;
-
-		var serverEntry = _generateServerEntry();
-		var prefs = context.read<Prefs>();
-		var clientParams = connectParamsFromServerEntry(serverEntry, prefs);
-		var client = Client(clientParams, autoReconnect: false, requestCaps: {});
-		_fetchFeaturesClient = client;
 		IrcAvailableCapRegistry availableCaps;
 		try {
-			await client.connect(register: false);
+			var client = await _connect();
 			availableCaps = await client.fetchAvailableCaps();
 		} on IrcException catch (err) {
 			if (err.msg.cmd == ERR_UNKNOWNCOMMAND) {
 				availableCaps = IrcAvailableCapRegistry();
 			} else {
+				_disconnect();
 				rethrow;
-			}
-		} finally {
-			client.dispose();
-			if (_fetchFeaturesClient == client) {
-				_fetchFeaturesClient = null;
 			}
 		}
 		return _ServerFeatures(
@@ -210,7 +237,7 @@ class _ConnectPageState extends State<ConnectPage> {
 
 	@override
 	void dispose() {
-		_fetchFeaturesClient?.disconnect();
+		_client?.dispose();
 		serverController.dispose();
 		nicknameController.dispose();
 		passwordController.dispose();
@@ -273,6 +300,7 @@ class _ConnectPageState extends State<ConnectPage> {
 						autofocus: true,
 						onEditingComplete: () => focusNode.nextFocus(),
 						onChanged: (value) {
+							_disconnect();
 							setState(() {
 								_serverFeatures = _ServerFeatures();
 								_pinnedCertSHA1 = null;
