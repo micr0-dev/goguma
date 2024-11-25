@@ -61,6 +61,21 @@ class ConnectParams {
 			pinnedCertSHA1: pinnedCertSHA1,
 		);
 	}
+
+	ConnectParams _mergeRegistration(ConnectParams regParams) {
+		return ConnectParams(
+			host: host,
+			port: port,
+			tls: tls,
+			nick: regParams.nick,
+			realname: regParams.realname,
+			pass: regParams.pass,
+			saslPlain: regParams.saslPlain,
+			bouncerNetId: regParams.bouncerNetId,
+			away: regParams.away,
+			pinnedCertSHA1: pinnedCertSHA1,
+		);
+	}
 }
 
 class BadCertException implements Exception {
@@ -255,8 +270,7 @@ class Client {
 
 		if (register) {
 			try {
-				await _register(params);
-				_params = params;
+				await this.register(params);
 			} on Exception {
 				_socket?.close().ignore();
 				rethrow;
@@ -467,7 +481,9 @@ class Client {
 		return endOfBatch.child;
 	}
 
-	Future<void> _register(ConnectParams params) {
+	Future<void> register([ ConnectParams? params ]) async {
+		params ??= _params;
+
 		_nick = params.nick;
 		_realname = params.nick;
 
@@ -502,10 +518,10 @@ class Client {
 		send(IrcMessage('CAP', ['END']));
 
 		var saslSuccess = false;
-		return _waitMessage((msg) {
+		await _waitMessage((msg) {
 			switch (msg.cmd) {
 			case RPL_WELCOME:
-				if (params.saslPlain != null && !saslSuccess) {
+				if (params!.saslPlain != null && !saslSuccess) {
 					throw Exception('Server doesn\'t support SASL authentication');
 				}
 				return true;
@@ -531,6 +547,8 @@ class Client {
 		}, onTimeout: () {
 			throw TimeoutException('Connection registration timed out');
 		});
+
+		_params = _params._mergeRegistration(params);
 	}
 
 	void _handleMessage(IrcMessage msg) {
