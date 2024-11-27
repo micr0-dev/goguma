@@ -222,35 +222,62 @@ class _BackgroundServicePermissionBanner extends StatelessWidget {
 		required this.child,
 	});
 
+	Widget _buildBackgroundSyncUnavailable(BuildContext context, Widget? child) {
+		var clientProvider = context.read<ClientProvider>();
+		return Column(children: [
+			MaterialBanner(
+				content: Text('This server doesn\'t support modern IRCv3 features. Goguma cannot maintain a persistent connection and will miss messages when running in the background.'),
+				actions: [
+					TextButton(
+						child: Text('DISMISS'),
+						onPressed: () {
+							clientProvider.backgroundSyncStatus.value = BackgroundSyncStatus();
+						},
+					),
+				],
+				forceActionsBelow: true,
+			),
+			Expanded(child: child!),
+		]);
+	}
+
+	Widget _buildNeedBackgroundServicePermissions(BuildContext context, Widget? child) {
+		var clientProvider = context.read<ClientProvider>();
+		return Column(children: [
+			MaterialBanner(
+				content: Text('This server doesn\'t support modern IRCv3 features. Goguma needs additional permissions to maintain a persistent network connection. This may increase battery usage.'),
+				actions: [
+					TextButton(
+						child: Text('DISMISS'),
+						onPressed: () {
+							clientProvider.backgroundSyncStatus.value = BackgroundSyncStatus();
+						},
+					),
+					TextButton(
+						child: Text('ALLOW'),
+						onPressed: () {
+							clientProvider.askBackgroundServicePermissions();
+						},
+					),
+				],
+			),
+			Expanded(child: child!),
+		]);
+	}
+
 	@override
 	Widget build(BuildContext context) {
 		var clientProvider = context.read<ClientProvider>();
-		return ValueListenableBuilder<bool>(
-			valueListenable: clientProvider.needBackgroundServicePermissions,
-			builder: (context, needPermissions, child) {
-				if (!needPermissions) {
-					return child!;
+		return ValueListenableBuilder<BackgroundSyncStatus>(
+			valueListenable: clientProvider.backgroundSyncStatus,
+			builder: (context, backgroundSyncStatus, child) {
+				if (backgroundSyncStatus.isUnavailable) {
+					return _buildBackgroundSyncUnavailable(context, child);
 				}
-				return Column(children: [
-					MaterialBanner(
-						content: Text('This server doesn\'t support modern IRCv3 features. Goguma needs additional permissions to maintain a persistent network connection. This may increase battery usage.'),
-						actions: [
-							TextButton(
-								child: Text('DISMISS'),
-								onPressed: () {
-									clientProvider.needBackgroundServicePermissions.value = false;
-								},
-							),
-							TextButton(
-								child: Text('ALLOW'),
-								onPressed: () {
-									clientProvider.askBackgroundServicePermissions();
-								},
-							),
-						],
-					),
-					Expanded(child: child!),
-				]);
+				if (backgroundSyncStatus.needServicePermissions) {
+					return _buildNeedBackgroundServicePermissions(context, child);
+				}
+				return child!;
 			},
 			child: child,
 		);

@@ -53,6 +53,16 @@ class ClientNotice {
 	const ClientNotice(this.msgs, this.target, this.client, this.network);
 }
 
+class BackgroundSyncStatus {
+	final bool isUnavailable;
+	final bool needServicePermissions;
+
+	const BackgroundSyncStatus({
+		this.isUnavailable = false,
+		this.needServicePermissions = false,
+	});
+}
+
 /// A data structure which keeps track of IRC clients.
 class ClientProvider {
 	final Map<NetworkModel, ClientController> _controllers = {};
@@ -69,7 +79,7 @@ class ClientProvider {
 	final bool _enableSync;
 	final PushController? _pushController;
 
-	final ValueNotifier<bool> needBackgroundServicePermissions = ValueNotifier(false);
+	final ValueNotifier<BackgroundSyncStatus> backgroundSyncStatus = ValueNotifier(BackgroundSyncStatus());
 
 	bool _workManagerSyncEnabled = false;
 	ClientAutoReconnectLock? _backgroundServiceAutoReconnectLock;
@@ -132,7 +142,7 @@ class ClientProvider {
 	}
 
 	void _setupSync() {
-		if (!Platform.isAndroid || !_enableSync) {
+		if (!_enableSync) {
 			return;
 		}
 
@@ -141,16 +151,26 @@ class ClientProvider {
 			return;
 		}
 
-		var useWorkManager = registeredClients.every((client) {
+		var hasChatHistory = registeredClients.every((client) {
 			return client.caps.enabled.contains('draft/chathistory');
 		});
-		var usePush = _pushController != null && registeredClients.every((client) {
+		var hasWebPush = registeredClients.every((client) {
 			return client.caps.enabled.contains('soju.im/webpush');
 		});
+
+		var useWorkManager = Platform.isAndroid && hasChatHistory;
+		var usePush = _pushController != null && hasWebPush;
 		_setupWorkManagerSync(useWorkManager, usePush);
 		_setupBackgroundServiceSync(!useWorkManager);
 
 		_askNotificationPermissions();
+
+		if (Platform.isIOS && !hasChatHistory) {
+			// Background service is unavailable on iOS
+			backgroundSyncStatus.value = BackgroundSyncStatus(
+				isUnavailable: true,
+			);
+		}
 	}
 
 	void _setupWorkManagerSync(bool enable, bool lowFreq) {
@@ -186,7 +206,7 @@ class ClientProvider {
 		}
 
 		if (!enable) {
-			needBackgroundServicePermissions.value = false;
+			backgroundSyncStatus.value = BackgroundSyncStatus();
 			_backgroundServiceAutoReconnectLock?.release();
 			_backgroundServiceAutoReconnectLock = null;
 			if (FlutterBackground.isBackgroundExecutionEnabled) {
@@ -203,7 +223,9 @@ class ClientProvider {
 		}
 
 		var hasPermissions = await FlutterBackground.hasPermissions;
-		needBackgroundServicePermissions.value = !hasPermissions;
+		backgroundSyncStatus.value = BackgroundSyncStatus(
+			needServicePermissions: !hasPermissions,
+		);
 		if (hasPermissions) {
 			askBackgroundServicePermissions();
 		}
@@ -218,7 +240,9 @@ class ClientProvider {
 			notificationIcon: AndroidResource(name: 'ic_stat_name'),
 			enableWifiLock: true,
 		));
-		needBackgroundServicePermissions.value = !success;
+		backgroundSyncStatus.value = BackgroundSyncStatus(
+			needServicePermissions: !success,
+		);
 		if (!success) {
 			log.print('Failed to obtain permissions for background service');
 			return;
