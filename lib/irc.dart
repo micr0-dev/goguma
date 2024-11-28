@@ -614,6 +614,7 @@ class IrcCapRegistry {
 
 	void clear() {
 		available.clear();
+		_enabled.clear();
 	}
 }
 
