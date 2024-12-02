@@ -127,7 +127,6 @@ var _nextClientId = 0;
 var _nextPingSerial = 0;
 
 class Client {
-	final IrcCapRegistry caps = IrcCapRegistry();
 	final IrcIsupportRegistry isupport;
 
 	final int _id;
@@ -150,6 +149,8 @@ class Client {
 	final Map<String, ClientBatch> _batches = {};
 	final Map<String, List<ClientMessage>> _pendingNames = {};
 	final Map<String, int> _pendingTextMsgs = {};
+	IrcCapRegistry _caps = IrcCapRegistry();
+	IrcAvailableCapRegistry _pendingAvailableCaps = IrcAvailableCapRegistry();
 	Future<void> _lastWhoFuture = Future.value(null);
 	Future<void> _lastListFuture = Future.value(null);
 	final IrcNameMap<void> _monitored = IrcNameMap(defaultCaseMapping);
@@ -162,6 +163,7 @@ class Client {
 	String? get pinnedCertSHA1 => _pinnedCertSHA1;
 	ClientState get state => _state;
 	bool get registered => _registered;
+	IrcCapRegistry get caps => _caps;
 	Stream<ClientMessage> get messages => _messagesController.stream;
 	Stream<ClientState> get states => _statesController.stream;
 	Stream<Exception> get connectErrors => _connectErrorsController.stream;
@@ -297,6 +299,7 @@ class Client {
 			caps.clear();
 			_batches.clear();
 			_pendingNames.clear();
+			_pendingAvailableCaps.clear();
 			_monitored.clear();
 
 			// Don't mutate our state or try to auto-reconnect if we're already
@@ -596,9 +599,19 @@ class Client {
 
 		switch (msg.cmd) {
 		case 'CAP':
-			caps.parse(msg);
+			var subcommand = msg.params[1].toUpperCase();
+			if (subcommand == 'LS') {
+				_pendingAvailableCaps.parse(msg.params[msg.params.length - 1]);
+				if (msg.params[2] == '*') {
+					break;
+				}
+				_caps = IrcCapRegistry(available: _pendingAvailableCaps, enabled: caps.enabled);
+				_pendingAvailableCaps = IrcAvailableCapRegistry();
+			} else {
+				caps.parse(msg);
+			}
 
-			if (msg.params[1].toUpperCase() != 'NEW') {
+			if (subcommand != 'NEW') {
 				break;
 			}
 

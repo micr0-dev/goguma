@@ -571,8 +571,12 @@ class IrcAvailableCapRegistry {
 }
 
 class IrcCapRegistry {
-	final IrcAvailableCapRegistry available = IrcAvailableCapRegistry();
-	final Set<String> _enabled = {};
+	final IrcAvailableCapRegistry available;
+	final Set<String> _enabled;
+
+	IrcCapRegistry({ IrcAvailableCapRegistry? available, Set<String>? enabled }) :
+		available = available ?? IrcAvailableCapRegistry(),
+		_enabled = enabled != null ? { ...enabled } : {};
 
 	UnmodifiableSetView<String> get enabled => UnmodifiableSetView(_enabled);
 
@@ -583,8 +587,7 @@ class IrcCapRegistry {
 		var params = msg.params.sublist(2);
 		switch (subcommand) {
 		case 'LS':
-			available.parse(params[params.length - 1]);
-			break;
+			break; // handled by caller
 		case 'NEW':
 			available.parse(params[0]);
 			break;
