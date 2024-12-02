@@ -614,11 +614,6 @@ class IrcCapRegistry {
 			throw FormatException('Unknown CAP subcommand: ' + subcommand);
 		}
 	}
-
-	void clear() {
-		available.clear();
-		_enabled.clear();
-	}
 }
 
 final defaultCaseMapping = _caseMappingByName('rfc1459')!;

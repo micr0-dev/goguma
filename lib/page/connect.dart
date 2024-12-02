@@ -165,7 +165,7 @@ class _ConnectPageState extends State<ConnectPage> {
 		await db.storeServer(serverEntry);
 		var networkEntry = await db.storeNetwork(NetworkEntry(server: serverEntry.id!));
 
-		client = Client(clientParams);
+		client = Client(clientParams, lastIsupport: client.isupport, lastAvailableCaps: client.caps.available);
 		var network = NetworkModel(serverEntry, networkEntry, client.nick, client.realname);
 		networkList.add(network);
 		clientProvider.add(client, network);

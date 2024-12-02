@@ -148,7 +148,7 @@ class Client {
 	final Map<String, ClientBatch> _batches = {};
 	final Map<String, List<ClientMessage>> _pendingNames = {};
 	final Map<String, int> _pendingTextMsgs = {};
-	IrcCapRegistry _caps = IrcCapRegistry();
+	IrcCapRegistry _caps;
 	IrcAvailableCapRegistry _pendingAvailableCaps = IrcAvailableCapRegistry();
 	IrcIsupportRegistry _isupport;
 	IrcIsupportRegistry _pendingIsupport = IrcIsupportRegistry();
@@ -174,8 +174,9 @@ class Client {
 
 	Client(ConnectParams params, {
 		bool autoReconnect = true,
-		IrcIsupportRegistry? isupport,
 		Set<String>? requestCaps,
+		IrcIsupportRegistry? lastIsupport,
+		IrcAvailableCapRegistry? lastAvailableCaps,
 	}) :
 		_id = _nextClientId++,
 		_params = params,
@@ -184,7 +185,8 @@ class Client {
 		_realname = params.realname,
 		_pinnedCertSHA1 = params.pinnedCertSHA1,
 		_autoReconnect = autoReconnect,
-		_isupport = isupport ?? IrcIsupportRegistry();
+		_isupport = lastIsupport ?? IrcIsupportRegistry(),
+		_caps = IrcCapRegistry(available: lastAvailableCaps);
 
 	Future<void> connect({ bool register = true, ConnectParams? params }) async {
 		if (_messagesController.isClosed) {
@@ -299,7 +301,7 @@ class Client {
 
 			_socket = null;
 			_registered = false;
-			caps.clear();
+			_caps = IrcCapRegistry(available: caps.available);
 			_batches.clear();
 			_pendingNames.clear();
 			_pendingAvailableCaps.clear();
@@ -507,7 +509,22 @@ class Client {
 		send(IrcMessage('NICK', [params.nick]));
 		send(IrcMessage('USER', [params.nick, '0', '*', params.realname]));
 		for (var cap in _requestCaps) {
-			send(IrcMessage('CAP', ['REQ', cap]));
+			bool req = caps.available.containsKey(cap);
+			switch (cap) {
+			case 'sasl':
+				req = req || params.saslPlain != null;
+				break;
+			case 'soju.im/bouncer-networks':
+				req = req || params.bouncerNetId != null;
+				break;
+			case 'draft/pre-away':
+				req = req || params.away != null;
+				break;
+			}
+
+			if (req) {
+				send(IrcMessage('CAP', ['REQ', cap]));
+			}
 		}
 		if (params.saslPlain != null) {
 			var creds = params.saslPlain!;
@@ -615,7 +632,7 @@ class Client {
 				caps.parse(msg);
 			}
 
-			if (subcommand != 'NEW') {
+			if (subcommand != 'NEW' && subcommand != 'LS') {
 				break;
 			}
 
