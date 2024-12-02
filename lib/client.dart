@@ -127,8 +127,6 @@ var _nextClientId = 0;
 var _nextPingSerial = 0;
 
 class Client {
-	final IrcIsupportRegistry isupport;
-
 	final int _id;
 	final Set<String> _requestCaps;
 	ConnectParams _params;
@@ -143,6 +141,7 @@ class Client {
 	final StreamController<ClientMessage> _messagesController = StreamController.broadcast(sync: true);
 	final StreamController<ClientState> _statesController = StreamController.broadcast(sync: true);
 	final StreamController<Exception> _connectErrorsController = StreamController.broadcast(sync: true);
+	final StreamController<IrcIsupportRegistry> _isupportStreamController = StreamController.broadcast(sync: true);
 	Timer? _reconnectTimer;
 	bool _autoReconnect;
 	DateTime? _lastConnectTime;
@@ -151,6 +150,8 @@ class Client {
 	final Map<String, int> _pendingTextMsgs = {};
 	IrcCapRegistry _caps = IrcCapRegistry();
 	IrcAvailableCapRegistry _pendingAvailableCaps = IrcAvailableCapRegistry();
+	IrcIsupportRegistry _isupport;
+	IrcIsupportRegistry _pendingIsupport = IrcIsupportRegistry();
 	Future<void> _lastWhoFuture = Future.value(null);
 	Future<void> _lastListFuture = Future.value(null);
 	final IrcNameMap<void> _monitored = IrcNameMap(defaultCaseMapping);
@@ -164,9 +165,11 @@ class Client {
 	ClientState get state => _state;
 	bool get registered => _registered;
 	IrcCapRegistry get caps => _caps;
+	IrcIsupportRegistry get isupport => _isupport;
 	Stream<ClientMessage> get messages => _messagesController.stream;
 	Stream<ClientState> get states => _statesController.stream;
 	Stream<Exception> get connectErrors => _connectErrorsController.stream;
+	Stream<IrcIsupportRegistry> get isupportStream => _isupportStreamController.stream;
 	bool get autoReconnect => _autoReconnect;
 
 	Client(ConnectParams params, {
@@ -181,7 +184,7 @@ class Client {
 		_realname = params.realname,
 		_pinnedCertSHA1 = params.pinnedCertSHA1,
 		_autoReconnect = autoReconnect,
-		isupport = isupport ?? IrcIsupportRegistry();
+		_isupport = isupport ?? IrcIsupportRegistry();
 
 	Future<void> connect({ bool register = true, ConnectParams? params }) async {
 		if (_messagesController.isClosed) {
@@ -300,6 +303,7 @@ class Client {
 			_batches.clear();
 			_pendingNames.clear();
 			_pendingAvailableCaps.clear();
+			_pendingIsupport.clear();
 			_monitored.clear();
 
 			// Don't mutate our state or try to auto-reconnect if we're already
@@ -627,11 +631,16 @@ class Client {
 			isupport.clear();
 			break;
 		case RPL_ISUPPORT:
-			// TODO: during connection registration, accumulate ISUPPORT into
-			// a pending registry, then atomically apply it on
-			// ENDOFMOTD/ERR_NOMOTD
-			isupport.parse(msg.params.sublist(1, msg.params.length - 1));
-			_monitored.setCaseMapping(isupport.caseMapping);
+			var tokens = msg.params.sublist(1, msg.params.length - 1);
+			if (_registered) {
+				isupport.parse(tokens);
+				_monitored.setCaseMapping(isupport.caseMapping);
+				if (!_isupportStreamController.isClosed) {
+					_isupportStreamController.add(isupport);
+				}
+			} else {
+				_pendingIsupport.parse(tokens);
+			}
 			break;
 		case RPL_ENDOFMOTD:
 		case ERR_NOMOTD:
@@ -640,6 +649,11 @@ class Client {
 			}
 			_log('Registration complete');
 			_registered = true;
+			_isupport = _pendingIsupport;
+			_pendingIsupport = IrcIsupportRegistry();
+			if (!_isupportStreamController.isClosed) {
+				_isupportStreamController.add(isupport);
+			}
 			if (params.away != null && !caps.enabled.contains('draft/pre-away')) {
 				setAway(params.away);
 			}
@@ -705,6 +719,7 @@ class Client {
 		_messagesController.close();
 		_statesController.close();
 		_connectErrorsController.close();
+		_isupportStreamController.close();
 	}
 
 	void send(IrcMessage msg) {

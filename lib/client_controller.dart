@@ -412,6 +412,19 @@ class ClientController {
 		client.connectErrors.listen((err) {
 			network.connectError = err.toString();
 		});
+
+		client.isupportStream.listen((isupport) {
+			network.upstreamName = isupport.network;
+			if (isupport.bouncerNetId != null) {
+				network.bouncerNetwork = _bouncerNetworkList.networks[isupport.bouncerNetId!];
+			} else {
+				network.bouncerNetwork = null;
+			}
+			setCaseMapping(_bufferList, network, isupport.caseMapping);
+
+			network.networkEntry.isupport = isupport;
+			_db.storeNetwork(network.networkEntry);
+		});
 	}
 
 	String? _getLastDeliveredTime() {
@@ -435,18 +448,6 @@ class ClientController {
 		switch (msg.cmd) {
 		case RPL_WELCOME:
 			network.nickname = client.nick;
-			break;
-		case RPL_ISUPPORT:
-			network.upstreamName = client.isupport.network;
-			if (client.isupport.bouncerNetId != null) {
-				network.bouncerNetwork = _bouncerNetworkList.networks[client.isupport.bouncerNetId!];
-			} else {
-				network.bouncerNetwork = null;
-			}
-			setCaseMapping(_bufferList, network, client.isupport.caseMapping);
-
-			network.networkEntry.isupport = client.isupport;
-			_db.storeNetwork(network.networkEntry);
 			break;
 		case 'CAP':
 			switch (msg.params[1].toUpperCase()) {
