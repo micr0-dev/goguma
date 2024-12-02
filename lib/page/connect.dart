@@ -100,15 +100,11 @@ class _ConnectPageState extends State<ConnectPage> {
 		// sent immediately after RPL_WELCOME)
 		var clientParams = connectParamsFromServerEntry(serverEntry, prefs);
 		var client = Client(clientParams, autoReconnect: false, requestCaps: {'sasl'});
-		NetworkEntry networkEntry;
 		try {
 			await client.connect();
-			client.dispose();
-			await db.storeServer(serverEntry);
-			networkEntry = await db.storeNetwork(NetworkEntry(server: serverEntry.id!));
 		} on Exception catch (err) {
-			client.dispose();
 			setState(() {
+				_loading = false;
 				_error = err;
 				if (err is IrcException) {
 					if (err.msg.cmd == 'FAIL' && err.msg.params[1] == 'ACCOUNT_REQUIRED') {
@@ -118,10 +114,11 @@ class _ConnectPageState extends State<ConnectPage> {
 			});
 			return;
 		} finally {
-			setState(() {
-				_loading = false;
-			});
+			client.dispose();
 		}
+
+		await db.storeServer(serverEntry);
+		var networkEntry = await db.storeNetwork(NetworkEntry(server: serverEntry.id!));
 
 		client = Client(clientParams);
 		var network = NetworkModel(serverEntry, networkEntry, client.nick, client.realname);
