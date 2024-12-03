@@ -662,7 +662,7 @@ class ClientController {
 		case 'TOPIC':
 			var channel = msg.params[0];
 			String? topic;
-			if (msg.params.length > 1) {
+			if (msg.params[1] != '') {
 				topic = msg.params[1];
 			}
 			var buffer = _bufferList.get(channel, network);
