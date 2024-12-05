@@ -129,14 +129,14 @@ class _ConnectPageState extends State<ConnectPage> {
 		var networkList = context.read<NetworkListModel>();
 		var clientProvider = context.read<ClientProvider>();
 
+		prefs.nickname = nicknameController.text;
+
 		var serverEntry = _generateServerEntry();
 		var clientParams = connectParamsFromServerEntry(serverEntry, prefs);
 
 		setState(() {
 			_loading = true;
 		});
-
-		prefs.nickname = nicknameController.text;
 
 		// TODO: only connect once (but be careful not to loose messages
 		// sent immediately after RPL_WELCOME, and request all caps)
