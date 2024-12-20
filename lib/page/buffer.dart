@@ -808,7 +808,7 @@ class _MessageItem extends StatelessWidget {
 		var showTime = !nextMsgSameSender || nextMsg!.entry.dateTime.difference(entry.dateTime) > Duration(minutes: 2);
 
 		var unreadMarkerColor = Theme.of(context).colorScheme.secondary;
-		var eventColor = DefaultTextStyle.of(context).style.color!.withOpacity(0.5);
+		var eventColor = DefaultTextStyle.of(context).style.color!.withValues(alpha: 0.5);
 
 		var boxColor = Colors.primaries[sender.hashCode % Colors.primaries.length].shade500;
 		var boxAlignment = Alignment.centerLeft;
@@ -845,12 +845,12 @@ class _MessageItem extends StatelessWidget {
 		if (hasChannelContext) {
 			senderTextSpan = TextSpan(children: [
 				senderTextSpan,
-				TextSpan(text: ' (only visible to you)', style: TextStyle(color: textColor.withOpacity(0.5))),
+				TextSpan(text: ' (only visible to you)', style: TextStyle(color: textColor.withValues(alpha: 0.5))),
 			]);
 		} else if (statusMsgPrefix != '') {
 			senderTextSpan = TextSpan(children: [
 				senderTextSpan,
-				TextSpan(text: ' (only visible to $statusMsgPrefix)', style: TextStyle(color: textColor.withOpacity(0.5))),
+				TextSpan(text: ' (only visible to $statusMsgPrefix)', style: TextStyle(color: textColor.withValues(alpha: 0.5))),
 			]);
 		}
 
@@ -897,7 +897,7 @@ class _MessageItem extends StatelessWidget {
 						avatar: Icon(Icons.reply, size: 16, color: textColor),
 						label: Text(replyNickname),
 						labelPadding: EdgeInsets.only(right: 4),
-						backgroundColor: Color.alphaBlend(textColor.withOpacity(0.15), boxColor),
+						backgroundColor: Color.alphaBlend(textColor.withValues(alpha: 0.15), boxColor),
 						labelStyle: TextStyle(color: textColor),
 						visualDensity: VisualDensity(vertical: -4),
 						onPressed: () {
@@ -942,7 +942,7 @@ class _MessageItem extends StatelessWidget {
 			var time = '   $hh:$mm';
 			var timeScreenReader = 'Sent at $hh $mm';
 			var timeStyle = DefaultTextStyle.of(context).style.apply(
-				color: textColor.withOpacity(0.5),
+				color: textColor.withValues(alpha: 0.5),
 				fontSizeFactor: 0.8,
 			);
 
