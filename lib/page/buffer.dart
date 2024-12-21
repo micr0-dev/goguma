@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:async/async.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
@@ -85,22 +86,28 @@ void _join(Client client, BufferModel buffer) async {
 	}
 }
 
-class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, SingleTickerProviderStateMixin {
+class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, TickerProviderStateMixin {
 	final _itemScrollController = ItemScrollController();
 	final _itemPositionsListener = ItemPositionsListener.create();
+	final _userScrollListener = ScrollOffsetListener.create(recordProgrammaticScrolls: false);
 	final _listKey = GlobalKey();
 	final GlobalKey<ComposerState> _composerKey = GlobalKey();
 	late final AnimationController _blinkMsgController;
+	late final AnimationController _dateIndicatorController;
+	late final Animation<Offset> _dateIndicatorAnimation;
+	late final StreamSubscription<double> _userScrollSubscription;
 
 	bool _activated = true;
 	bool _chatHistoryLoading = false;
 	int _initialScrollIndex = 0;
 	bool _isAtTop = false;
 	bool _isAtBottom = false;
+	DateTime? _dateIndicator;
 
 	bool _initialChatHistoryLoaded = false;
 	bool _showJumpToBottom = false;
 	int? _blinkMsgIndex;
+	RestartableTimer? _dateIndicatorTimer;
 
 	@override
 	void initState() {
@@ -109,12 +116,22 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Si
 		WidgetsBinding.instance.addObserver(this);
 
 		_itemPositionsListener.itemPositions.addListener(_handleScroll);
+		_userScrollSubscription = _userScrollListener.changes.listen(_handleUserScroll);
 
 		_blinkMsgController = AnimationController(
 			vsync: this,
 			duration: const Duration(milliseconds: 200),
 			value: 1,
 		);
+
+		_dateIndicatorController = AnimationController(
+			vsync: this,
+			duration: const Duration(milliseconds: 200),
+		);
+		_dateIndicatorAnimation = _dateIndicatorController.drive(Tween<Offset>(
+			begin: const Offset(0, -5),
+			end: Offset.zero,
+		));
 
 		var buffer = context.read<BufferModel>();
 		if (buffer.messages.length >= 1000) {
@@ -157,18 +174,39 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Si
 			_updateBufferFocus();
 		}
 
-		var showJumpToBottom = positions.any((pos) => pos.index >= 20) && !isAtBottom;
-		if (_showJumpToBottom != showJumpToBottom) {
-			setState(() {
-				_showJumpToBottom = showJumpToBottom;
-			});
-		}
-
 		// Workaround for the last messages becoming hidden when the virtual
 		// keyboard is opened: reset the alignment to 0.
 		if (_initialScrollIndex != 0 && positions.any((pos) => pos.index == 0 && pos.itemLeadingEdge == 0)) {
 			_itemScrollController.jumpTo(index: 0, alignment: 0);
 			_initialScrollIndex = 0;
+		}
+	}
+
+	void _handleUserScroll(double value) {
+		var positions = _itemPositionsListener.itemPositions.value;
+		if (positions.isEmpty) {
+			return;
+		}
+
+		var buffer = context.read<BufferModel>();
+		var isAtBottom = positions.any((pos) => pos.index < 2);
+		var showJumpToBottom = positions.any((pos) => pos.index >= 20) && !isAtBottom;
+		var firstDateTime = buffer.messages[buffer.messages.length - positions.last.index - 1].entry.dateTime;
+		setState(() {
+			_showJumpToBottom = showJumpToBottom;
+			_dateIndicator = firstDateTime;
+		});
+		if (_dateIndicatorController.value == 0) {
+			_dateIndicatorController.animateTo(1.0);
+		}
+
+		if (_dateIndicatorTimer == null) {
+			_dateIndicatorTimer = RestartableTimer(Duration(milliseconds: 500), () {
+				_dateIndicatorTimer = null;
+				_dateIndicatorController.animateTo(0.0);
+			});
+		} else {
+			_dateIndicatorTimer?.reset();
 		}
 	}
 
@@ -276,7 +314,10 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Si
 	@override
 	void dispose() {
 		_itemPositionsListener.itemPositions.removeListener(_handleScroll);
+		_userScrollSubscription.cancel();
 		_blinkMsgController.dispose();
+		_dateIndicatorController.dispose();
+		_dateIndicatorTimer?.cancel();
 		WidgetsBinding.instance.removeObserver(this);
 		super.dispose();
 	}
@@ -462,6 +503,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Si
 				reverse: true,
 				itemScrollController: _itemScrollController,
 				itemPositionsListener: _itemPositionsListener,
+				scrollOffsetListener: _userScrollListener,
 				itemCount: messages.length,
 				initialScrollIndex: _initialScrollIndex,
 				initialAlignment: _initialScrollIndex > 0 ? 1 : 0,
@@ -526,6 +568,25 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Si
 				),
 			);
 		}
+
+		Widget dateIndicator = Container(
+			padding: EdgeInsets.only(top: 10),
+			alignment: Alignment.topCenter,
+			child: SlideTransition(
+				position: _dateIndicatorAnimation,
+				child: Container(
+					padding: const EdgeInsets.all(7.0),
+					decoration: BoxDecoration(
+						color: Theme.of(context).colorScheme.secondaryContainer,
+						borderRadius: BorderRadius.circular(5),
+					),
+					child: Text(
+						_dateIndicator != null ? _formatDate(_dateIndicator!.toLocal()) : '',
+						style: TextStyle(color: Theme.of(context).colorScheme.onSecondaryContainer),
+					),
+				),
+			),
+		);
 
 		return Scaffold(
 			appBar: AppBar(
@@ -598,6 +659,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Si
 				Expanded(child: Stack(children: [
 					msgList,
 					if (jumpToBottom != null) jumpToBottom,
+					dateIndicator,
 				])),
 			])),
 			bottomNavigationBar: Visibility(
