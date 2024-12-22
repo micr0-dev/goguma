@@ -174,6 +174,13 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 			_updateBufferFocus();
 		}
 
+		var showJumpToBottom = positions.any((pos) => pos.index >= 20) && !isAtBottom;
+		if (_showJumpToBottom != showJumpToBottom) {
+			setState(() {
+				_showJumpToBottom = showJumpToBottom;
+			});
+		}
+
 		// Workaround for the last messages becoming hidden when the virtual
 		// keyboard is opened: reset the alignment to 0.
 		if (_initialScrollIndex != 0 && positions.any((pos) => pos.index == 0 && pos.itemLeadingEdge == 0)) {
@@ -189,11 +196,8 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 		}
 
 		var buffer = context.read<BufferModel>();
-		var isAtBottom = positions.any((pos) => pos.index < 2);
-		var showJumpToBottom = positions.any((pos) => pos.index >= 20) && !isAtBottom;
 		var firstDateTime = buffer.messages[buffer.messages.length - positions.last.index - 1].entry.dateTime;
 		setState(() {
-			_showJumpToBottom = showJumpToBottom;
 			_dateIndicator = firstDateTime;
 		});
 		if (_dateIndicatorController.value == 0) {
