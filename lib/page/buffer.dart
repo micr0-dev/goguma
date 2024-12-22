@@ -197,9 +197,11 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 
 		var buffer = context.read<BufferModel>();
 		var firstDateTime = buffer.messages[buffer.messages.length - positions.last.index - 1].entry.dateTime;
-		setState(() {
-			_dateIndicator = firstDateTime;
-		});
+		if (firstDateTime != _dateIndicator) {
+			setState(() {
+				_dateIndicator = firstDateTime;
+			});
+		}
 		if (_dateIndicatorController.value == 0) {
 			_dateIndicatorController.animateTo(1.0);
 		}
