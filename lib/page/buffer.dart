@@ -174,6 +174,13 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 			_updateBufferFocus();
 		}
 
+		var firstDateTime = buffer.messages[buffer.messages.length - positions.last.index - 1].entry.dateTime;
+		if (firstDateTime != _dateIndicator) {
+			setState(() {
+				_dateIndicator = firstDateTime;
+			});
+		}
+
 		var showJumpToBottom = positions.any((pos) => pos.index >= 20) && !isAtBottom;
 		if (_showJumpToBottom != showJumpToBottom) {
 			setState(() {
@@ -190,18 +197,6 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 	}
 
 	void _handleUserScroll(double value) {
-		var positions = _itemPositionsListener.itemPositions.value;
-		if (positions.isEmpty) {
-			return;
-		}
-
-		var buffer = context.read<BufferModel>();
-		var firstDateTime = buffer.messages[buffer.messages.length - positions.last.index - 1].entry.dateTime;
-		if (firstDateTime != _dateIndicator) {
-			setState(() {
-				_dateIndicator = firstDateTime;
-			});
-		}
 		if (_dateIndicatorController.value == 0) {
 			_dateIndicatorController.animateTo(1.0);
 		}
