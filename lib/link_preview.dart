@@ -17,6 +17,7 @@ const maxHtmlSize = 2 * 1024 * 1024;
 const minPeekHtmlSize = 50 * 1024;
 const maxPeekHtmlSize = 500 * 1024;
 const minImageDimensions = 250;
+const minImageSize = 20 * 1024;
 
 class LinkPreviewer {
 	final HttpClient _client = HttpClient();
@@ -116,16 +117,32 @@ class LinkPreviewer {
 			throw Exception('Failed to parse HTML: $err');
 		}
 
+		// TODO: add support for oEmbed, see https://oembed.com/
+
 		// OpenGraph, see https://ogp.me/
 		var ogImage = _findOpenGraph(doc, 'og:image');
-		var ogImageWidth = _findOpenGraphInt(doc, 'og:image:width');
-		var ogImageHeight = _findOpenGraphInt(doc, 'og:image:height');
-		var imageDimValid = (ogImageWidth ?? 0) >= minImageDimensions && (ogImageHeight ?? 0) >= minImageDimensions;
-		if (ogImage != null && _validateUrlStr(ogImage) && imageDimValid) {
-			entry.imageUrl = ogImage;
+		if (ogImage == null || !_validateUrlStr(ogImage)) {
+			return entry;
 		}
 
-		// TODO: add support for oEmbed, see https://oembed.com/
+		var ogImageWidth = _findOpenGraphInt(doc, 'og:image:width');
+		var ogImageHeight = _findOpenGraphInt(doc, 'og:image:height');
+		if (ogImageWidth != null && ogImageHeight != null) {
+			if (ogImageWidth >= minImageDimensions && ogImageHeight >= minImageDimensions) {
+				entry.imageUrl = ogImage;
+			}
+			return entry;
+		}
+
+		// No embedded image dimensions; fetch to see size. Larger than 20kB means larger than 256x256.
+		var imageReq = await _client.headUrl(Uri.parse(ogImage));
+		var imageResp = await imageReq.close();
+		if (imageResp.statusCode ~/ 100 != 2) {
+			return entry;
+		}
+		if (imageResp.headers.contentLength > minImageSize) {
+			entry.imageUrl = ogImage;
+		}
 		return entry;
 	}
 
