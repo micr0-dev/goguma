@@ -149,7 +149,6 @@ class Client {
 	final Map<String, List<ClientMessage>> _pendingNames = {};
 	final Map<String, int> _pendingTextMsgs = {};
 	IrcCapRegistry _caps;
-	IrcAvailableCapRegistry _pendingAvailableCaps = IrcAvailableCapRegistry();
 	IrcIsupportRegistry _isupport;
 	IrcIsupportRegistry _pendingIsupport = IrcIsupportRegistry();
 	Future<void> _lastWhoFuture = Future.value(null);
@@ -304,7 +303,6 @@ class Client {
 			_caps = IrcCapRegistry(available: caps.available);
 			_batches.clear();
 			_pendingNames.clear();
-			_pendingAvailableCaps.clear();
 			_pendingIsupport.clear();
 			_monitored.clear();
 
@@ -502,7 +500,15 @@ class Client {
 		// messages required to register the connection. We blindly request all
 		// caps we support to avoid waiting for the CAP LS reply.
 
-		send(IrcMessage('CAP', ['LS', '302']));
+		var capLsFuture = () async {
+			IrcAvailableCapRegistry available;
+			try {
+				available = await fetchAvailableCaps();
+			} on Exception {
+				return;
+			}
+			_caps = IrcCapRegistry(available: available, enabled: caps.enabled);
+		}();
 		if (params.pass != null) {
 			send(IrcMessage('PASS', [params.pass!]));
 		}
@@ -564,6 +570,7 @@ class Client {
 		});
 
 		await Future.wait([
+			capLsFuture,
 			if (authFuture != null) authFuture,
 			welcomeFuture,
 		], eagerError: true);
@@ -617,16 +624,8 @@ class Client {
 		switch (msg.cmd) {
 		case 'CAP':
 			var subcommand = msg.params[1].toUpperCase();
-			if (subcommand == 'LS') {
-				_pendingAvailableCaps.parse(msg.params[msg.params.length - 1]);
-				if (msg.params[2] == '*') {
-					break;
-				}
-				_caps = IrcCapRegistry(available: _pendingAvailableCaps, enabled: caps.enabled);
-				_pendingAvailableCaps = IrcAvailableCapRegistry();
-			} else {
-				caps.parse(msg);
-			}
+
+			caps.parse(msg);
 
 			if (subcommand != 'NEW' && subcommand != 'LS') {
 				break;
