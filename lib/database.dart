@@ -236,6 +236,57 @@ class MessageEntry {
 	}
 }
 
+class ReactionEntry {
+	int? id;
+	final String time;
+	final String replyNetworkMsgid;
+	final int buffer;
+	final String raw;
+
+	IrcMessage? _msg;
+	DateTime? _dateTime;
+	String? _text;
+
+	ReactionEntry(IrcMessage msg, this.buffer) :
+		time = msg.tags['time'] ?? formatIrcTime(DateTime.now()),
+		replyNetworkMsgid = msg.tags['+draft/reply']!,
+		raw = msg.toString(),
+		_text = msg.tags['+draft/react']!,
+		_msg = msg;
+
+	Map<String, Object?> toMap() {
+		return <String, Object?>{
+			'id': id,
+			'time': time,
+			'reply_network_msgid': replyNetworkMsgid,
+			'buffer': buffer,
+			'raw': raw,
+		};
+	}
+
+	ReactionEntry.fromMap(Map<String, dynamic> m) :
+		id = m['id'] as int,
+		time = m['time'] as String,
+		replyNetworkMsgid = m['reply_network_msgid'] as String,
+		buffer = m['buffer'] as int,
+		raw = m['raw'] as String;
+
+	IrcMessage get msg {
+		_msg ??= IrcMessage.parse(raw);
+		return _msg!;
+	}
+
+	String get text {
+		_text ??= msg.tags['+draft/react']!;
+		return _text!;
+	}
+
+	DateTime get dateTime {
+		_dateTime ??= DateTime.parse(time);
+		return _dateTime!;
+	}
+}
+
 class WebPushSubscriptionEntry {
 	int? id;
 	final int network;
@@ -393,6 +444,17 @@ const _schema = [
 	''',
 	'CREATE INDEX index_message_network_msgid on Message(network_msgid)',
 	'''
+		CREATE TABLE Reaction (
+			id INTEGER PRIMARY KEY,
+			buffer INTEGER NOT NULL,
+			time TEXT NOT NULL,
+			raw TEXT NOT NULL,
+			reply_network_msgid TEXT NOT NULL,
+			FOREIGN KEY (buffer) REFERENCES Buffer(id) ON DELETE CASCADE
+		)
+	''',
+	'CREATE INDEX index_reaction_reply_network_msgid on Reaction(reply_network_msgid)',
+	'''
 		CREATE TABLE WebPushSubscription (
 			id INTEGER PRIMARY KEY,
 			network INTEGER NOT NULL,
@@ -465,6 +527,17 @@ const _migrations = [
 	'ALTER TABLE LinkPreview ADD COLUMN image_url TEXT',
 	'ALTER TABLE Network ADD COLUMN last_delivered_time TEXT',
 	'ALTER TABLE Server ADD COLUMN pinned_cert_sha1 TEXT',
+	'''
+		CREATE TABLE Reaction (
+			id INTEGER PRIMARY KEY,
+			buffer INTEGER NOT NULL,
+			time TEXT NOT NULL,
+			raw TEXT NOT NULL,
+			reply_network_msgid TEXT NOT NULL,
+			FOREIGN KEY (buffer) REFERENCES Buffer(id) ON DELETE CASCADE
+		)
+	''',
+	'CREATE INDEX index_reaction_reply_network_msgid on Reaction(reply_network_msgid)',
 ];
 
 class DB {
@@ -719,6 +792,45 @@ class DB {
 					entry.id = id;
 				} else {
 					await _updateById('Message', entry.toMap(), executor: txn);
+				}
+			}));
+		});
+	}
+
+	Future<Map<String, List<ReactionEntry>>> fetchReactionSetBetweenMessages(int buffer, MessageEntry initialMessage, MessageEntry finalMessage) async {
+		var entries = await _db.rawQuery('''
+			SELECT *
+			FROM Reaction
+			WHERE buffer = ? AND reply_network_msgid IN (
+				SELECT network_msgid
+				FROM Message
+				WHERE buffer = ? AND time BETWEEN (
+					SELECT time FROM Message WHERE id = ?
+				) AND (
+					SELECT time FROM Message WHERE id = ?
+				)
+			)
+		''', <Object>[buffer, buffer, initialMessage.id!, finalMessage.id!]);
+		Map<String, List<ReactionEntry>> reactions = {};
+		for (var m in entries) {
+			var entry = ReactionEntry.fromMap(m);
+			reactions.update(
+				entry.replyNetworkMsgid,
+				(l) => l..add(entry),
+				ifAbsent: () => [entry],
+			);
+		}
+		return reactions;
+	}
+
+	Future<void> storeReactions(List<ReactionEntry> entries) async {
+		await _db.transaction((txn) async {
+			await Future.wait(entries.map((entry) async {
+				if (entry.id == null) {
+					var id = await txn.insert('Reaction', entry.toMap());
+					entry.id = id;
+				} else {
+					await _updateById('Reaction', entry.toMap(), executor: txn);
 				}
 			}));
 		});
