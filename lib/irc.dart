@@ -825,6 +825,21 @@ class IrcIsupportRegistry {
 		}
 		return l;
 	}
+
+	bool isClientTagAllowed(String name) {
+		var clientTagDeny = _raw['CLIENTTAGDENY'] ?? '';
+		var defaultAllowed = true;
+		for (var entry in clientTagDeny.split(',')) {
+			if (entry == name) {
+				return false;
+			} else if (entry == '-' + name) {
+				return true;
+			} else if (entry == '*') {
+				defaultAllowed = false;
+			}
+		}
+		return defaultAllowed;
+	}
 }
 
 class IrcIsupportMembership {
