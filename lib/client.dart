@@ -500,20 +500,13 @@ class Client {
 		// messages required to register the connection. We blindly request all
 		// caps we support to avoid waiting for the CAP LS reply.
 
-		var capLsFuture = () async {
-			IrcAvailableCapRegistry available;
-			try {
-				available = await fetchAvailableCaps();
-			} on Exception {
-				return;
-			}
-			_caps = IrcCapRegistry(available: available, enabled: caps.enabled);
-		}();
+		var capLsFuture = fetchAvailableCaps();
 		if (params.pass != null) {
 			send(IrcMessage('PASS', [params.pass!]));
 		}
 		send(IrcMessage('NICK', [params.nick]));
 		send(IrcMessage('USER', [params.nick, '0', '*', params.realname]));
+		Map<String, Future<bool>> capReqFutures = {};
 		for (var cap in _requestCaps) {
 			bool req = caps.available.containsKey(cap);
 			switch (cap) {
@@ -529,7 +522,7 @@ class Client {
 			}
 
 			if (req) {
-				send(IrcMessage('CAP', ['REQ', cap]));
+				capReqFutures[cap] = _requestCap(cap);
 			}
 		}
 		Future<void>? authFuture;
@@ -569,8 +562,30 @@ class Client {
 			throw TimeoutException('Connection registration timed out');
 		});
 
+		var capsFuture = () async {
+			IrcAvailableCapRegistry available;
+			try {
+				available = await capLsFuture;
+			} on Exception {
+				return;
+			}
+			_caps = IrcCapRegistry(available: available, enabled: caps.enabled);
+
+			try {
+				await Future.wait(capReqFutures.values, eagerError: true);
+			} on Exception {
+				// ignore
+			}
+
+			for (var cap in _requestCaps) {
+				if (caps.available.containsKey(cap) && !capReqFutures.containsKey(cap)) {
+					_requestCap(cap).ignore();
+				}
+			}
+		}();
+
 		await Future.wait([
-			capLsFuture,
+			capsFuture,
 			if (authFuture != null) authFuture,
 			welcomeFuture,
 		], eagerError: true);
@@ -627,13 +642,13 @@ class Client {
 
 			caps.parse(msg);
 
-			if (subcommand != 'NEW' && subcommand != 'LS') {
+			if (subcommand != 'NEW') {
 				break;
 			}
 
 			for (var cap in _requestCaps) {
 				if (caps.available.containsKey(cap) && !caps.enabled.contains(cap)) {
-					send(IrcMessage('CAP', ['REQ', cap]));
+					_requestCap(cap).ignore();
 				}
 			}
 			break;
@@ -802,6 +817,26 @@ class Client {
 			return reply.params[2] != '*';
 		});
 		return caps;
+	}
+
+	Future<bool> _requestCap(String cap) async {
+		var cmd = IrcMessage('CAP', ['REQ', cap]);
+		var ok = false;
+		await _roundtripMessage(cmd, (reply) {
+			if (reply.cmd != 'CAP' || reply.params[2] != cap) {
+				return false;
+			}
+			switch (reply.params[1].toUpperCase()) {
+			case 'ACK':
+				ok = true;
+				return true;
+			case 'NAK':
+				return true;
+			default:
+				return false;
+			}
+		});
+		return ok;
 	}
 
 	Future<List<ChatHistoryTarget>> fetchChatHistoryTargets(String t1, String t2) async {
