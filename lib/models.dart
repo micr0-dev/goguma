@@ -398,6 +398,7 @@ class BufferModel extends ChangeNotifier {
 	String? _lastDeliveredTime;
 	bool _messageHistoryLoaded = false;
 	List<MessageModel> _messages = [];
+	final Map<String, MessageModel> _messagesByNetworkMsgid = {};
 	final Map<String, Timer> _typing = {};
 
 	// Kept in sync by BufferPageState
@@ -497,18 +498,52 @@ class BufferModel extends ChangeNotifier {
 		notifyListeners();
 	}
 
-	void addMessages(Iterable<MessageModel> msgs, { bool append = false }) {
+	void _populateMessagesById(List<MessageModel> msgs) {
+		for (var msg in msgs) {
+			if (msg.entry.networkMsgid != null) {
+				_messagesByNetworkMsgid[msg.entry.networkMsgid!] = msg;
+			}
+		}
+	}
+
+	void _appendMessages(List<MessageModel> msgs) {
+		_messages.addAll(msgs);
+		_populateMessagesById(msgs);
+	}
+
+	void _prependMessages(List<MessageModel> msgs) {
+		assert(msgs.last.entry.time.compareTo(_messages.first.entry.time) <= 0);
+		_messages = [...msgs, ..._messages];
+		_populateMessagesById(msgs);
+	}
+
+	void addMessages(List<MessageModel> msgs, { bool append = false }) {
 		assert(messageHistoryLoaded);
 		if (msgs.isEmpty) {
 			return;
 		}
+
 		if (append) {
-			_messages.addAll(msgs);
+			_appendMessages(msgs);
 		} else {
 			// TODO: optimize this case
-			_messages.addAll(msgs);
+			_appendMessages(msgs);
 			_messages.sort(_compareMessageModels);
 		}
+
+		notifyListeners();
+	}
+
+	void addReactions(List<ReactionEntry> reacts) {
+		assert(messageHistoryLoaded);
+		if (reacts.isEmpty) {
+			return;
+		}
+
+		for (var reaction in reacts) {
+			_messagesByNetworkMsgid[reaction.replyNetworkMsgid]?._addReaction(reaction);
+		}
+
 		notifyListeners();
 	}
 
@@ -517,11 +552,10 @@ class BufferModel extends ChangeNotifier {
 		// must always come before the existing messages
 		if (!_messageHistoryLoaded) {
 			assert(_messages.isEmpty);
-			_messages = l;
+			_appendMessages(l);
 			_messageHistoryLoaded = true;
 		} else if (!l.isEmpty) {
-			assert(l.last.entry.time.compareTo(_messages.first.entry.time) <= 0);
-			_messages = [...l, ..._messages];
+			_prependMessages(l);
 		}
 		notifyListeners();
 	}
@@ -566,12 +600,25 @@ class MessageModel {
 	final MessageEntry entry;
 	final MessageEntry? replyTo;
 
-	MessageModel({ required this.entry, this.replyTo }) {
+	final List<ReactionEntry> _reactions;
+
+	MessageModel({
+		required this.entry,
+		this.replyTo,
+		Iterable<ReactionEntry>? reactions,
+	}) :
+		// Our reaction list needs to be mutable. This is why we spread
+		// instead of taking a list and storing it.
+		_reactions = [...?reactions],
 		assert(entry.id != null);
+
+	void _addReaction(ReactionEntry reaction) {
+		_reactions.add(reaction);
 	}
 
 	int get id => entry.id!;
 	IrcMessage get msg => entry.msg;
+	UnmodifiableListView<ReactionEntry> get reactions => UnmodifiableListView(_reactions);
 }
 
 class MemberListModel extends ChangeNotifier {

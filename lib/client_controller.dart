@@ -714,7 +714,6 @@ class ClientController {
 				if (typing != null && !client.isMyNick(msg.source.name)) {
 					_bufferList.get(target, network)?.setTyping(msg.source.name, typing == 'active');
 				}
-				break;
 			}
 			return _handleChatMessages(target, [msg]);
 		case 'INVITE':
@@ -801,6 +800,8 @@ class ClientController {
 				if (msg.cmd == 'NOTICE') {
 					notices.add(msg);
 					continue;
+				} else if (msg.cmd != 'PRIVMSG') {
+					continue;
 				}
 
 				// Disregard non-/me CTCP messages
@@ -843,16 +844,39 @@ class ClientController {
 			return;
 		}
 
-		var entries = messages.map((msg) => MessageEntry(msg, buf!.id)).toList();
-		await _db.storeMessages(entries);
-		if (buf.messageHistoryLoaded) {
-			var models = await buildMessageModelList(_db, entries);
-			buf.addMessages(models, append: !isHistory);
+		List<MessageEntry> privmsgs = [];
+		List<ReactionEntry> reactions = [];
+		for (var msg in messages) {
+			var reply = msg.tags['+draft/reply'];
+			var react = msg.tags['+draft/react'];
+			if (reply != null && react != null) {
+				reactions.add(ReactionEntry(msg, buf.id));
+			} else if (msg.cmd == 'NOTICE' || msg.cmd == 'PRIVMSG') {
+				privmsgs.add(MessageEntry(msg, buf.id));
+			}
 		}
 
-		String t = entries.first.time;
+		if (reactions.isNotEmpty) {
+			await _db.storeReactions(reactions);
+		}
+		if (privmsgs.isNotEmpty) {
+			await _db.storeMessages(privmsgs);
+		}
+
+		if (buf.messageHistoryLoaded) {
+			var models = await buildMessageModelList(_db, privmsgs);
+			buf.addMessages(models, append: !isHistory);
+			buf.addReactions(reactions);
+		}
+
+		// Only privmsgs affects unread count / lastReadTime
+		if (privmsgs.isEmpty) {
+			return;
+		}
+
+		String t = privmsgs.first.time;
 		List<MessageEntry> unread = [];
-		for (var entry in entries) {
+		for (var entry in privmsgs) {
 			if (entry.time.compareTo(t) > 0) {
 				t = entry.time;
 			}
@@ -1194,27 +1218,29 @@ IrcUri? _uriFromBouncerNetworkModel(BouncerNetworkModel bouncerNetwork) {
 	);
 }
 
-Future<Iterable<MessageModel>> buildMessageModelList(DB db, List<MessageEntry> entries) async {
+Future<List<MessageModel>> buildMessageModelList(DB db, List<MessageEntry> entries) async {
 	if (entries.isEmpty) {
 		return [];
 	}
 
-	List<String> msgids = [];
+	List<String> parentMsgids = [];
 	for (var entry in entries) {
 		var parentMsgid = entry.msg.tags['+draft/reply'];
 		if (parentMsgid != null) {
-			msgids.add(parentMsgid);
+			parentMsgids.add(parentMsgid);
 		}
 	}
 
 	var bufferId = entries.first.buffer;
-	var parents = await db.fetchMessageSetByNetworkMsgid(bufferId, msgids);
+	var parentMap = await db.fetchMessageSetByNetworkMsgid(bufferId, parentMsgids);
+	var reactionMap = await db.fetchReactionSetBetweenMessages(bufferId, entries.first, entries.last);
 	return entries.map((entry) {
 		MessageEntry? replyTo;
 		var parentMsgid = entry.msg.tags['+draft/reply'];
 		if (parentMsgid != null) {
-			replyTo = parents[parentMsgid];
+			replyTo = parentMap[parentMsgid];
 		}
-		return MessageModel(entry: entry, replyTo: replyTo);
-	});
+		var reacts = reactionMap[entry.networkMsgid] ?? [];
+		return MessageModel(entry: entry, replyTo: replyTo, reactions: reacts);
+	}).toList();
 }
