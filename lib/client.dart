@@ -545,9 +545,6 @@ class Client {
 		await _waitMessage((msg) {
 			switch (msg.cmd) {
 			case RPL_WELCOME:
-				if (params!.saslPlain != null && !saslSuccess) {
-					throw Exception('Server doesn\'t support SASL authentication');
-				}
 				return true;
 			case 'ERROR':
 			case 'FAIL':
@@ -571,6 +568,10 @@ class Client {
 		}, onTimeout: () {
 			throw TimeoutException('Connection registration timed out');
 		});
+
+		if (params.saslPlain != null && !saslSuccess) {
+			throw Exception('Server doesn\'t support SASL authentication');
+		}
 
 		_params = _params._mergeRegistration(params);
 	}
