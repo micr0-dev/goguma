@@ -365,7 +365,7 @@ class ComposerState extends State<Composer> {
 	void _sendTypingStatus() {
 		var buffer = context.read<BufferModel>();
 		var client = context.read<Client>();
-		if (!client.caps.enabled.contains('message-tags')) {
+		if (!client.caps.enabled.contains('message-tags') || !client.isupport.isClientTagAllowed('typing')) {
 			return;
 		}
 
