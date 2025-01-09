@@ -315,11 +315,11 @@ class Client {
 		}
 	}
 
-	Future<void> disconnect() async {
+	void disconnect() {
 		_reconnectTimer?.cancel();
 		_reconnectTimer = null;
 		_connectionTask?.cancel();
-		await _socket?.close();
+		_socket?.destroy();
 	}
 
 	void _log(String s, { Object? error }) {

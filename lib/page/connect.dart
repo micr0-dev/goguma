@@ -115,7 +115,7 @@ class _ConnectPageState extends State<ConnectPage> {
 	}
 
 	void _disconnect() {
-		_client?.disconnect().ignore();
+		_client?.disconnect();
 		_client = null;
 	}
 
