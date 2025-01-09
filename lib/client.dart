@@ -526,10 +526,11 @@ class Client {
 				send(IrcMessage('CAP', ['REQ', cap]));
 			}
 		}
+		Future<void>? authFuture;
 		if (params.saslPlain != null) {
 			var creds = params.saslPlain!;
 			_log('Starting SASL PLAIN authentication');
-			authWithPlain(creds.username, creds.password).ignore();
+			authFuture = authWithPlain(creds.username, creds.password);
 		}
 		if (params.bouncerNetId != null) {
 			send(IrcMessage('BOUNCER', ['BIND', params.bouncerNetId!]));
@@ -541,8 +542,7 @@ class Client {
 		}
 		send(IrcMessage('CAP', ['END']));
 
-		var saslSuccess = false;
-		await _waitMessage((msg) {
+		var welcomeFuture = _waitMessage((msg) {
 			switch (msg.cmd) {
 			case RPL_WELCOME:
 				return true;
@@ -556,22 +556,17 @@ class Client {
 			case ERR_UNAVAILRESOURCE:
 			case ERR_NOPERMFORHOST:
 			case ERR_YOUREBANNEDCREEP:
-			case ERR_SASLFAIL:
-			case ERR_SASLTOOLONG:
-			case ERR_SASLABORTED:
 				throw IrcException(msg);
-			case RPL_SASLSUCCESS:
-				saslSuccess = true;
-				break;
 			}
 			return false;
 		}, onTimeout: () {
 			throw TimeoutException('Connection registration timed out');
 		});
 
-		if (params.saslPlain != null && !saslSuccess) {
-			throw Exception('Server doesn\'t support SASL authentication');
-		}
+		await Future.wait([
+			if (authFuture != null) authFuture,
+			welcomeFuture,
+		], eagerError: true);
 
 		_params = _params._mergeRegistration(params);
 	}
