@@ -1,3 +1,6 @@
+// Disabled because of IRC command constants
+// ignore_for_file: constant_identifier_names
+
 import 'dart:collection';
 import 'dart:core';
 
