@@ -21,10 +21,10 @@ available on the [Google Play Store] and the [Apple App Store].
 
 For more information about using Goguma, see our [documentation].
 
-<img src="https://l.sr.ht/ah3N.png" width="220" alt="Conversation list">
-<img src="https://l.sr.ht/5NNh.png" width="220" alt="Conversation view">
-<img src="https://l.sr.ht/7tDh.png" width="220" alt="Conversation details">
-<img src="https://l.sr.ht/VoM9.png" width="220" alt="Conversation view, dark">
+<img src="https://fs.emersion.fr/protected/img/goguma/main.png" width="220" alt="Conversation list">
+<img src="https://fs.emersion.fr/protected/img/goguma/conversation.png" width="220" alt="Conversation view">
+<img src="https://fs.emersion.fr/protected/img/goguma/conversation-details.png" width="220" alt="Conversation details">
+<img src="https://fs.emersion.fr/protected/img/goguma/main-dark.png" width="220" alt="Conversation view, dark">
 
 ## Compiling
 
