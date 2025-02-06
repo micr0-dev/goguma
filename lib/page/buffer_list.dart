@@ -372,6 +372,7 @@ class _BufferItem extends AnimatedWidget {
 				softWrap: false,
 			),
 			onTap: () {
+				Navigator.popUntil(context, ModalRoute.withName(BufferListPage.routeName));
 				Navigator.pushNamed(context, BufferPage.routeName, arguments: BufferPageArguments(buffer: buffer));
 			},
 		));
