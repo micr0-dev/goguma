@@ -97,7 +97,7 @@ class _BufferListPageState extends State<BufferListPage> {
 			var query = _searchQuery!;
 			List<BufferModel> filtered = [];
 			for (var buf in buffers) {
-				if (buf.name.toLowerCase().contains(query) || (buf.topic ?? '').toLowerCase().contains(query)) {
+				if (buf.name.toLowerCase().contains(query) || (buf.topic ?? buf.realname ?? '').toLowerCase().contains(query)) {
 					filtered.add(buf);
 				}
 			}
