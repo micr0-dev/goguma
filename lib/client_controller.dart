@@ -152,10 +152,10 @@ class ClientProvider {
 		}
 
 		var hasChatHistory = registeredClients.every((client) {
-			return client.caps.enabled.contains('draft/chathistory');
+			return client.caps.available.containsKey('draft/chathistory');
 		});
 		var hasWebPush = registeredClients.every((client) {
-			return client.caps.enabled.contains('soju.im/webpush');
+			return client.caps.available.containsKey('soju.im/webpush');
 		});
 
 		var useWorkManager = Platform.isAndroid && hasChatHistory;
