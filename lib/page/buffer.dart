@@ -519,6 +519,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 							key: key,
 							msg: msg,
 							prevMsg: prevMsg,
+							unreadMarkerTime: widget.unreadMarkerTime,
 							last: msgIndex == messages.length - 1,
 						);
 					}
@@ -685,12 +686,14 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 class _CompactMessageItem extends StatelessWidget {
 	final MessageModel msg;
 	final MessageModel? prevMsg;
+	final String? unreadMarkerTime;
 	final bool last;
 
 	const _CompactMessageItem({
 		super.key,
 		required this.msg,
 		this.prevMsg,
+		this.unreadMarkerTime,
 		this.last = false,
 	});
 
@@ -705,8 +708,11 @@ class _CompactMessageItem extends StatelessWidget {
 		assert(ircMsg.cmd == 'PRIVMSG' || ircMsg.cmd == 'NOTICE');
 
 		var prevIrcMsg = prevMsg?.msg;
+		var prevEntry = prevMsg?.entry;
 		var prevMsgSameSender = prevIrcMsg != null && ircMsg.source!.name == prevIrcMsg.source!.name;
+		var showUnreadMarker = prevEntry != null && unreadMarkerTime != null && unreadMarkerTime!.compareTo(entry.time) < 0 && unreadMarkerTime!.compareTo(prevEntry.time) >= 0;
 
+		var unreadMarkerColor = Theme.of(context).colorScheme.secondary;
 		var textStyle = TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color);
 
 		String? text;
@@ -757,7 +763,6 @@ class _CompactMessageItem extends StatelessWidget {
 
 		content.addAll(textSpans);
 
-		var prevEntry = prevMsg?.entry;
 		if (!prevMsgSameSender || prevEntry == null || entry.dateTime.difference(prevEntry.dateTime) > Duration(minutes: 2)) {
 			var hh = localDateTime.hour.toString().padLeft(2, '0');
 			var mm = localDateTime.minute.toString().padLeft(2, '0');
@@ -809,16 +814,25 @@ class _CompactMessageItem extends StatelessWidget {
 			);
 		}
 
-		return Container(
-			margin: EdgeInsets.only(top: prevMsgSameSender ? 0 : 2.5, bottom: last ? 10 : 0, left: 4, right: 5),
-			child: DefaultTextStyle.merge(
-				style: TextStyle(height: 1.15),
-				child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-					Stack(children: stack),
-					if (linkPreview != null) linkPreview,
-				]),
+		return Column(children: [
+			if (showUnreadMarker) Row(children: [
+				Expanded(child: Divider(color: unreadMarkerColor)),
+				SizedBox(width: 10),
+				Text('Unread messages', style: TextStyle(color: unreadMarkerColor)),
+				SizedBox(width: 10),
+				Expanded(child: Divider(color: unreadMarkerColor)),
+			]),
+			Container(
+				margin: EdgeInsets.only(top: prevMsgSameSender ? 0 : 2.5, bottom: last ? 10 : 0, left: 4, right: 5),
+				child: DefaultTextStyle.merge(
+					style: TextStyle(height: 1.15),
+					child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+						Stack(children: stack),
+						if (linkPreview != null) linkPreview,
+					]),
+				),
 			),
-		);
+		]);
 	}
 }
 
