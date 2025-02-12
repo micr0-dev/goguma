@@ -711,6 +711,7 @@ class _CompactMessageItem extends StatelessWidget {
 		var prevEntry = prevMsg?.entry;
 		var prevMsgSameSender = prevIrcMsg != null && ircMsg.source!.name == prevIrcMsg.source!.name;
 		var showUnreadMarker = prevEntry != null && unreadMarkerTime != null && unreadMarkerTime!.compareTo(entry.time) < 0 && unreadMarkerTime!.compareTo(prevEntry.time) >= 0;
+		var showDateMarker = prevEntry == null || !_isSameDate(localDateTime, prevEntry.dateTime.toLocal());
 
 		var unreadMarkerColor = Theme.of(context).colorScheme.secondary;
 		var textStyle = TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color);
@@ -822,6 +823,12 @@ class _CompactMessageItem extends StatelessWidget {
 				SizedBox(width: 10),
 				Expanded(child: Divider(color: unreadMarkerColor)),
 			]),
+			if (showDateMarker)
+				Container(
+					margin: EdgeInsets.only(top: 2.5),
+					alignment: Alignment.center,
+					child: Text(_formatDate(localDateTime), style: textStyle),
+				),
 			Container(
 				margin: EdgeInsets.only(top: prevMsgSameSender ? 0 : 2.5, bottom: last ? 10 : 0, left: 4, right: 5),
 				child: DefaultTextStyle.merge(
