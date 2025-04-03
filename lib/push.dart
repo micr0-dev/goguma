@@ -20,6 +20,10 @@ class PushSubscription {
 		required this.endpoint,
 		this.tag,
 	});
+
+	PushSubscription.fromEntry(WebPushSubscriptionEntry entry) :
+		endpoint = entry.endpoint,
+		tag = entry.tag;
 }
 
 abstract class PushController {

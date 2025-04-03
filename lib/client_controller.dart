@@ -1172,10 +1172,7 @@ class ClientController {
 			}
 
 			try {
-				await pushController.deleteSubscription(network.networkEntry, PushSubscription(
-					endpoint: oldSub.endpoint,
-					tag: oldSub.tag,
-				));
+				await pushController.deleteSubscription(network.networkEntry, PushSubscription.fromEntry(oldSub));
 			} on Exception catch (err) {
 				log.print('Failed to delete old push subscription', error: err);
 			}
