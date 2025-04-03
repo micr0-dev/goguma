@@ -49,19 +49,6 @@ class FirebasePushController extends PushController {
 	@override
 	String get providerName => 'firebase:' + _gatewayEndpoint.toString();
 
-	Future<void> _checkRespStatusCode(HttpClientResponse resp) async {
-		if (resp.statusCode ~/ 100 == 2) {
-			return;
-		}
-
-		var msg = 'HTTP error ${resp.statusCode}';
-		var type = resp.headers.contentType;
-		if (type == null || type.mimeType == 'text/plain') {
-			msg += ': ' + await resp.take(1024).transform(utf8.decoder).join();
-		}
-		throw Exception(msg);
-	}
-
 	@override
 	Future<PushSubscription> createSubscription(NetworkEntry network, String? vapidKey) async {
 		var token = await FirebaseMessaging.instance.getToken();
@@ -108,6 +95,10 @@ class FirebasePushController extends PushController {
 
 	@override
 	Future<void> deleteSubscription(NetworkEntry network, PushSubscription sub) async {
+		await _deleteSubscription(sub);
+	}
+
+	static Future<void> _deleteSubscription(PushSubscription sub) async {
 		// Compatibility with old subscriptions
 		// TODO: drop this
 		var subUri = sub.tag ?? sub.endpoint.replaceFirst('/push/', '/subscription/');
@@ -138,8 +129,28 @@ class FirebasePushController extends PushController {
 		for (var sub in subs) {
 			await db.deleteWebPushSubscription(sub.id!);
 		}
+		for (var sub in subs) {
+			try {
+				await _deleteSubscription(PushSubscription.fromEntry(sub));
+			} on Exception catch (err) {
+				log.print('Failed to delete pushgarden subscription', error: err);
+			}
+		}
 		// TODO: send WEBPUSH UNREGISTER to the IRC server
 	}
+}
+
+Future<void> _checkRespStatusCode(HttpClientResponse resp) async {
+	if (resp.statusCode ~/ 100 == 2) {
+		return;
+	}
+
+	var msg = 'HTTP error ${resp.statusCode}';
+	var type = resp.headers.contentType;
+	if (type == null || type.mimeType == 'text/plain') {
+		msg += ': ' + await resp.take(1024).transform(utf8.decoder).join();
+	}
+	throw Exception(msg);
 }
 
 // This function may called from a separate Isolate
