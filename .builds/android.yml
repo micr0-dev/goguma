@@ -4,7 +4,7 @@ packages:
   - android-sdk-build-tools
   - android-sdk-cmdline-tools-latest
   - android-sdk-platform-tools
-  - jdk17-openjdk
+  - jdk21-openjdk
   # for flutter
   - unzip
 sources:
