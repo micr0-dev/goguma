@@ -1034,6 +1034,13 @@ class _MessageItem extends StatelessWidget {
 
 		inner = DefaultTextStyle.merge(style: TextStyle(color: textColor), child: inner);
 
+		var reactions = msg.reactionMap.entries.map((reactionEntry) {
+			return _Reaction(
+				text: reactionEntry.key,
+				nicknames: reactionEntry.value,
+			);
+		}).toList();
+
 		Widget decoratedMessage;
 		if (isAction) {
 			decoratedMessage = Align(
@@ -1050,8 +1057,16 @@ class _MessageItem extends StatelessWidget {
 						borderRadius: BorderRadius.circular(10),
 						color: boxColor,
 					),
+					margin: reactions.isEmpty ? null : EdgeInsets.only(bottom: 25),
 					padding: EdgeInsets.all(10),
-					child: inner,
+					child: Stack(clipBehavior: Clip.none, children: [
+						inner,
+						if (!reactions.isEmpty) Positioned(
+							bottom: -30,
+							right: 0,
+							child: Row(spacing: 2, children: reactions),
+						),
+					]),
 				),
 			);
 		}
@@ -1104,6 +1119,39 @@ class _MessageItem extends StatelessWidget {
 				]),
 			),
 		]);
+	}
+}
+
+class _Reaction extends StatelessWidget {
+	final String text;
+	final Set<String> nicknames;
+
+	const _Reaction({
+		super.key,
+		required this.text,
+		required this.nicknames,
+	});
+
+	@override
+	Widget build(BuildContext context) {
+		var content = text;
+		if (nicknames.length > 1) {
+			content = '$text ${nicknames.length}';
+		}
+
+		return Container(
+			padding: EdgeInsets.symmetric(vertical: 2, horizontal: 7),
+			alignment: Alignment.center,
+			decoration: BoxDecoration(
+				border: Border.all(
+					width: 1,
+					color: Theme.of(context).colorScheme.surface,
+				),
+				borderRadius: BorderRadius.circular(100),
+				color: Theme.of(context).colorScheme.secondaryContainer,
+			),
+			child: Text(content),
+		);
 	}
 }
 

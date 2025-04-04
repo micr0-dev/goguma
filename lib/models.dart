@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:collection';
 
+import 'package:characters/characters.dart';
 import 'package:flutter/foundation.dart';
 
 import 'database.dart';
@@ -629,6 +630,23 @@ class MessageModel {
 	int get id => entry.id!;
 	IrcMessage get msg => entry.msg;
 	UnmodifiableListView<ReactionEntry> get reactions => UnmodifiableListView(_reactions);
+
+	Map<String, Set<String>> get reactionMap {
+		Map<String,Set<String>> reactionMap = {};
+		for (var entry in reactions) {
+			var nick = entry.msg.source!.name;
+			// only allow a single grapheme cluster
+			if (Characters(entry.text).length > 1) continue;
+			reactionMap.update(
+				entry.text,
+				(set) => set..add(nick),
+				ifAbsent: () => { nick },
+			);
+		}
+		reactionMap.updateAll((_, set) => UnmodifiableSetView(set));
+
+		return UnmodifiableMapView(reactionMap);
+	}
 }
 
 class MemberListModel extends ChangeNotifier {
