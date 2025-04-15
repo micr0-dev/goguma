@@ -468,6 +468,10 @@ class ClientController {
 
 			_provider._setupSync();
 
+			if (client.caps.available.containsKey('draft/metadata-2')) {
+				client.send(IrcMessage('METADATA', ['*', 'SUB', 'soju.im/pinned', 'soju.im/muted']));
+			}
+
 			// Send WHO commands for each recent user buffer
 			var now = DateTime.now();
 			var limit = const Duration(days: 5);
@@ -681,6 +685,26 @@ class ClientController {
 				members.set(member.nickname, member.prefix);
 			}
 			_bufferList.get(channel, network)?.members = members;
+			break;
+		case 'METADATA':
+			if (msg.params.length < 4) {
+				break;
+			}
+			var target = msg.params[0];
+			var key = msg.params[1];
+			var value = msg.params[3];
+			var buffer = _bufferList.get(target, network);
+			if (buffer != null) {
+				switch (key) {
+					case 'soju.im/pinned':
+						_bufferList.setPinned(buffer, value == '1');
+						break;
+					case 'soju.im/muted':
+						_bufferList.setMuted(buffer, value == '1');
+						break;
+				}
+				_db.storeBuffer(buffer.entry);
+			}
 			break;
 		case 'PRIVMSG':
 		case 'NOTICE':

@@ -82,6 +82,14 @@ const ERR_SASLALREADY = '907';
 const RPL_MONONLINE = '730';
 const RPL_MONOFFLINE = '731';
 const ERR_MONLISTFULL = '734';
+// IRCv3 METADATA: https://ircv3.net/specs/extensions/metadata
+const RPL_WHOISKEYVALUE = '760';
+const RPL_KEYVALUE = '761';
+const RPL_KEYNOTSET = '766';
+const RPL_METADATASUBOK = '770';
+const RPL_METADATAUNSUBOK = '771';
+const RPL_METADATASUBS = '772';
+const RPL_METADATASYNCLATER = '774';
 
 String formatIrcTime(DateTime dt) {
 	dt = dt.toUtc();

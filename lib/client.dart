@@ -106,6 +106,7 @@ Set<String> _getDefaultCaps(ConnectParams params) {
 		'draft/extended-monitor',
 		'draft/pre-away',
 		'draft/message-redaction',
+		'draft/metadata-2',
 		'draft/read-marker',
 
 		'soju.im/bouncer-networks',
@@ -152,6 +153,7 @@ class Client {
 	IrcCapRegistry _caps;
 	IrcIsupportRegistry _isupport;
 	IrcIsupportRegistry _pendingIsupport = IrcIsupportRegistry();
+	final Set<String> _metadataSubs = {};
 	Future<void> _lastWhoFuture = Future.value(null);
 	Future<void> _lastListFuture = Future.value(null);
 	final IrcNameMap<void> _monitored = IrcNameMap(defaultCaseMapping);
@@ -171,6 +173,7 @@ class Client {
 	Stream<Exception> get connectErrors => _connectErrorsController.stream;
 	Stream<IrcIsupportRegistry> get isupportStream => _isupportStreamController.stream;
 	bool get autoReconnect => _autoReconnect;
+	Set<String> get metadataSubs => Set.unmodifiable(_metadataSubs);
 
 	Client(ConnectParams params, {
 		bool autoReconnect = true,
@@ -684,6 +687,11 @@ class Client {
 			}
 			if (params.away != null && !caps.enabled.contains('draft/pre-away')) {
 				setAway(params.away);
+			}
+			break;
+		case RPL_METADATASUBOK:
+			for (var sub in msg.params.sublist(1)) {
+				_metadataSubs.add(sub);
 			}
 			break;
 		case 'NICK':
@@ -1224,6 +1232,13 @@ class Client {
 				return isupport.caseMapping.equals(msg.params[0], channel);
 			}
 			return false;
+		});
+	}
+
+	Future<void> setMetadata(String channel, String key, String value) async {
+		var msg = IrcMessage('METADATA', [channel, 'SET', key, value]);
+		await _roundtripMessage(msg, (msg) {
+			return msg.cmd == RPL_KEYVALUE && msg.params[1] == channel && msg.params[2] == key;
 		});
 	}
 

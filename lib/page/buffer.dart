@@ -611,7 +611,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 				),
 				actions: [
 					PopupMenuButton<String>(
-						onSelected: (key) {
+						onSelected: (key) async {
 							var bufferList = context.read<BufferListModel>();
 							var db = context.read<DB>();
 							switch (key) {
@@ -619,12 +619,22 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 								Navigator.pushNamed(context, BufferDetailsPage.routeName, arguments: buffer);
 								break;
 							case 'pin':
-								bufferList.setPinned(buffer, !buffer.pinned);
-								db.storeBuffer(buffer.entry);
+								var client = context.read<Client>();
+								if (client.metadataSubs.contains('soju.im/pinned')) {
+									await client.setMetadata(buffer.name, 'soju.im/pinned', buffer.pinned ? '0' : '1');
+								} else {
+									bufferList.setPinned(buffer, !buffer.pinned);
+									await db.storeBuffer(buffer.entry);
+								}
 								break;
 							case 'mute':
-								bufferList.setMuted(buffer, !buffer.muted);
-								db.storeBuffer(buffer.entry);
+								var client = context.read<Client>();
+								if (client.metadataSubs.contains('soju.im/muted')) {
+									await client.setMetadata(buffer.name, 'soju.im/muted', buffer.muted ? '0' : '1');
+								} else {
+									bufferList.setMuted(buffer, !buffer.muted);
+									await db.storeBuffer(buffer.entry);
+								}
 								break;
 							case 'part':
 								var client = context.read<Client>();
@@ -647,8 +657,8 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 						itemBuilder: (context) {
 							return [
 								PopupMenuItem(value: 'details', child: Text('Details')),
-								PopupMenuItem(value: 'pin', child: Text(buffer.pinned ? 'Unpin' : 'Pin')),
-								PopupMenuItem(value: 'mute', child: Text(buffer.muted ? 'Unmute' : 'Mute')),
+								if (isOnline) PopupMenuItem(value: 'pin', child: Text(buffer.pinned ? 'Unpin' : 'Pin')),
+								if (isOnline) PopupMenuItem(value: 'mute', child: Text(buffer.muted ? 'Unmute' : 'Mute')),
 								if (!buffer.archived && (isOnline || !isChannel)) PopupMenuItem(value: 'part', child: Text(buffer.joined ? 'Leave' : 'Archive')),
 								if (buffer.archived) PopupMenuItem(value: 'delete', child: Text('Delete')),
 							];
