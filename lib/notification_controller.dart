@@ -49,6 +49,7 @@ class NotificationController {
 			),
 			linux: LinuxInitializationSettings(defaultActionName: 'Open'),
 			android: AndroidInitializationSettings('ic_stat_name'),
+			windows: WindowsInitializationSettings(appName: 'Goguma', appUserModelId: 'fr.emersion.goguma', guid: '41b2ec15-f640-44be-a9c2-a4144969e94b'),
 		), onDidReceiveNotificationResponse: _handleNotificationResponse);
 
 		var androidPlugin = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
