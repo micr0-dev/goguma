@@ -148,7 +148,7 @@ class NotificationController {
 				name: 'Private messages',
 				description: 'Private messages sent directly to you',
 			),
-			dateTime: entry.dateTime,
+			dateTime: _getLatestMessageTimestamp(messages),
 			messagingStyleInfo: _buildMessagingStyleInfo(messages, buffer, false),
 			tag: _bufferTag(buffer),
 		);
@@ -177,7 +177,7 @@ class NotificationController {
 				name: 'Mentions',
 				description: 'Messages mentioning your nickname in a channel',
 			),
-			dateTime: entry.dateTime,
+			dateTime: _getLatestMessageTimestamp(messages),
 			messagingStyleInfo: _buildMessagingStyleInfo(messages, buffer, true),
 			tag: _bufferTag(buffer),
 		);
@@ -241,6 +241,16 @@ class NotificationController {
 		} else {
 			return '$sender has sent a CTCP "${ctcp.cmd}" command';
 		}
+	}
+
+	DateTime? _getLatestMessageTimestamp(List<Message> messages) {
+		DateTime? latest;
+		for (var msg in messages) {
+			if (latest == null || msg.timestamp.isAfter(latest)) {
+				latest = msg.timestamp;
+			}
+		}
+		return latest;
 	}
 
 	Future<void> cancelAllWithBuffer(BufferModel buffer) async {
