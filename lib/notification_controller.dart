@@ -26,7 +26,12 @@ class _ActiveNotification {
 	final String title;
 	final MessagingStyleInformation? messagingStyleInfo;
 
-	_ActiveNotification(this.id, this.tag, this.title, this.messagingStyleInfo);
+	_ActiveNotification({
+		required this.id,
+		required this.tag,
+		required this.title,
+		this.messagingStyleInfo,
+	});
 }
 
 class NotificationController {
@@ -113,7 +118,12 @@ class NotificationController {
 				log.print('Failed to get active notification messaging style', error: err);
 			}
 
-			_active.add(_ActiveNotification(notif.id!, notif.tag!, notif.title!, messagingStyleInfo));
+			_active.add(_ActiveNotification(
+				id: notif.id!,
+				tag: notif.tag!,
+				title: notif.title!,
+				messagingStyleInfo: messagingStyleInfo,
+			));
 		}
 	}
 
@@ -311,7 +321,12 @@ class NotificationController {
 				}
 			}
 		}
-		_active.add(_ActiveNotification(id, tag, title, messagingStyleInfo));
+		_active.add(_ActiveNotification(
+			id: id,
+			tag: tag,
+			title: title,
+			messagingStyleInfo: messagingStyleInfo,
+		));
 
 		await _plugin.show(id, title, body, NotificationDetails(
 			linux: LinuxNotificationDetails(
