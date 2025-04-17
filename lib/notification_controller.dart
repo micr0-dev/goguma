@@ -186,6 +186,7 @@ class NotificationController {
 	Future<void> showInvite(IrcMessage msg, NetworkModel network) async {
 		assert(msg.cmd == 'INVITE');
 		var channel = msg.params[1];
+		var time = msg.tags['time'];
 
 		await _show(
 			title: '${msg.source!.name} invited you to $channel',
@@ -194,6 +195,7 @@ class NotificationController {
 				name: 'Invitations',
 				description: 'Invitations to join a channel',
 			),
+			dateTime: time != null ? DateTime.tryParse(time) : null,
 			tag: 'invite:${network.networkEntry.id}:$channel',
 		);
 	}
