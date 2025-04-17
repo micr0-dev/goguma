@@ -17,19 +17,47 @@ class _NotificationChannel {
 	final String name;
 	final String? description;
 
-	_NotificationChannel({ required this.id, required this.name, this.description });
+	const _NotificationChannel({ required this.id, required this.name, this.description });
 }
+
+const _directMessageChannel = _NotificationChannel(
+	id: 'privmsg',
+	name: 'Private messages',
+	description: 'Private messages sent directly to you',
+);
+
+const _highlightChannel = _NotificationChannel(
+	id: 'highlight',
+	name: 'Mentions',
+	description: 'Messages mentioning your nickname in a channel',
+);
+
+const _inviteChannel = _NotificationChannel(
+	id: 'invite',
+	name: 'Invitations',
+	description: 'Invitations to join a channel',
+);
+
+var _channels = Map.fromEntries([
+	_directMessageChannel,
+	_highlightChannel,
+	_inviteChannel,
+].map((channel) => MapEntry(channel.id, channel)));
 
 class _ActiveNotification {
 	final int id;
 	final String tag;
 	final String title;
+	final String? body;
+	final String? channelId;
 	final MessagingStyleInformation? messagingStyleInfo;
 
-	_ActiveNotification({
+	const _ActiveNotification({
 		required this.id,
 		required this.tag,
 		required this.title,
+		this.body,
+		this.channelId,
 		this.messagingStyleInfo,
 	});
 }
@@ -37,7 +65,7 @@ class _ActiveNotification {
 class NotificationController {
 	final FlutterLocalNotificationsPlugin _plugin = FlutterLocalNotificationsPlugin();
 	final StreamController<String?> _selectionsController = StreamController(sync: true);
-	List<_ActiveNotification> _active = [];
+	final List<_ActiveNotification> _active = [];
 
 	static NotificationController? _instance;
 
@@ -122,6 +150,8 @@ class NotificationController {
 				id: notif.id!,
 				tag: notif.tag!,
 				title: notif.title!,
+				body: notif.body,
+				channelId: notif.channelId,
 				messagingStyleInfo: messagingStyleInfo,
 			));
 		}
@@ -153,11 +183,7 @@ class NotificationController {
 		await _show(
 			title: title,
 			body: _getMessageBody(entry),
-			channel: _NotificationChannel(
-				id: 'privmsg',
-				name: 'Private messages',
-				description: 'Private messages sent directly to you',
-			),
+			channel: _directMessageChannel,
 			dateTime: _getLatestMessageTimestamp(messages),
 			messagingStyleInfo: _buildMessagingStyleInfo(messages, buffer, false),
 			tag: _bufferTag(buffer),
@@ -182,11 +208,7 @@ class NotificationController {
 		await _show(
 			title: title,
 			body: _getMessageBody(entry),
-			channel: _NotificationChannel(
-				id: 'highlight',
-				name: 'Mentions',
-				description: 'Messages mentioning your nickname in a channel',
-			),
+			channel: _highlightChannel,
 			dateTime: _getLatestMessageTimestamp(messages),
 			messagingStyleInfo: _buildMessagingStyleInfo(messages, buffer, true),
 			tag: _bufferTag(buffer),
@@ -200,11 +222,7 @@ class NotificationController {
 
 		await _show(
 			title: '${msg.source!.name} invited you to $channel',
-			channel: _NotificationChannel(
-				id: 'invite',
-				name: 'Invitations',
-				description: 'Invitations to join a channel',
-			),
+			channel: _inviteChannel,
 			dateTime: time != null ? DateTime.tryParse(time) : null,
 			tag: 'invite:${network.networkEntry.id}:$channel',
 		);
@@ -263,21 +281,54 @@ class NotificationController {
 		return latest;
 	}
 
-	Future<void> cancelAllWithBuffer(BufferModel buffer) async {
-		await _cancelAllWithTag(_bufferTag(buffer));
-	}
-
-	Future<void> _cancelAllWithTag(String tag) async {
+	Future<void> cancelAllWithBuffer(BufferModel buffer, DateTime? before) async {
+		var tag = _bufferTag(buffer);
+		var prevActive = [..._active]; // copy to be able to remove while iterating
 		List<Future<void>> futures = [];
-		List<_ActiveNotification> others = [];
-		for (var notif in _active) {
-			if (notif.tag == tag) {
-				futures.add(_plugin.cancel(notif.id, tag: notif.tag));
-			} else {
-				others.add(notif);
+		for (var notif in prevActive) {
+			if (notif.tag != tag) {
+				continue;
 			}
+
+			var prevMessagingStyleInfo = notif.messagingStyleInfo;
+			var prevMessages = prevMessagingStyleInfo?.messages ?? [];
+
+			var epsilon = Duration(milliseconds: 500); // the platform may round notification timestamps
+			var messages = prevMessages.where((msg) {
+				return before != null && msg.timestamp.subtract(epsilon).isAfter(before);
+			}).toList();
+
+			_NotificationChannel? channel;
+			if (notif.channelId != null) {
+				channel = _channels[notif.channelId];
+			}
+
+			// TODO: on non-Android, check notification timestamp
+			if (messages.isEmpty || channel == null || prevMessagingStyleInfo == null) {
+				futures.add(_plugin.cancel(notif.id, tag: notif.tag));
+				_active.remove(notif);
+				continue;
+			}
+
+			if (messages.length == prevMessages.length) {
+				continue;
+			}
+
+			// TODO: update notification title
+			futures.add(_show(
+				title: notif.title,
+				body: notif.body,
+				channel: channel,
+				dateTime: _getLatestMessageTimestamp(messages),
+				messagingStyleInfo: MessagingStyleInformation(
+					prevMessagingStyleInfo.person,
+					conversationTitle: prevMessagingStyleInfo.conversationTitle,
+					groupConversation: prevMessagingStyleInfo.groupConversation,
+					messages: messages,
+				),
+				tag: notif.tag,
+			));
 		}
-		_active = others;
 		await Future.wait(futures);
 	}
 
@@ -307,11 +358,16 @@ class NotificationController {
 		DateTime? dateTime,
 		MessagingStyleInformation? messagingStyleInfo,
 	}) async {
-		_ActiveNotification? replace = _getActiveWithTag(tag);
+		_ActiveNotification? replaced = _getActiveWithTag(tag);
 		int id;
-		if (replace != null) {
-			_active.remove(replace);
-			id = replace.id;
+		var onlyAlertOnce = false;
+		if (replaced != null) {
+			_active.remove(replaced);
+			id = replaced.id;
+
+			var oldMessageCount = replaced.messagingStyleInfo?.messages?.length ?? 0;
+			var newMessageCount = messagingStyleInfo?.messages?.length ?? 0;
+			onlyAlertOnce = oldMessageCount > newMessageCount;
 		} else {
 			while (true) {
 				id = _nextId++;
@@ -325,6 +381,8 @@ class NotificationController {
 			id: id,
 			tag: tag,
 			title: title,
+			body: body,
+			channelId: channel.id,
 			messagingStyleInfo: messagingStyleInfo,
 		));
 
@@ -341,6 +399,7 @@ class NotificationController {
 				styleInformation: messagingStyleInfo,
 				tag: tag,
 				enableLights: true,
+				onlyAlertOnce: onlyAlertOnce,
 			),
 		), payload: tag);
 	}

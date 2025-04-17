@@ -764,8 +764,7 @@ class ClientController {
 				break;
 			}
 
-			// TODO: only cancel notifications with a lower timestamp
-			_notifController.cancelAllWithBuffer(buffer);
+			_notifController.cancelAllWithBuffer(buffer, DateTime.parse(time));
 
 			buffer.entry.lastReadTime = time;
 			return _db.storeBuffer(buffer.entry).then((_) {

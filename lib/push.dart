@@ -119,7 +119,7 @@ Future<void> handlePushMessage(DB db, WebPushSubscriptionEntry sub, List<int> ci
 		if (!bound.startsWith('timestamp=')) {
 			throw FormatException('Invalid MARKREAD bound: $msg');
 		}
-		//var time = bound.replaceFirst('timestamp=', '');
+		var time = DateTime.parse(bound.replaceFirst('timestamp=', ''));
 
 		var bufferEntry = await _fetchBuffer(db, target, networkEntry);
 		if (bufferEntry == null) {
@@ -130,10 +130,8 @@ Future<void> handlePushMessage(DB db, WebPushSubscriptionEntry sub, List<int> ci
 		// against the main Isolate, which also receives MARKREAD via the TCP
 		// connection and isn't aware about notifications opened via push
 
-		// TODO: don't clear notifications whose timestamp is after the read
-		// marker
 		var buffer = BufferModel(entry: bufferEntry, network: network);
-		await notifController.cancelAllWithBuffer(buffer);
+		await notifController.cancelAllWithBuffer(buffer, time);
 		break;
 	default:
 		log.print('Ignoring ${msg.cmd} message');

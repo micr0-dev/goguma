@@ -368,7 +368,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 		}
 		buffer.unreadCount = 0;
 
-		notifController.cancelAllWithBuffer(buffer);
+		notifController.cancelAllWithBuffer(buffer, null);
 	}
 
 	void _handleMsgRefTap(int id) {
