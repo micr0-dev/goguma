@@ -611,7 +611,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 				),
 				actions: [
 					PopupMenuButton<String>(
-						onSelected: (key) async {
+						onSelected: (key) {
 							var bufferList = context.read<BufferListModel>();
 							var db = context.read<DB>();
 							switch (key) {
@@ -621,19 +621,19 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 							case 'pin':
 								var client = context.read<Client>();
 								if (client.metadataSubs.contains('soju.im/pinned')) {
-									await client.setMetadata(buffer.name, 'soju.im/pinned', buffer.pinned ? '0' : '1');
+									client.setMetadata(buffer.name, 'soju.im/pinned', buffer.pinned ? '0' : '1');
 								} else {
 									bufferList.setPinned(buffer, !buffer.pinned);
-									await db.storeBuffer(buffer.entry);
+									db.storeBuffer(buffer.entry);
 								}
 								break;
 							case 'mute':
 								var client = context.read<Client>();
 								if (client.metadataSubs.contains('soju.im/muted')) {
-									await client.setMetadata(buffer.name, 'soju.im/muted', buffer.muted ? '0' : '1');
+									client.setMetadata(buffer.name, 'soju.im/muted', buffer.muted ? '0' : '1');
 								} else {
 									bufferList.setMuted(buffer, !buffer.muted);
-									await db.storeBuffer(buffer.entry);
+									db.storeBuffer(buffer.entry);
 								}
 								break;
 							case 'part':
