@@ -1,9 +1,7 @@
 import 'dart:async';
 import 'dart:convert' show base64UrlEncode;
 import 'dart:math';
-import 'dart:typed_data';
 
-import 'package:unifiedpush/constants.dart';
 import 'package:unifiedpush/unifiedpush.dart';
 
 import 'database.dart';
@@ -32,7 +30,7 @@ class UnifiedPushController extends PushController {
 
 		var distributor = await UnifiedPush.getDistributor();
 		if (distributor == null) {
-			var distributors = await UnifiedPush.getDistributors([featureAndroidBytesMessage]);
+			var distributors = await UnifiedPush.getDistributors();
 			if (distributors.length == 0) {
 				throw Exception('No UnifiedPush distributor found');
 			}
@@ -59,7 +57,7 @@ class UnifiedPushController extends PushController {
 	Future<PushSubscription> createSubscription(NetworkEntry network, String? vapidKey) async {
 		var instance = _generateInstance();
 
-		await UnifiedPush.registerApp(instance, [featureAndroidBytesMessage]);
+		await UnifiedPush.register(instance: instance);
 
 		var completer = Completer<PushSubscription>();
 		_pendingSubscriptions[instance] = completer;
@@ -80,7 +78,7 @@ class UnifiedPushController extends PushController {
 		await UnifiedPush.unregister(instance);
 	}
 
-	void _handleNewEndpoint(String endpoint, String instance) {
+	void _handleNewEndpoint(PushEndpoint endpoint, String instance) {
 		log.print('New UnifiedPush endpoint for instance $instance');
 		var completer = _pendingSubscriptions.remove(instance);
 		if (completer == null) {
@@ -89,12 +87,12 @@ class UnifiedPushController extends PushController {
 			return;
 		}
 		completer.complete(PushSubscription(
-			endpoint: endpoint,
+			endpoint: endpoint.url,
 			tag: instance,
 		));
 	}
 
-	void _handleRegistrationFailed(String instance) {
+	void _handleRegistrationFailed(FailedReason reason, String instance) {
 		log.print('UnifiedPush registration failed for instance $instance');
 		var completer = _pendingSubscriptions.remove(instance);
 		if (completer == null) {
@@ -121,7 +119,8 @@ class UnifiedPushController extends PushController {
 
 // This function may called from a separate Isolate
 @pragma('vm:entry-point')
-void _handleMessage(Uint8List ciphertext, String instance) async {
+void _handleMessage(PushMessage message, String instance) async {
+	var ciphertext = message.content;
 	log.print('Got UnifiedPush message for $instance');
 
 	var db = await DB.open();
