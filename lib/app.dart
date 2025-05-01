@@ -128,6 +128,8 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 		_handleNetworkStateChange();
 
 		if (Platform.isAndroid || Platform.isIOS) {
+			// Ignore initialUri: appLinks.stringLinkStream will trigger an
+			// event for that URI
 			var appLinks = context.read<AppLinks>();
 			_appLinksSub = appLinks.stringLinkStream.listen(_handleAppLink);
 
@@ -140,12 +142,6 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 			_initialRoute = SharePage.routeName;
 		} else {
 			_initialRoute = BufferListPage.routeName;
-
-			if (widget.initialUri != null) {
-				Timer(const Duration(), () {
-					_handleAppLink(widget.initialUri.toString());
-				});
-			}
 		}
 	}
 
