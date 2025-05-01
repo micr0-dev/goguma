@@ -729,12 +729,13 @@ packages:
     source: hosted
     version: "0.0.22"
   share_handler_android:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
-      name: share_handler_android
-      sha256: "124dcc914fb7ecd89076d3dc28435b98fe2129a988bf7742f7a01dcb66a95667"
-      url: "https://pub.dev"
-    source: hosted
+      path: share_handler_android
+      ref: goguma
+      resolved-ref: e880f0ddd9ba827527aa916aae0f3eec988600f8
+      url: "https://github.com/emersion/share_handler.git"
+    source: git
     version: "0.0.9"
   share_handler_ios:
     dependency: transitive
