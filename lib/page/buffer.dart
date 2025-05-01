@@ -91,6 +91,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 	final _itemPositionsListener = ItemPositionsListener.create();
 	final _userScrollListener = ScrollOffsetListener.create(recordProgrammaticScrolls: false);
 	final _dateIndicatorValue = ValueNotifier<DateTime?>(null);
+	final _showJumpToBottomValue = ValueNotifier<bool>(false);
 	final _listKey = GlobalKey();
 	final GlobalKey<ComposerState> _composerKey = GlobalKey();
 	final GlobalKey<DateIndicatorState> _dateIndicatorKey = GlobalKey();
@@ -104,7 +105,6 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 	bool _isAtBottom = false;
 
 	bool _initialChatHistoryLoaded = false;
-	bool _showJumpToBottom = false;
 	int? _blinkMsgIndex;
 
 	@override
@@ -167,11 +167,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 		_dateIndicatorValue.value = firstDateTime;
 
 		var showJumpToBottom = positions.any((pos) => pos.index >= 20) && !isAtBottom;
-		if (_showJumpToBottom != showJumpToBottom) {
-			setState(() {
-				_showJumpToBottom = showJumpToBottom;
-			});
-		}
+		_showJumpToBottomValue.value = showJumpToBottom;
 
 		// Workaround for the last messages becoming hidden when the virtual
 		// keyboard is opened: reset the alignment to 0.
@@ -524,24 +520,27 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 			msgList = Container();
 		}
 
-		Widget? jumpToBottom;
-		if (_showJumpToBottom) {
-			jumpToBottom = Positioned(
-				right: 15,
-				bottom: 15,
-				child: FloatingActionButton(
-					mini: true,
-					tooltip: 'Jump to bottom',
-					heroTag: null,
-					backgroundColor: Colors.grey,
-					foregroundColor: Colors.white,
-					onPressed: () {
-						_itemScrollController.jumpTo(index: 0);
-					},
-					child: const Icon(Icons.keyboard_double_arrow_down, size: 18),
-				),
-			);
-		}
+		Widget jumpToBottom = ValueListenableBuilder(
+			valueListenable: _showJumpToBottomValue,
+			builder: (context, showJumpToBottom, _) {
+				if (!showJumpToBottom) return Container();
+				return Positioned(
+					right: 15,
+					bottom: 15,
+					child: FloatingActionButton(
+						mini: true,
+						tooltip: 'Jump to bottom',
+						heroTag: null,
+						backgroundColor: Colors.grey,
+						foregroundColor: Colors.white,
+						onPressed: () {
+							_itemScrollController.jumpTo(index: 0);
+						},
+						child: const Icon(Icons.keyboard_double_arrow_down, size: 18),
+					),
+				);
+			},
+		);
 
 		Widget dateIndicator = Container(
 			padding: EdgeInsets.only(top: 10),
@@ -629,7 +628,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 				if (banner != null) banner,
 				Expanded(child: Stack(children: [
 					msgList,
-					if (jumpToBottom != null) jumpToBottom,
+					jumpToBottom,
 					dateIndicator,
 				])),
 			])),
