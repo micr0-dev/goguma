@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:async/async.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
@@ -17,6 +16,7 @@ import '../models.dart';
 import '../notification_controller.dart';
 import '../prefs.dart';
 import '../widget/composer.dart';
+import '../widget/date_indicator.dart';
 import '../widget/link_preview.dart';
 import '../widget/message_sheet.dart';
 import '../widget/network_indicator.dart';
@@ -90,11 +90,11 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 	final _itemScrollController = ItemScrollController();
 	final _itemPositionsListener = ItemPositionsListener.create();
 	final _userScrollListener = ScrollOffsetListener.create(recordProgrammaticScrolls: false);
+	final _dateIndicatorValue = ValueNotifier<DateTime?>(null);
 	final _listKey = GlobalKey();
 	final GlobalKey<ComposerState> _composerKey = GlobalKey();
+	final GlobalKey<DateIndicatorState> _dateIndicatorKey = GlobalKey();
 	late final AnimationController _blinkMsgController;
-	late final AnimationController _dateIndicatorController;
-	late final Animation<Offset> _dateIndicatorAnimation;
 	late final StreamSubscription<double> _userScrollSubscription;
 
 	bool _activated = true;
@@ -102,12 +102,10 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 	int _initialScrollIndex = 0;
 	bool _isAtTop = false;
 	bool _isAtBottom = false;
-	DateTime? _dateIndicator;
 
 	bool _initialChatHistoryLoaded = false;
 	bool _showJumpToBottom = false;
 	int? _blinkMsgIndex;
-	RestartableTimer? _dateIndicatorTimer;
 
 	@override
 	void initState() {
@@ -123,15 +121,6 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 			duration: const Duration(milliseconds: 200),
 			value: 1,
 		);
-
-		_dateIndicatorController = AnimationController(
-			vsync: this,
-			duration: const Duration(milliseconds: 200),
-		);
-		_dateIndicatorAnimation = _dateIndicatorController.drive(Tween<Offset>(
-			begin: const Offset(0, -5),
-			end: Offset.zero,
-		));
 
 		var buffer = context.read<BufferModel>();
 		if (buffer.messages.length >= 1000) {
@@ -175,11 +164,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 		}
 
 		var firstDateTime = buffer.messages[buffer.messages.length - positions.last.index - 1].entry.dateTime;
-		if (firstDateTime != _dateIndicator) {
-			setState(() {
-				_dateIndicator = firstDateTime;
-			});
-		}
+		_dateIndicatorValue.value = firstDateTime;
 
 		var showJumpToBottom = positions.any((pos) => pos.index >= 20) && !isAtBottom;
 		if (_showJumpToBottom != showJumpToBottom) {
@@ -197,18 +182,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 	}
 
 	void _handleUserScroll(double value) {
-		if (_dateIndicatorController.value == 0) {
-			_dateIndicatorController.animateTo(1.0);
-		}
-
-		if (_dateIndicatorTimer == null) {
-			_dateIndicatorTimer = RestartableTimer(Duration(milliseconds: 500), () {
-				_dateIndicatorTimer = null;
-				_dateIndicatorController.animateTo(0.0);
-			});
-		} else {
-			_dateIndicatorTimer?.reset();
-		}
+		_dateIndicatorKey.currentState?.show();
 	}
 
 	void _fetchMetadata() async {
@@ -317,8 +291,6 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 		_itemPositionsListener.itemPositions.removeListener(_handleScroll);
 		_userScrollSubscription.cancel();
 		_blinkMsgController.dispose();
-		_dateIndicatorController.dispose();
-		_dateIndicatorTimer?.cancel();
 		WidgetsBinding.instance.removeObserver(this);
 		super.dispose();
 	}
@@ -574,20 +546,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 		Widget dateIndicator = Container(
 			padding: EdgeInsets.only(top: 10),
 			alignment: Alignment.topCenter,
-			child: SlideTransition(
-				position: _dateIndicatorAnimation,
-				child: Container(
-					padding: const EdgeInsets.all(7.0),
-					decoration: BoxDecoration(
-						color: Theme.of(context).colorScheme.secondaryContainer,
-						borderRadius: BorderRadius.circular(5),
-					),
-					child: Text(
-						_dateIndicator != null ? _formatDate(_dateIndicator!.toLocal()) : '',
-						style: TextStyle(color: Theme.of(context).colorScheme.onSecondaryContainer),
-					),
-				),
-			),
+			child: DateIndicator(key: _dateIndicatorKey, date: _dateIndicatorValue),
 		);
 
 		return Scaffold(
