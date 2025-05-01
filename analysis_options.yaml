@@ -15,9 +15,6 @@ linter:
     avoid_catches_without_on_clauses: true
     unawaited_futures: true
     unnecessary_final: true
-    # Disabled because we have so many of these
-    # TODO: get rid of them
-    prefer_const_constructors: false
     prefer_is_empty: false
     prefer_is_not_empty: false
     prefer_is_not_operator: false
