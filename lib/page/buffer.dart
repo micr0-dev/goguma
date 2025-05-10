@@ -382,13 +382,8 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 
 		var subtitle = buffer.topic ?? buffer.realname;
 		var isOnline = network.state == NetworkState.synchronizing || network.state == NetworkState.online;
-		var canSendMessage = isOnline && !buffer.archived;
+		var canSendMessage = canSendMessageToBuffer(buffer, network);
 		var isChannel = client.isChannel(buffer.name);
-		if (isChannel) {
-			canSendMessage = canSendMessage && buffer.joined;
-		} else {
-			canSendMessage = canSendMessage && buffer.online != false;
-		}
 		var messages = buffer.messages;
 
 		var compact = prefs.bufferCompact;

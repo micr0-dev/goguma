@@ -753,3 +753,17 @@ void setCaseMapping(BufferListModel bufferList, NetworkModel network, CaseMappin
 	bufferList._setCaseMapping(network, cm);
 	network._users._map.setCaseMapping(cm);
 }
+
+bool canSendMessageToBuffer(BufferModel buffer, NetworkModel network) {
+	if (network.state != NetworkState.synchronizing && network.state != NetworkState.online) {
+		return false;
+	}
+	if (buffer.archived) {
+		return false;
+	}
+	if (network.networkEntry.isupport.isChannel(buffer.name)) {
+		return buffer.joined;
+	} else {
+		return buffer.online != false;
+	}
+}
