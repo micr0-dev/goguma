@@ -103,6 +103,7 @@ Set<String> _getDefaultCaps(ConnectParams params) {
 		'setname',
 
 		'draft/chathistory',
+		'draft/event-playback',
 		'draft/extended-monitor',
 		'draft/pre-away',
 		'draft/message-redaction',

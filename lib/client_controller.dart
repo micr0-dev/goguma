@@ -1147,9 +1147,31 @@ class ClientController {
 				readMarkerFuture = client.fetchReadMarker(target.name);
 			}
 
-			var batch = await client.fetchChatHistoryBetween(target.name, from, to, max);
-			await readMarkerFuture;
-			await _handleChatMessages(target.name, batch.messages);
+			var done = false;
+			for (var i = 0; i < 20; i++) {
+				var batch = await client.fetchChatHistoryBetween(target.name, from, to, max);
+				await readMarkerFuture;
+				await _handleChatMessages(target.name, batch.messages);
+				if (batch.messages.length < max) {
+					done = true;
+					break;
+				}
+
+				var bumpedFrom = false;
+				for (var msg in batch.messages) {
+					var t = msg.tags['time'];
+					if (t != null && t.compareTo(from) > 0) {
+						from = t;
+						bumpedFrom = true;
+					}
+				}
+				if (!bumpedFrom) {
+					throw Exception('Requested backlog between $from and $to for $target, but all returned messages were before $from');
+				}
+			}
+			if (!done) {
+				log.print('Failed to fetch all backlog for $target: limit reached');
+			}
 		}));
 	}
 
