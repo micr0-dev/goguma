@@ -851,6 +851,10 @@ class IrcIsupportRegistry {
 		}
 		return defaultAllowed;
 	}
+
+	bool isChannel(String name) {
+		return name.length > 0 && chanTypes.contains(name[0]);
+	}
 }
 
 class IrcIsupportMembership {

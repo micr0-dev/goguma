@@ -771,7 +771,7 @@ class Client {
 	}
 
 	bool isChannel(String name) {
-		return name.length > 0 && isupport.chanTypes.contains(name[0]);
+		return isupport.isChannel(name);
 	}
 
 	bool isMyNick(String name) {
