@@ -83,7 +83,7 @@ class MessageSheet extends StatelessWidget {
 		// TODO: we can redact if we are channel operator too
 		var canRedact = canSendMessage && client.caps.enabled.contains('draft/message-redaction') && ircMsg.tags['msgid'] != null && isOwn && !message.entry.redacted;
 		var reactions = message.reactionMap;
-		var canReact = canSendMessage && client.caps.enabled.contains('message-tags') && client.isupport.isClientTagAllowed('react') && message.entry.networkMsgid != null;
+		var canReact = canSendMessage && client.caps.enabled.contains('message-tags') && client.isupport.isClientTagAllowed('draft/react') && message.entry.networkMsgid != null;
 
 		return Column(mainAxisSize: MainAxisSize.min, children: [
 			if (canReact) Container(
