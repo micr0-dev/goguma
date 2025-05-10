@@ -906,8 +906,8 @@ class Client {
 	}
 
 	Future<IrcMessage> sendTextMessage(IrcMessage req) async {
-		assert(req.cmd == 'PRIVMSG' || req.cmd == 'NOTICE');
-		assert(req.params.length == 2);
+		assert(req.cmd == 'PRIVMSG' || req.cmd == 'NOTICE' || req.cmd == 'TAGMSG');
+		assert(req.params.length >= 1);
 
 		if (caps.enabled.contains('echo-message')) {
 			// Assume the first echo-message we get is the one we're waiting
