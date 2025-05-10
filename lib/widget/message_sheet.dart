@@ -10,7 +10,7 @@ import '../irc.dart';
 import '../models.dart';
 import '../page/buffer.dart';
 
-const DEFAULT_REACTIONS = ['❤️', '👍', '👎', '😂', '😮', '😢'];
+const defaultReactions = ['❤️', '👍', '👎', '😂', '😮', '😢'];
 
 class MessageSheet extends StatelessWidget {
 	final MessageModel message;
@@ -90,7 +90,7 @@ class MessageSheet extends StatelessWidget {
 				padding: EdgeInsets.symmetric(vertical: 10),
 					child: Row(
 					mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-					children: DEFAULT_REACTIONS.map((reaction) => IconButton.filledTonal(
+					children: defaultReactions.map((reaction) => IconButton.filledTonal(
 						isSelected: reactions[reaction]?.contains(client.nick) ?? false,
 						constraints: BoxConstraints(minWidth: 50, minHeight: 50),
 						onPressed: () {

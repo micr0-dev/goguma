@@ -1122,7 +1122,6 @@ class _Reaction extends StatelessWidget {
 	final Set<String> nicknames;
 
 	const _Reaction({
-		super.key,
 		required this.text,
 		required this.nicknames,
 	});
