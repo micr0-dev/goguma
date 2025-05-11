@@ -9,8 +9,9 @@ import '../database.dart';
 import '../irc.dart';
 import '../models.dart';
 import '../page/buffer.dart';
+import './emoji_sheet.dart';
 
-const defaultReactions = ['❤️', '👍', '👎', '😂', '😮', '😢'];
+const _defaultReactions = ['❤️', '👍', '👎', '😂', '😮', '😢'];
 
 class MessageSheet extends StatelessWidget {
 	final MessageModel message;
@@ -88,9 +89,9 @@ class MessageSheet extends StatelessWidget {
 		return Column(mainAxisSize: MainAxisSize.min, children: [
 			if (canReact) Container(
 				padding: EdgeInsets.symmetric(vertical: 10),
-					child: Row(
+				child: Row(
 					mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-					children: defaultReactions.map((reaction) => IconButton.filledTonal(
+					children: _defaultReactions.map((reaction) => IconButton.filledTonal(
 						isSelected: reactions[reaction]?.contains(client.nick) ?? false,
 						constraints: BoxConstraints(minWidth: 50, minHeight: 50),
 						onPressed: () {
@@ -101,7 +102,23 @@ class MessageSheet extends StatelessWidget {
 							reaction,
 							style: TextStyle(fontSize: 20),
 						),
-					)).toList(),
+					)).followedBy([
+						IconButton.filledTonal(
+							isSelected: false,
+							constraints: BoxConstraints(minWidth: 50, minHeight: 50),
+							onPressed: () async {
+								var reaction = await EmojiSheet.open(context);
+								if (!context.mounted) {
+									return;
+								}
+								if (reaction != null) {
+									_handleReact(context, reaction);
+								}
+								Navigator.pop(context);
+							},
+							icon: Icon(Icons.add_reaction),
+						),
+					]).toList(),
 				),
 			),
 			if (onReply != null && !isOwn) ListTile(
