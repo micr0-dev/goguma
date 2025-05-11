@@ -13,6 +13,7 @@ class EmojiSheet extends StatefulWidget {
 		return showModalBottomSheet<String?>(
 			context: context,
 			showDragHandle: true,
+			isScrollControlled: true,
 			builder: (context) => EmojiSheet(),
 		);
 	}
@@ -51,20 +52,29 @@ class _EmojiSheetState extends State<EmojiSheet> {
 			]).toList();
 		}
 
-		return Column(children: [
-			Container(
-				padding: EdgeInsets.all(15),
-				child: TextField(
-					decoration: InputDecoration(
-						prefixIcon: Icon(Icons.search),
-						hintText: 'Search emoji',
-						border: OutlineInputBorder(),
+		// Padding ensures the full list is visible when the OSK is open
+		return Padding(
+			padding: MediaQuery.of(context).viewInsets,
+			child: DraggableScrollableSheet(
+				expand: false,
+				snap: true,
+				minChildSize: 0.5,
+				builder: (context, scrollController) => Column(children: [
+					Container(
+						padding: EdgeInsets.all(15),
+						child: TextField(
+							decoration: InputDecoration(
+								prefixIcon: Icon(Icons.search),
+								hintText: 'Search emoji',
+								border: OutlineInputBorder(),
+							),
+							onChanged: _search,
+						),
 					),
-					onChanged: _search,
-				),
+					Expanded(child: CustomScrollView(slivers: slivers, controller: scrollController)),
+				]),
 			),
-			Expanded(child: CustomScrollView(slivers: slivers)),
-		]);
+		);
 	}
 }
 
