@@ -3,10 +3,11 @@ import 'package:unicode_emojis/unicode_emojis.dart';
 
 const _gridItemSize = 60.0;
 
-class EmojiSheet extends StatelessWidget {
-	final Map<Category, List<Emoji>> _emojiByCategory = _groupEmojiByCategory();
+class EmojiSheet extends StatefulWidget {
+	const EmojiSheet({ super.key });
 
-	EmojiSheet({ super.key });
+	@override
+	State<EmojiSheet> createState() => _EmojiSheetState();
 
 	static Future<String?> open(BuildContext context) {
 		return showModalBottomSheet<String?>(
@@ -15,29 +16,74 @@ class EmojiSheet extends StatelessWidget {
 			builder: (context) => EmojiSheet(),
 		);
 	}
+}
+
+class _EmojiSheetState extends State<EmojiSheet> {
+	final Map<Category, List<Emoji>> _allEmojis = _groupEmojiByCategory();
+
+	List<Emoji>? _filteredEmojis;
+
+	void _search(String query) {
+		List<Emoji>? filtered;
+		if (!query.isEmpty) {
+			filtered = UnicodeEmojis.search(query);
+		}
+
+		setState(() {
+			_filteredEmojis = filtered;
+		});
+	}
 
 	@override
 	Widget build(BuildContext context) {
-		return CustomScrollView(
-			slivers: Category.values.expand((category) => [
+		List<Widget> slivers;
+		if (_filteredEmojis != null) {
+			slivers = [_EmojiGrid(_filteredEmojis!)];
+		} else {
+			slivers = Category.values.expand((category) => [
 				SliverList.list(children: [
 					Container(
 						padding: EdgeInsets.all(10),
 						child: Text(category.description, style: TextStyle(fontWeight: FontWeight.bold)),
 					),
 				]),
-				SliverGrid.builder(
-					gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-						maxCrossAxisExtent: _gridItemSize,
-						mainAxisExtent: _gridItemSize,
+				_EmojiGrid(_allEmojis[category]!),
+			]).toList();
+		}
+
+		return Column(children: [
+			Container(
+				padding: EdgeInsets.all(15),
+				child: TextField(
+					decoration: InputDecoration(
+						prefixIcon: Icon(Icons.search),
+						hintText: 'Search emoji',
+						border: OutlineInputBorder(),
 					),
-					itemBuilder: (context, index) {
-						var emoji = _emojiByCategory[category]![index];
-						return _EmojiItem(emoji);
-					},
-					itemCount: _emojiByCategory[category]!.length,
+					onChanged: _search,
 				),
-			]).toList(),
+			),
+			Expanded(child: CustomScrollView(slivers: slivers)),
+		]);
+	}
+}
+
+class _EmojiGrid extends StatelessWidget {
+	final List<Emoji> emojis;
+
+	const _EmojiGrid(this.emojis);
+
+	@override
+	Widget build(BuildContext context) {
+		return SliverGrid.builder(
+			gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+				maxCrossAxisExtent: _gridItemSize,
+				mainAxisExtent: _gridItemSize,
+			),
+			itemBuilder: (context, index) {
+				return _EmojiItem(emojis[index]);
+			},
+			itemCount: emojis.length,
 		);
 	}
 }
