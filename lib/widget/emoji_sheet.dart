@@ -33,26 +33,37 @@ class EmojiSheet extends StatelessWidget {
 					),
 					itemBuilder: (context, index) {
 						var emoji = _emojiByCategory[category]![index];
-						return Container(
-							alignment: Alignment.center,
-							width: _gridItemSize,
-							height: _gridItemSize,
-							child: IconButton(
-								onPressed: () {
-									Navigator.pop(context, emoji.emoji);
-								},
-								icon: Container(
-									alignment: Alignment.center,
-									width: 40,
-									height: 40,
-									child: Text(emoji.emoji, style: TextStyle(fontSize: 30)),
-								),
-							),
-						);
+						return _EmojiItem(emoji);
 					},
 					itemCount: _emojiByCategory[category]!.length,
 				),
 			]).toList(),
+		);
+	}
+}
+
+class _EmojiItem extends StatelessWidget {
+	final Emoji emoji;
+
+	const _EmojiItem(this.emoji);
+
+	@override
+	Widget build(BuildContext context) {
+		return Container(
+			alignment: Alignment.center,
+			width: _gridItemSize,
+			height: _gridItemSize,
+			child: IconButton(
+				onPressed: () {
+					Navigator.pop(context, emoji.emoji);
+				},
+				icon: Container(
+					alignment: Alignment.center,
+					width: 40,
+					height: 40,
+					child: Text(emoji.emoji, style: TextStyle(fontSize: 30)),
+				),
+			),
 		);
 	}
 }
