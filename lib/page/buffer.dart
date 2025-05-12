@@ -20,6 +20,7 @@ import '../widget/date_indicator.dart';
 import '../widget/link_preview.dart';
 import '../widget/message_sheet.dart';
 import '../widget/network_indicator.dart';
+import '../widget/reactions_sheet.dart';
 import '../widget/swipe_action.dart';
 import 'buffer_details.dart';
 import 'buffer_list.dart';
@@ -1030,9 +1031,14 @@ class _MessageItem extends StatelessWidget {
 		inner = DefaultTextStyle.merge(style: TextStyle(color: textColor), child: inner);
 
 		var reactions = msg.reactionMap.entries.map((reactionEntry) {
-			return _Reaction(
-				text: reactionEntry.key,
-				nicknames: reactionEntry.value,
+			return GestureDetector(
+				onTap: () {
+					ReactionsSheet.open(context, msg.reactions);
+				},
+				child: _Reaction(
+					text: reactionEntry.key,
+					nicknames: reactionEntry.value,
+				),
 			);
 		}).toList();
 
