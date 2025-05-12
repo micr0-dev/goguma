@@ -620,10 +620,13 @@ class MessageModel {
 	}) :
 		// Our reaction list needs to be mutable. This is why we spread
 		// instead of taking a list and storing it.
-		_reactions = [...?reactions],
+		_reactions = [...?reactions?.where(_validateReaction)],
 		assert(entry.id != null);
 
 	void _addReaction(ReactionEntry reaction) {
+		if (!_validateReaction(reaction)) {
+			return;
+		}
 		_reactions.add(reaction);
 	}
 
@@ -635,8 +638,6 @@ class MessageModel {
 		Map<String,Set<String>> reactionMap = {};
 		for (var entry in reactions) {
 			var nick = entry.msg.source!.name;
-			// only allow a single grapheme cluster
-			if (Characters(entry.text).length > 1) continue;
 			reactionMap.update(
 				entry.text,
 				(set) => set..add(nick),
@@ -647,6 +648,11 @@ class MessageModel {
 
 		return UnmodifiableMapView(reactionMap);
 	}
+}
+
+bool _validateReaction(ReactionEntry reaction) {
+	// only allow a single grapheme cluster
+	return Characters(reaction.text).length == 1;
 }
 
 class MemberListModel extends ChangeNotifier {
