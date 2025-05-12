@@ -619,11 +619,11 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 			),
 			body: NetworkIndicator(network: network, child: Column(children: [
 				if (banner != null) banner,
-				Expanded(child: Stack(children: [
+				Expanded(child: SafeArea(child: Stack(children: [
 					msgList,
 					jumpToBottom,
 					dateIndicator,
-				])),
+				]))),
 			])),
 			bottomNavigationBar: Visibility(
 				visible: canSendMessage,
