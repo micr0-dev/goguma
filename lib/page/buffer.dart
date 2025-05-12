@@ -1047,22 +1047,18 @@ class _MessageItem extends StatelessWidget {
 		} else {
 			decoratedMessage = Align(
 				alignment: boxAlignment,
-				child: Container(
-					decoration: BoxDecoration(
-						borderRadius: BorderRadius.circular(10),
-						color: boxColor,
-					),
-					margin: reactions.isEmpty ? null : EdgeInsets.only(bottom: 25),
-					padding: EdgeInsets.all(10),
-					child: Stack(clipBehavior: Clip.none, children: [
-						inner,
-						if (!reactions.isEmpty) Positioned(
-							bottom: -30,
-							right: 0,
-							child: Row(spacing: 2, children: reactions),
+				child: Stack(children: [
+					Container(
+						decoration: BoxDecoration(
+							borderRadius: BorderRadius.circular(10),
+							color: boxColor,
 						),
-					]),
-				),
+						margin: reactions.isEmpty ? null : EdgeInsets.only(bottom: 25),
+						padding: EdgeInsets.all(10),
+						child: inner,
+					),
+					if (!reactions.isEmpty) Positioned(bottom: 4, right: 10, child: Row(spacing: 2, children: reactions)),
+				]),
 			);
 		}
 
