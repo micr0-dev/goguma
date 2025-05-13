@@ -478,24 +478,25 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 					var prevMsg = msgIndex > 0 ? messages[msgIndex - 1] : null;
 					var key = ValueKey(msg.id);
 
-					if (compact) {
-						return _CompactMessageItem(
-							key: key,
-							msg: msg,
-							prevMsg: prevMsg,
-							unreadMarkerTime: widget.unreadMarkerTime,
-							last: msgIndex == messages.length - 1,
-						);
-					}
-
-					var nextMsg = msgIndex + 1 < messages.length ? messages[msgIndex + 1] : null;
-
 					VoidCallback? onSwipe;
 					if (isChannel && canSendMessage) {
 						onSwipe = () {
 							_composerKey.currentState!.replyTo(msg);
 						};
 					}
+
+					if (compact) {
+						return _CompactMessageItem(
+							key: key,
+							msg: msg,
+							prevMsg: prevMsg,
+							unreadMarkerTime: widget.unreadMarkerTime,
+							onSwipe: onSwipe,
+							last: msgIndex == messages.length - 1,
+						);
+					}
+
+					var nextMsg = msgIndex + 1 < messages.length ? messages[msgIndex + 1] : null;
 
 					Widget msgWidget = _MessageItem(
 						key: key,
@@ -651,6 +652,7 @@ class _CompactMessageItem extends StatelessWidget {
 	final MessageModel msg;
 	final MessageModel? prevMsg;
 	final String? unreadMarkerTime;
+	final VoidCallback? onSwipe;
 	final bool last;
 
 	const _CompactMessageItem({
@@ -658,6 +660,7 @@ class _CompactMessageItem extends StatelessWidget {
 		required this.msg,
 		this.prevMsg,
 		this.unreadMarkerTime,
+		this.onSwipe,
 		this.last = false,
 	});
 
@@ -691,6 +694,11 @@ class _CompactMessageItem extends StatelessWidget {
 			} else {
 				textSpans = [TextSpan(text: 'has sent a CTCP "${ctcp.cmd}" command', style: textStyle)];
 			}
+		} else if (entry.redacted) {
+			textSpans = [TextSpan(
+				text: 'This message has been deleted.',
+				style: TextStyle(fontStyle: FontStyle.italic),
+			)];
 		} else {
 			text = ircMsg.params[1];
 			textSpans = applyAnsiFormatting(text, textStyle);
@@ -751,15 +759,40 @@ class _CompactMessageItem extends StatelessWidget {
 			));
 		}
 
+		var fg = Theme.of(context).colorScheme.secondaryContainer;
+		var reactions = msg.reactionMap.entries.map((reactionEntry) {
+			return GestureDetector(
+				onTap: () {
+					ReactionsSheet.open(context, msg.reactions);
+				},
+				child: _Reaction(
+					text: reactionEntry.key,
+					nicknames: reactionEntry.value,
+					borderColor: fg,
+					backgroundColor: fg.withAlpha(30),
+				),
+			);
+		}).toList();
+
 		stack.add(Container(
 			margin: EdgeInsets.only(left: 4),
-			child: SelectionArea(
-				child: Text.rich(
-					TextSpan(
-						children: content,
+			child: Stack(children: [
+				Container(
+					margin: reactions.isEmpty ? null : EdgeInsets.only(bottom: 30),
+					child: GestureDetector(
+						onLongPress: () {
+							var buffer = context.read<BufferModel>();
+							MessageSheet.open(context, buffer, msg, onSwipe);
+						},
+						child: Text.rich(
+							TextSpan(
+								children: content,
+							),
+						),
 					),
 				),
-			),
+				if (!reactions.isEmpty) Positioned(bottom: 4, child: Row(spacing: 2, children: reactions)),
+			]),
 		));
 
 		Widget? linkPreview;
@@ -1122,10 +1155,14 @@ class _MessageItem extends StatelessWidget {
 class _Reaction extends StatelessWidget {
 	final String text;
 	final Set<String> nicknames;
+	final Color? borderColor;
+	final Color? backgroundColor;
 
 	const _Reaction({
 		required this.text,
 		required this.nicknames,
+		this.borderColor,
+		this.backgroundColor,
 	});
 
 	@override
@@ -1135,16 +1172,18 @@ class _Reaction extends StatelessWidget {
 			content = '$text ${nicknames.length}';
 		}
 
+		var fg = Theme.of(context).colorScheme.secondaryContainer;
+		var bg = Theme.of(context).colorScheme.surface;
 		return Container(
 			padding: EdgeInsets.symmetric(vertical: 2, horizontal: 7),
 			alignment: Alignment.center,
 			decoration: BoxDecoration(
 				border: Border.all(
 					width: 1,
-					color: Theme.of(context).colorScheme.surface,
+					color: borderColor ?? bg,
 				),
 				borderRadius: BorderRadius.circular(100),
-				color: Theme.of(context).colorScheme.secondaryContainer,
+				color: backgroundColor ?? fg,
 			),
 			child: Text(content),
 		);
