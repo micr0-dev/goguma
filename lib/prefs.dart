@@ -9,6 +9,9 @@ const _nicknameKey = 'nickname';
 const _realnameKey = 'realname';
 const _pushProviderKey = 'push_provider';
 const _linkPreviewKey = 'link_preview';
+const _recentReactionsKey = 'recent_reactions';
+
+const _maxRecentReactions = 14;
 
 class Prefs {
 	final SharedPreferences _prefs;
@@ -30,6 +33,7 @@ class Prefs {
 	String? get realname => _prefs.getString(_realnameKey);
 	String? get pushProvider => _prefs.getString(_pushProviderKey);
 	bool get linkPreview => _prefs.getBool(_linkPreviewKey) ?? false;
+	List<String> get recentReactions => _prefs.getStringList(_recentReactionsKey) ?? [];
 
 	set bufferCompact(bool enabled) {
 		_prefs.setBool(_bufferCompactKey, enabled);
@@ -61,5 +65,10 @@ class Prefs {
 
 	set linkPreview(bool enabled) {
 		_prefs.setBool(_linkPreviewKey, enabled);
+	}
+
+	void addRecentReaction(String reaction) {
+		var reactions = [reaction, ...recentReactions.where((r) => r != reaction).take(_maxRecentReactions - 1)];
+		_prefs.setStringList(_recentReactionsKey, reactions);
 	}
 }

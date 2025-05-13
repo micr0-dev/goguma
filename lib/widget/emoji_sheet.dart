@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:unicode_emojis/unicode_emojis.dart';
+
+import '../prefs.dart';
 
 const _gridItemSize = 60.0;
 
@@ -21,8 +24,24 @@ class EmojiSheet extends StatefulWidget {
 
 class _EmojiSheetState extends State<EmojiSheet> {
 	final Map<Category, List<Emoji>> _allEmojis = _groupEmojiByCategory();
+	late final List<Emoji> _recentEmojis;
 
 	List<Emoji>? _filteredEmojis;
+
+	@override
+	void initState() {
+		super.initState();
+
+		var prefs = context.read<Prefs>();
+
+		_recentEmojis = [];
+		for (var reaction in prefs.recentReactions) {
+			var emoji = _findEmoji(reaction);
+			if (emoji != null) {
+				_recentEmojis.add(emoji);
+			}
+		}
+	}
 
 	void _search(String query) {
 		List<Emoji>? filtered;
@@ -42,14 +61,17 @@ class _EmojiSheetState extends State<EmojiSheet> {
 			slivers = [_EmojiGrid(_filteredEmojis!)];
 		} else {
 			slivers = Category.values.expand((category) => [
-				SliverList.list(children: [
-					Container(
-						padding: EdgeInsets.all(10),
-						child: Text(category.description, style: TextStyle(fontWeight: FontWeight.bold)),
-					),
-				]),
+				_EmojiHeader(category.description),
 				_EmojiGrid(_allEmojis[category]!),
 			]).toList();
+
+			if (!_recentEmojis.isEmpty) {
+				slivers = [
+					_EmojiHeader('Recent'),
+					_EmojiGrid(_recentEmojis),
+					...slivers,
+				];
+			}
 		}
 
 		// Padding ensures the full list is visible when the OSK is open
@@ -75,6 +97,22 @@ class _EmojiSheetState extends State<EmojiSheet> {
 				]),
 			),
 		);
+	}
+}
+
+class _EmojiHeader extends StatelessWidget {
+	final String title;
+
+	const _EmojiHeader(this.title);
+
+	@override
+	Widget build(BuildContext context) {
+		return SliverList.list(children: [
+			Container(
+				padding: EdgeInsets.all(10),
+				child: Text(title, style: TextStyle(fontWeight: FontWeight.bold)),
+			),
+		]);
 	}
 }
 
@@ -111,6 +149,9 @@ class _EmojiItem extends StatelessWidget {
 			height: _gridItemSize,
 			child: IconButton(
 				onPressed: () {
+					var prefs = context.read<Prefs>();
+					prefs.addRecentReaction(emoji.emoji);
+
 					Navigator.pop(context, emoji.emoji);
 				},
 				icon: Container(
@@ -130,4 +171,13 @@ Map<Category, List<Emoji>> _groupEmojiByCategory() {
 		m.putIfAbsent(emoji.category, () => []).add(emoji);
 	}
 	return m;
+}
+
+Emoji? _findEmoji(String text) {
+	for (var emoji in UnicodeEmojis.allEmojis) {
+		if (emoji.emoji == text) {
+			return emoji;
+		}
+	}
+	return null;
 }
