@@ -148,6 +148,7 @@ class _EmojiItem extends StatelessWidget {
 			width: _gridItemSize,
 			height: _gridItemSize,
 			child: IconButton(
+				tooltip: emoji.name,
 				onPressed: () {
 					var prefs = context.read<Prefs>();
 					prefs.addRecentReaction(emoji.emoji);
