@@ -478,9 +478,9 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 					var prevMsg = msgIndex > 0 ? messages[msgIndex - 1] : null;
 					var key = ValueKey(msg.id);
 
-					VoidCallback? onSwipe;
+					VoidCallback? onReply;
 					if (isChannel && canSendMessage) {
-						onSwipe = () {
+						onReply = () {
 							_composerKey.currentState!.replyTo(msg);
 						};
 					}
@@ -491,7 +491,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 							msg: msg,
 							prevMsg: prevMsg,
 							unreadMarkerTime: widget.unreadMarkerTime,
-							onSwipe: onSwipe,
+							onReply: onReply,
 							last: msgIndex == messages.length - 1,
 						);
 					}
@@ -504,7 +504,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 						prevMsg: prevMsg,
 						nextMsg: nextMsg,
 						unreadMarkerTime: widget.unreadMarkerTime,
-						onSwipe: onSwipe,
+						onReply: onReply,
 						onMsgRefTap: _handleMsgRefTap,
 					);
 					if (index == _blinkMsgIndex) {
@@ -652,7 +652,7 @@ class _CompactMessageItem extends StatelessWidget {
 	final MessageModel msg;
 	final MessageModel? prevMsg;
 	final String? unreadMarkerTime;
-	final VoidCallback? onSwipe;
+	final VoidCallback? onReply;
 	final bool last;
 
 	const _CompactMessageItem({
@@ -660,7 +660,7 @@ class _CompactMessageItem extends StatelessWidget {
 		required this.msg,
 		this.prevMsg,
 		this.unreadMarkerTime,
-		this.onSwipe,
+		this.onReply,
 		this.last = false,
 	});
 
@@ -782,7 +782,7 @@ class _CompactMessageItem extends StatelessWidget {
 					child: GestureDetector(
 						onLongPress: () {
 							var buffer = context.read<BufferModel>();
-							MessageSheet.open(context, buffer, msg, onSwipe);
+							MessageSheet.open(context, buffer, msg, onReply);
 						},
 						child: Text.rich(
 							TextSpan(
@@ -844,7 +844,7 @@ class _MessageItem extends StatelessWidget {
 	final MessageModel msg;
 	final MessageModel? prevMsg, nextMsg;
 	final String? unreadMarkerTime;
-	final VoidCallback? onSwipe;
+	final VoidCallback? onReply;
 	final void Function(int)? onMsgRefTap;
 
 	const _MessageItem({
@@ -853,7 +853,7 @@ class _MessageItem extends StatelessWidget {
 		this.prevMsg,
 		this.nextMsg,
 		this.unreadMarkerTime,
-		this.onSwipe,
+		this.onReply,
 		this.onMsgRefTap,
 	});
 
@@ -1110,7 +1110,7 @@ class _MessageItem extends StatelessWidget {
 						child: Icon(Icons.reply),
 					),
 				),
-				onSwipe: onSwipe,
+				onSwipe: onReply,
 				child: decoratedMessage,
 			);
 		}
@@ -1120,7 +1120,7 @@ class _MessageItem extends StatelessWidget {
 			decoratedMessage = GestureDetector(
 				onLongPress: () {
 					var buffer = context.read<BufferModel>();
-					MessageSheet.open(context, buffer, msg, onSwipe);
+					MessageSheet.open(context, buffer, msg, onReply);
 				},
 				child: decoratedMessage,
 			);
