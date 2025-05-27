@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -43,7 +44,7 @@ class Logger {
 			return;
 		}
 
-		if (_sentryInitialized && isSentryEnabled()) {
+		if (_sentryInitialized && _isSentryException(details.exception) && isSentryEnabled()) {
 			await Sentry.captureException(details.exception, stackTrace: details.stack);
 		}
 
@@ -59,4 +60,8 @@ class Logger {
 		var uri = Uri.parse(_sentryDsn);
 		return uri.host;
 	}
+}
+
+bool _isSentryException(Object exception) {
+	return !(exception is TimeoutException);
 }
