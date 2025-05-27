@@ -127,7 +127,8 @@ void _handleMessage(Uint8List ciphertext, String instance) async {
 	var db = await DB.open();
 	var sub = await _fetchSubscriptionWithInstance(db, instance);
 	if (sub == null) {
-		throw Exception('Got push message for an unknown instance: $instance');
+		log.print('Got UnifiedPush push message for an unknown instance: $instance');
+		throw Exception('Got UnifiedPush push message for an unknown instance');
 	}
 
 	await handlePushMessage(db, sub, ciphertext);

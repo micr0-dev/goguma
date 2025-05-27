@@ -166,7 +166,8 @@ Future<void> _handleFirebaseMessage(RemoteMessage message) async {
 
 	var sub = await _fetchWebPushSubscription(db, endpoint);
 	if (sub == null) {
-		throw Exception('Got push message for an unknown endpoint: $endpoint');
+		log.print('Got Firebase push message for an unknown endpoint: $endpoint');
+		throw Exception('Got Firebase push message for an unknown endpoint');
 	} else if (sub.vapidKey != vapidKey) {
 		throw Exception('VAPID public key mismatch');
 	}

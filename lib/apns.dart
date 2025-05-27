@@ -71,7 +71,8 @@ Future<void> _handleApnsMessage(ApnsRemoteMessage msg) async {
 
 	var sub = await _fetchWebPushSubscription(db, tag);
 	if (sub == null) {
-		throw Exception('Got APNs push message for an unknown tag: $tag');
+		log.print('Got APNs push message for an unknown tag: $tag');
+		throw Exception('Got APNs push message for an unknown tag');
 	} else if (sub.vapidKey != vapidKey) {
 		throw Exception('VAPID public key mismatch');
 	}
