@@ -4,12 +4,14 @@ import 'package:flutter/foundation.dart';
 import 'package:sentry/sentry.dart';
 
 const _sentryDsn = String.fromEnvironment('SENTRY_DSN');
-var _sentryEnabled = false;
+var _sentryInitialized = false;
 
-const log = Logger._();
+final log = Logger._();
 
 class Logger {
-	const Logger._();
+	Logger._();
+
+	bool Function() isSentryEnabled = () => true;
 
 	Future<void> init() async {
 		if (_sentryDsn == '') {
@@ -20,7 +22,7 @@ class Logger {
 			await Sentry.init((options) {
 				options.enablePrintBreadcrumbs = false;
 			});
-			_sentryEnabled = true;
+			_sentryInitialized = true;
 			log.print('Sentry error reporting enabled');
 		} on Exception catch (err) {
 			log.print('Failed to initialize Sentry', error: err);
@@ -41,12 +43,20 @@ class Logger {
 			return;
 		}
 
-		if (_sentryEnabled) {
+		if (_sentryInitialized && isSentryEnabled()) {
 			await Sentry.captureException(details.exception, stackTrace: details.stack);
 		}
 
 		if (kReleaseMode && details.exception is Error) {
 			exit(1);
 		}
+	}
+
+	String? get sentryHost {
+		if (!_sentryInitialized) {
+			return null;
+		}
+		var uri = Uri.parse(_sentryDsn);
+		return uri.host;
 	}
 }

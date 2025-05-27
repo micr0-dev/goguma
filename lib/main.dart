@@ -68,6 +68,9 @@ void main() async {
 	);
 	appLifecycleListener.onStateChange!(widgetsBinding.lifecycleState ?? AppLifecycleState.resumed);
 
+	var prefs = await Prefs.load();
+	log.isSentryEnabled = () => prefs.uploadErrorReports;
+
 	await _initWorkManager();
 
 	if (Platform.isIOS) {
@@ -101,7 +104,6 @@ void main() async {
 	}
 
 	var notifController = await NotificationController.init();
-	var prefs = await Prefs.load();
 	var db = await DB.open();
 
 	// If the push provider has changed, wipe our Web Push subscriptions table.

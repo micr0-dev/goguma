@@ -9,6 +9,7 @@ import '../client_controller.dart';
 import '../database.dart';
 import '../dialog/edit_profile.dart';
 import '../irc.dart';
+import '../logging.dart';
 import '../models.dart';
 import '../prefs.dart';
 import 'connect.dart';
@@ -28,6 +29,8 @@ class _SettingsPageState extends State<SettingsPage> {
 	late bool _compact;
 	late bool _typing;
 	late bool _linkPreview;
+	late bool _uploadErrorReports;
+	late String? _uploadErrorReportsHost;
 
 	@override
 	void initState() {
@@ -37,6 +40,8 @@ class _SettingsPageState extends State<SettingsPage> {
 		_compact = prefs.bufferCompact;
 		_typing = prefs.typingIndicator;
 		_linkPreview = prefs.linkPreview;
+		_uploadErrorReports = prefs.uploadErrorReports;
+		_uploadErrorReportsHost = log.sentryHost;
 	}
 
 	void _showLogoutDialog() {
@@ -175,6 +180,18 @@ class _SettingsPageState extends State<SettingsPage> {
 						context.read<Prefs>().linkPreview = enabled;
 						setState(() {
 							_linkPreview = enabled;
+						});
+					},
+				),
+				if (_uploadErrorReportsHost != null) SwitchListTile(
+					title: Text('Send crash reports'),
+					subtitle: Text('Crash reports will be sent to $_uploadErrorReportsHost.'),
+					secondary: Icon(Icons.bug_report),
+					value: _uploadErrorReports,
+					onChanged: (bool enabled) {
+						context.read<Prefs>().uploadErrorReports = enabled;
+						setState(() {
+							_uploadErrorReports = enabled;
 						});
 					},
 				),

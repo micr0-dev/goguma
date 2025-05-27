@@ -10,6 +10,7 @@ const _realnameKey = 'realname';
 const _pushProviderKey = 'push_provider';
 const _linkPreviewKey = 'link_preview';
 const _recentReactionsKey = 'recent_reactions';
+const _uploadErrorReportsKey = 'upload_error_reports';
 
 const _maxRecentReactions = 14;
 
@@ -34,6 +35,7 @@ class Prefs {
 	String? get pushProvider => _prefs.getString(_pushProviderKey);
 	bool get linkPreview => _prefs.getBool(_linkPreviewKey) ?? false;
 	List<String> get recentReactions => _prefs.getStringList(_recentReactionsKey) ?? [];
+	bool get uploadErrorReports => _prefs.getBool(_uploadErrorReportsKey) ?? true;
 
 	set bufferCompact(bool enabled) {
 		_prefs.setBool(_bufferCompactKey, enabled);
@@ -70,5 +72,9 @@ class Prefs {
 	void addRecentReaction(String reaction) {
 		var reactions = [reaction, ...recentReactions.where((r) => r != reaction).take(_maxRecentReactions - 1)];
 		_prefs.setStringList(_recentReactionsKey, reactions);
+	}
+
+	set uploadErrorReports(bool enabled) {
+		_prefs.setBool(_uploadErrorReportsKey, enabled);
 	}
 }
