@@ -6,10 +6,10 @@ import 'package:sentry/sentry.dart';
 const _sentryDsn = String.fromEnvironment('SENTRY_DSN');
 var _sentryEnabled = false;
 
-const log = Logger();
+const log = Logger._();
 
 class Logger {
-	const Logger();
+	const Logger._();
 
 	Future<void> init() async {
 		if (_sentryDsn == '') {
