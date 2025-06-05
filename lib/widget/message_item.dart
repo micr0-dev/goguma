@@ -242,7 +242,7 @@ class RegularMessageItem extends StatelessWidget {
 				},
 				child: _Reaction(
 					text: reactionEntry.key,
-					nicknames: reactionEntry.value,
+					count: reactionEntry.value.length,
 				),
 			);
 		}).toList();
@@ -326,13 +326,13 @@ class RegularMessageItem extends StatelessWidget {
 
 class _Reaction extends StatelessWidget {
 	final String text;
-	final Set<String> nicknames;
+	final int count;
 	final Color? borderColor;
 	final Color? backgroundColor;
 
 	const _Reaction({
 		required this.text,
-		required this.nicknames,
+		required this.count,
 		this.borderColor,
 		this.backgroundColor,
 	});
@@ -340,8 +340,8 @@ class _Reaction extends StatelessWidget {
 	@override
 	Widget build(BuildContext context) {
 		var content = text;
-		if (nicknames.length > 1) {
-			content = '$text ${nicknames.length}';
+		if (count > 1) {
+			content = '$text $count';
 		}
 
 		var fg = Theme.of(context).colorScheme.secondaryContainer;
@@ -481,7 +481,7 @@ class CompactMessageItem extends StatelessWidget {
 				},
 				child: _Reaction(
 					text: reactionEntry.key,
-					nicknames: reactionEntry.value,
+					count: reactionEntry.value.length,
 					borderColor: fg,
 					backgroundColor: fg.withAlpha(30),
 				),
