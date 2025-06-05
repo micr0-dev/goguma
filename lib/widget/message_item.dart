@@ -236,7 +236,7 @@ class RegularMessageItem extends StatelessWidget {
 		inner = DefaultTextStyle.merge(style: TextStyle(color: textColor), child: inner);
 
 		var reactions = msg.reactionMap.entries.map((reactionEntry) {
-			return _Reaction(
+			return _ReactionChip(
 				text: reactionEntry.key,
 				count: reactionEntry.value.length,
 				message: msg,
@@ -320,14 +320,14 @@ class RegularMessageItem extends StatelessWidget {
 	}
 }
 
-class _Reaction extends StatelessWidget {
+class _ReactionChip extends StatelessWidget {
 	final String text;
 	final int count;
 	final MessageModel message;
 	final Color? borderColor;
 	final Color? backgroundColor;
 
-	const _Reaction({
+	const _ReactionChip({
 		required this.text,
 		required this.count,
 		required this.message,
@@ -478,7 +478,7 @@ class CompactMessageItem extends StatelessWidget {
 
 		var fg = Theme.of(context).colorScheme.secondaryContainer;
 		var reactions = msg.reactionMap.entries.map((reactionEntry) {
-			return _Reaction(
+			return _ReactionChip(
 				text: reactionEntry.key,
 				count: reactionEntry.value.length,
 				message: msg,
