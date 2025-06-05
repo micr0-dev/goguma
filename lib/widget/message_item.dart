@@ -319,14 +319,35 @@ class RegularMessageItem extends StatelessWidget {
 class _ReactionsRow extends StatelessWidget {
 	final MessageModel message;
 
-	const _ReactionsRow(this.message);
+	late final List<MapEntry<String, int>> _reactions;
+	late final int _overflow;
+
+	_ReactionsRow(this.message) {
+		var map = message.reactionMap;
+		var entries = map.entries
+			.map((entry) => MapEntry(entry.key, entry.value.length))
+			.toList();
+		if (entries.length > 3) {
+			entries.sort((a, b) => a.value.compareTo(b.value));
+			entries = entries.take(2).toList();
+		}
+		_reactions = entries;
+		_overflow = map.length - entries.length;
+	}
 
 	@override
 	Widget build(BuildContext context) {
-		var reactions = message.reactionMap.entries.map((reactionEntry) {
+		MapEntry<String, int>? overflowEntry;
+		if (_overflow > 0) {
+			overflowEntry = MapEntry('+$_overflow', 0);
+		}
+
+		var reactions = _reactions.followedBy([
+			if (overflowEntry != null) overflowEntry,
+		]).map((reactionEntry) {
 			return _ReactionChip(
 				text: reactionEntry.key,
-				count: reactionEntry.value.length,
+				count: reactionEntry.value,
 				message: message,
 			);
 		}).toList();
