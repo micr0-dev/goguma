@@ -185,6 +185,10 @@ class LinkPreviewer {
 			entry = await _fetchPreview(url);
 		} on Exception catch (err) {
 			log.print('Failed to fetch link preview for <$url>', error: err);
+		} on ArgumentError catch (err) {
+			// TODO: drop once this is resolved:
+			// https://github.com/dart-lang/sdk/issues/60867
+			log.print('Failed to fetch link preview for <$url>', error: err);
 		}
 		if (entry == null) {
 			return null;
