@@ -236,14 +236,10 @@ class RegularMessageItem extends StatelessWidget {
 		inner = DefaultTextStyle.merge(style: TextStyle(color: textColor), child: inner);
 
 		var reactions = msg.reactionMap.entries.map((reactionEntry) {
-			return GestureDetector(
-				onTap: () {
-					ReactionsSheet.open(context, msg.reactions);
-				},
-				child: _Reaction(
-					text: reactionEntry.key,
-					count: reactionEntry.value.length,
-				),
+			return _Reaction(
+				text: reactionEntry.key,
+				count: reactionEntry.value.length,
+				message: msg,
 			);
 		}).toList();
 
@@ -327,12 +323,14 @@ class RegularMessageItem extends StatelessWidget {
 class _Reaction extends StatelessWidget {
 	final String text;
 	final int count;
+	final MessageModel message;
 	final Color? borderColor;
 	final Color? backgroundColor;
 
 	const _Reaction({
 		required this.text,
 		required this.count,
+		required this.message,
 		this.borderColor,
 		this.backgroundColor,
 	});
@@ -346,18 +344,23 @@ class _Reaction extends StatelessWidget {
 
 		var fg = Theme.of(context).colorScheme.secondaryContainer;
 		var bg = Theme.of(context).colorScheme.surface;
-		return Container(
-			padding: EdgeInsets.symmetric(vertical: 2, horizontal: 7),
-			alignment: Alignment.center,
-			decoration: BoxDecoration(
-				border: Border.all(
-					width: 1,
-					color: borderColor ?? bg,
+		return GestureDetector(
+			onTap: () {
+				ReactionsSheet.open(context, message.reactions);
+			},
+			child: Container(
+				padding: EdgeInsets.symmetric(vertical: 2, horizontal: 7),
+				alignment: Alignment.center,
+				decoration: BoxDecoration(
+					border: Border.all(
+						width: 1,
+						color: borderColor ?? bg,
+					),
+					borderRadius: BorderRadius.circular(100),
+					color: backgroundColor ?? fg,
 				),
-				borderRadius: BorderRadius.circular(100),
-				color: backgroundColor ?? fg,
+				child: Text(content),
 			),
-			child: Text(content),
 		);
 	}
 }
@@ -475,16 +478,12 @@ class CompactMessageItem extends StatelessWidget {
 
 		var fg = Theme.of(context).colorScheme.secondaryContainer;
 		var reactions = msg.reactionMap.entries.map((reactionEntry) {
-			return GestureDetector(
-				onTap: () {
-					ReactionsSheet.open(context, msg.reactions);
-				},
-				child: _Reaction(
-					text: reactionEntry.key,
-					count: reactionEntry.value.length,
-					borderColor: fg,
-					backgroundColor: fg.withAlpha(30),
-				),
+			return _Reaction(
+				text: reactionEntry.key,
+				count: reactionEntry.value.length,
+				message: msg,
+				borderColor: fg,
+				backgroundColor: fg.withAlpha(30),
 			);
 		}).toList();
 
