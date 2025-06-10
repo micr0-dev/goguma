@@ -281,6 +281,8 @@ class _ConnectPageState extends State<ConnectPage> {
 				}
 				break;
 			case ERR_PASSWDMISMATCH:
+				serverErr = 'Server password required but not supported ($ircErr)';
+				break;
 			case ERR_SASLFAIL:
 			case ERR_SASLTOOLONG:
 			case ERR_SASLABORTED:
