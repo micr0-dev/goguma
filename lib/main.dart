@@ -30,6 +30,15 @@ const _debugWorkManager = bool.fromEnvironment('debugWorkManager', defaultValue:
 
 Future<PushController> Function() initPush = UnifiedPushController.init;
 
+const String _userAgent = 'Goguma (+https://codeberg.org/emersion/goguma)';
+
+class UserAgentHttpOverrides extends HttpOverrides {
+  @override
+  HttpClient createHttpClient(SecurityContext? context) {
+    return super.createHttpClient(context)..userAgent = _userAgent;
+  }
+}
+
 void main() async {
 	FlutterError.onError = log.reportFlutterError;
 	PlatformDispatcher.instance.onError = (error, stack) {
@@ -42,6 +51,9 @@ void main() async {
 	};
 
 	await log.init();
+
+	// Override the http client implementation to set user agent
+	HttpOverrides.global = UserAgentHttpOverrides();
 
 	var syncReceivePort = ReceivePort('main:sync');
 	var syncPortRegistered = false;
