@@ -462,6 +462,14 @@ class BufferModel extends ChangeNotifier {
 		return entry.realname!;
 	}
 
+	String? get avatar {
+		var avatar = entry.avatar;
+		if (avatar == null || !avatar.startsWith('https://')) {
+			return null;
+		}
+		return avatar;
+	}
+
 	set topic(String? topic) {
 		entry.topic = topic;
 		notifyListeners();
@@ -500,6 +508,11 @@ class BufferModel extends ChangeNotifier {
 	set draft(Draft? draft) {
 		entry.draftText = draft?.text;
 		entry.draftReplyTo = draft?.replyTo;
+		notifyListeners();
+	}
+
+	set avatar(String? avatar) {
+		entry.avatar = avatar;
 		notifyListeners();
 	}
 

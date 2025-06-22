@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../ansi.dart';
+import '../cached_network_image.dart';
 import '../client_controller.dart';
 import '../database.dart';
 import '../models.dart';
@@ -358,6 +359,7 @@ class _BufferItem extends AnimatedWidget {
 
 		return Container(alignment: Alignment.center, height: height, child: ListTile(
 			leading: CircleAvatar(
+				foregroundImage: buffer.avatar == null ? null : CachedNetworkImage(buffer.avatar!),
 				child: Text(
 					_initials(buffer.name),
 					semanticsLabel: ''

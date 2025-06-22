@@ -154,6 +154,7 @@ class BufferEntry {
 	bool pinned;
 	bool muted;
 	bool archived;
+	String? avatar;
 
 	String? topic;
 	String? realname;
@@ -173,6 +174,7 @@ class BufferEntry {
 			'archived': archived ? 1 : 0,
 			'draft_text': draftText,
 			'draft_reply_to': draftReplyTo,
+			'avatar': avatar,
 		};
 	}
 
@@ -182,6 +184,7 @@ class BufferEntry {
 		this.pinned = false,
 		this.muted = false,
 		this.archived = false,
+		this.avatar,
 	});
 
 	BufferEntry.fromMap(Map<String, dynamic> m) :
@@ -195,7 +198,8 @@ class BufferEntry {
 		realname = m['realname'] as String?,
 		archived = m['archived'] == 1,
 		draftText = m['draft_text'] as String?,
-		draftReplyTo = m['draft_reply_to'] as int?;
+		draftReplyTo = m['draft_reply_to'] as int?,
+		avatar = m['avatar'] as String?;
 }
 
 class MessageEntry {
@@ -436,6 +440,7 @@ const _schema = [
 			archived INTEGER NOT NULL DEFAULT 0,
 			draft_text TEXT,
 			draft_reply_to INTEGER,
+			avatar TEXT,
 			FOREIGN KEY (network) REFERENCES Network(id) ON DELETE CASCADE,
 			FOREIGN KEY (draft_reply_to) REFERENCES Message(id) ON DELETE SET NULL,
 			UNIQUE(name, network)
@@ -555,6 +560,7 @@ const _migrations = [
 	'ALTER TABLE Message ADD COLUMN redacted INTEGER NOT NULL DEFAULT 0',
 	'ALTER TABLE Buffer ADD COLUMN draft_text TEXT',
 	'ALTER TABLE Buffer ADD COLUMN draft_reply_to INTEGER REFERENCES Message(id) ON DELETE SET NULL',
+	'ALTER TABLE Buffer ADD COLUMN avatar TEXT',
 ];
 
 class DB {

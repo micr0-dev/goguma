@@ -17,6 +17,8 @@ import 'prefs.dart';
 import 'push.dart';
 import 'webpush.dart';
 
+const _metadataSubs = ['avatar', 'soju.im/pinned', 'soju.im/muted'];
+
 ConnectParams connectParamsFromServerEntry(ServerEntry entry, Prefs prefs) {
 	var nick = entry.nick ?? prefs.nickname;
 
@@ -469,7 +471,7 @@ class ClientController {
 			_provider._setupSync();
 
 			if (client.caps.available.containsKey('draft/metadata-2')) {
-				client.send(IrcMessage('METADATA', ['*', 'SUB', 'soju.im/pinned', 'soju.im/muted']));
+				client.send(IrcMessage('METADATA', ['*', 'SUB', ..._metadataSubs]));
 			}
 
 			// Send WHO commands for each recent user buffer
@@ -696,12 +698,15 @@ class ClientController {
 			var buffer = _bufferList.get(target, network);
 			if (buffer != null) {
 				switch (key) {
-					case 'soju.im/pinned':
-						_bufferList.setPinned(buffer, value == '1');
-						break;
-					case 'soju.im/muted':
-						_bufferList.setMuted(buffer, value == '1');
-						break;
+				case 'avatar':
+					buffer.avatar = value;
+					break;
+				case 'soju.im/pinned':
+					_bufferList.setPinned(buffer, value == '1');
+					break;
+				case 'soju.im/muted':
+					_bufferList.setMuted(buffer, value == '1');
+					break;
 				}
 				_db.storeBuffer(buffer.entry);
 			}
