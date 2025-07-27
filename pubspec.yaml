@@ -55,14 +55,12 @@ dev_dependencies:
   flutter_lints: ^6.0.0
 
 dependency_overrides:
-  # TODO: switch back to the registry once these two PRs have been merged:
-  # https://github.com/ShoutSocial/share_handler/pull/118
-  # https://github.com/ShoutSocial/share_handler/pull/119
+  # TODO: switch back to the registry once a new release is available
   share_handler_android:
     git:
-      url: https://github.com/emersion/share_handler.git
+      url: https://github.com/ShoutSocial/share_handler.git
       path: share_handler_android
-      ref: goguma
+      ref: 6b24ddcc856957f053d859b49522a9184c9fbd75
 
 flutter:
   uses-material-design: true
