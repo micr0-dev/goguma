@@ -312,7 +312,7 @@ class _ConnectPageState extends State<ConnectPage> {
 			),
 			body: Form(
 				key: formKey,
-				child: Container(padding: EdgeInsets.all(10), child: Column(children: [
+				child: Container(padding: EdgeInsets.all(10), child: AutofillGroup(child: Column(children: [
 					Focus(onFocusChange: _handleServerFocusChange, child: TextFormField(
 						keyboardType: TextInputType.url,
 						autocorrect: false,
@@ -341,6 +341,7 @@ class _ConnectPageState extends State<ConnectPage> {
 							}
 							return null;
 						},
+						autofillHints: [AutofillHints.url],
 					)),
 					TextFormField(
 						decoration: InputDecoration(
@@ -354,6 +355,7 @@ class _ConnectPageState extends State<ConnectPage> {
 							return (value!.isEmpty) ? 'Required' : null;
 						},
 						maxLength: _serverFeatures.nickLen,
+						autofillHints: [AutofillHints.username],
 					),
 					if (!_serverFeatures.passwordUnsupported) TextFormField(
 						obscureText: true,
@@ -369,6 +371,7 @@ class _ConnectPageState extends State<ConnectPage> {
 						validator: (value) {
 							return (_serverFeatures.passwordRequired && value!.isEmpty) ? 'Required' : null;
 						},
+						autofillHints: [AutofillHints.password],
 					),
 					SizedBox(height: 20),
 					_loading
@@ -377,7 +380,7 @@ class _ConnectPageState extends State<ConnectPage> {
 							onPressed: _submit,
 							label: Text(_serverFeatures.networkName != null ? 'Connect to ${_serverFeatures.networkName}' : 'Connect'),
 						),
-				])),
+				]))),
 			),
 		);
 	}
