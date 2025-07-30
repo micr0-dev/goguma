@@ -33,6 +33,7 @@ class RegularMessageItem extends StatelessWidget {
 	Widget build(BuildContext context) {
 		var client = context.read<Client>();
 		var prefs = context.read<Prefs>();
+		var network = context.read<NetworkModel>();
 
 		var ircMsg = msg.msg;
 		var entry = msg.entry;
@@ -170,7 +171,13 @@ class RegularMessageItem extends StatelessWidget {
 				);
 			} else {
 				body = stripAnsiFormatting(body);
-				bodyTextSpan = linkify(context, body, linkStyle: linkStyle);
+				bodyTextSpan = _formatText(
+					context,
+					body,
+					nick: network.nickname,
+					linkStyle: linkStyle,
+					backgroundColor: boxColor,
+				);
 			}
 
 			content = [
@@ -598,4 +605,31 @@ String _formatDate(DateTime dt) {
 	var mm = dt.month.toString().padLeft(2, '0');
 	var dd = dt.day.toString().padLeft(2, '0');
 	return '$yyyy-$mm-$dd';
+}
+
+TextSpan _formatText(BuildContext context, String text, {
+	required String nick,
+	required TextStyle linkStyle,
+	required Color backgroundColor,
+}) {
+	var highlightIndexes = findTextHighlights(text, nick);
+	List<InlineSpan> children = [];
+	for (var i in highlightIndexes) {
+		children.add(linkify(context, text.substring(0, i), linkStyle: linkStyle));
+		children.add(WidgetSpan(
+			alignment: PlaceholderAlignment.middle,
+			child: Builder(builder: (context) => Container(
+				padding: EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+				decoration: BoxDecoration(
+					color: DefaultTextStyle.of(context).style.color!,
+					borderRadius: BorderRadius.circular(5),
+				),
+				child: Text(nick, style: TextStyle(color: backgroundColor)),
+			)),
+		));
+		text = text.substring(i + nick.length);
+	}
+	children.add(linkify(context, text, linkStyle: linkStyle));
+
+	return TextSpan(children: children);
 }

@@ -1102,7 +1102,7 @@ class ClientController {
 		if (client.isMyNick(entry.msg.source!.name)) {
 			return false;
 		}
-		if (isChannel && !findTextHighlight(entry.msg.params[1], client.nick)) {
+		if (isChannel && findTextHighlights(entry.msg.params[1], client.nick).isEmpty) {
 			return false;
 		}
 		var ctcp = CtcpMessage.parse(entry.msg);

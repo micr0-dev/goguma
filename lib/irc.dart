@@ -1080,14 +1080,15 @@ bool _isUriPrefix(String text) {
 	}
 }
 
-bool findTextHighlight(String text, String nick) {
+List<int> findTextHighlights(String text, String nick) {
 	nick = nick.toLowerCase();
 	text = text.toLowerCase();
 
+	List<int> positions = [];
 	while (true) {
 		var i = text.indexOf(nick);
 		if (i < 0) {
-			return false;
+			break;
 		}
 
 		// TODO: proper unicode handling
@@ -1100,11 +1101,13 @@ bool findTextHighlight(String text, String nick) {
 			right = text[i + nick.length];
 		}
 		if (_isWordBoundary(left) && _isWordBoundary(right) && !_isUriPrefix(text.substring(0, i))) {
-			return true;
+			positions.add(i);
 		}
 
 		text = text.substring(i + nick.length);
 	}
+
+	return positions;
 }
 
 class Whois {
