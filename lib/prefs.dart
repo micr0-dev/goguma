@@ -9,6 +9,7 @@ const _nicknameKey = 'nickname';
 const _realnameKey = 'realname';
 const _pushProviderKey = 'push_provider';
 const _linkPreviewKey = 'link_preview';
+const _linkExtAppKey = 'link_external_app';
 const _recentReactionsKey = 'recent_reactions';
 const _uploadErrorReportsKey = 'upload_error_reports';
 
@@ -34,6 +35,7 @@ class Prefs {
 	String? get realname => _prefs.getString(_realnameKey);
 	String? get pushProvider => _prefs.getString(_pushProviderKey);
 	bool get linkPreview => _prefs.getBool(_linkPreviewKey) ?? false;
+	bool get linkExtApp => _prefs.getBool(_linkExtAppKey) ?? false;
 	List<String> get recentReactions => _prefs.getStringList(_recentReactionsKey) ?? [];
 	bool get uploadErrorReports => _prefs.getBool(_uploadErrorReportsKey) ?? true;
 
@@ -67,6 +69,10 @@ class Prefs {
 
 	set linkPreview(bool enabled) {
 		_prefs.setBool(_linkPreviewKey, enabled);
+	}
+
+	set linkExtApp(bool enabled) {
+		_prefs.setBool(_linkExtAppKey, enabled);
 	}
 
 	void addRecentReaction(String reaction) {

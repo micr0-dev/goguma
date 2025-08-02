@@ -29,6 +29,7 @@ class _SettingsPageState extends State<SettingsPage> {
 	late bool _compact;
 	late bool _typing;
 	late bool _linkPreview;
+	late bool _linkExtApp;
 	late bool _uploadErrorReports;
 	late String? _uploadErrorReportsHost;
 
@@ -40,6 +41,7 @@ class _SettingsPageState extends State<SettingsPage> {
 		_compact = prefs.bufferCompact;
 		_typing = prefs.typingIndicator;
 		_linkPreview = prefs.linkPreview;
+		_linkExtApp = prefs.linkExtApp;
 		_uploadErrorReports = prefs.uploadErrorReports;
 		_uploadErrorReportsHost = log.sentryHost;
 	}
@@ -180,6 +182,18 @@ class _SettingsPageState extends State<SettingsPage> {
 						context.read<Prefs>().linkPreview = enabled;
 						setState(() {
 							_linkPreview = enabled;
+						});
+					},
+				),
+				SwitchListTile(
+					title: Text('Open links in external app'),
+					subtitle: Text('Use an external application (web browser, navigation, etc.) for opening links.'),
+					secondary: Icon(Icons.link),
+					value: _linkExtApp,
+					onChanged: (bool enabled) {
+						context.read<Prefs>().linkExtApp = enabled;
+						setState(() {
+							_linkExtApp = enabled;
 						});
 					},
 				),

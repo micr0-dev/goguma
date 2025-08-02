@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'client.dart';
 import 'models.dart';
+import 'prefs.dart';
 
 List<LinkifyElement> extractLinks(String text, [NetworkModel? network]) {
 	var linkifiers = [
@@ -27,6 +28,8 @@ List<LinkifyElement> extractLinks(String text, [NetworkModel? network]) {
 TextSpan linkify(BuildContext context, String text, {
 	required TextStyle linkStyle,
 }) {
+	var prefs = context.read<Prefs>();
+
 	NetworkModel? network;
 	try {
 		network = context.read<NetworkModel>();
@@ -45,7 +48,12 @@ TextSpan linkify(BuildContext context, String text, {
 				text: elem.text,
 				style: linkStyle,
 				recognizer: TapGestureRecognizer()..onTap = () async {
-					bool ok = await launchUrl(Uri.parse(elem.url));
+					bool ok = await launchUrl(
+						Uri.parse(elem.url),
+						mode: prefs.linkExtApp
+							? LaunchMode.externalApplication
+							: LaunchMode.platformDefault
+					);
 					if (!ok) {
 						throw Exception('Failed to launch URL: ${elem.url}');
 					}
