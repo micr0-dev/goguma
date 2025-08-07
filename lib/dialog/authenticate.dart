@@ -109,7 +109,7 @@ class _AuthenticateDialogState extends State<AuthenticateDialog> {
 		if (!_loading) {
 			content = Form(
 				key: _formKey,
-				child: Column(
+				child: AutofillGroup(child: Column(
 					mainAxisSize: MainAxisSize.min,
 					children: [
 						TextFormField(
@@ -122,6 +122,7 @@ class _AuthenticateDialogState extends State<AuthenticateDialog> {
 								}
 								return null;
 							},
+							autofillHints: [AutofillHints.username],
 						),
 						TextFormField(
 							controller: _passwordController,
@@ -137,9 +138,10 @@ class _AuthenticateDialogState extends State<AuthenticateDialog> {
 								}
 								return null;
 							},
+							autofillHints: [AutofillHints.password],
 						),
 					],
-				),
+				)),
 			);
 		} else {
 			content = Column(
