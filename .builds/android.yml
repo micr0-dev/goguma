@@ -27,8 +27,11 @@ tasks:
       sudo chown -R $USER /opt/android-sdk
       yes | flutter doctor --android-licenses >/dev/null
       flutter doctor -v
+      mkdir -p ~/.gradle
       # the gradle daemon sometimes crashes
-      mkdir -p ~/.gradle && echo "org.gradle.daemon=false" >>~/.gradle/gradle.properties
+      echo "org.gradle.daemon=false" >>~/.gradle/gradle.properties
+      # reduce memory usage by sharing the JVM between Gradle and the Kotlin compiler
+      echo "kotlin.compiler.execution.strategy=in-process" >>~/.gradle/gradle.properties
       # workaround for OOM
       sudo mkswap -U clear --size 4G --file /swapfile
       sudo swapon /swapfile
