@@ -32,6 +32,7 @@ tasks:
       echo "org.gradle.daemon=false" >>~/.gradle/gradle.properties
       # reduce memory usage by sharing the JVM between Gradle and the Kotlin compiler
       echo "kotlin.compiler.execution.strategy=in-process" >>~/.gradle/gradle.properties
+      echo "org.gradle.jvmargs=-Xmx3g -XX:MaxMetaspaceSize=768m -XX:+HeapDumpOnOutOfMemoryError" >>~/.gradle/gradle.properties
       # workaround for OOM
       sudo mkswap -U clear --size 4G --file /swapfile
       sudo swapon /swapfile
