@@ -194,7 +194,7 @@ class ClientProvider {
 		Workmanager().registerPeriodicTask('sync', 'sync',
 			frequency: freq,
 			tag: 'sync',
-			existingWorkPolicy: ExistingWorkPolicy.replace,
+			existingWorkPolicy: ExistingPeriodicWorkPolicy.replace,
 			initialDelay: freq,
 			constraints: Constraints(networkType: NetworkType.connected),
 		);
