@@ -36,7 +36,6 @@ dependencies:
   unifiedpush: ^5.0.0
   sentry: ^9.3.0
   share_plus: ^11.0.0
-  flutter_flipped_autocomplete: ^1.0.0
   scrollable_positioned_list: ^0.3.5
   html: ^0.15.2
   geolocator: ^14.0.0

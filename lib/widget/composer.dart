@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:flutter_flipped_autocomplete/flutter_flipped_autocomplete.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mime/mime.dart';
@@ -650,21 +649,7 @@ class ComposerState extends State<Composer> {
 			},
 		);
 
-		return Align(
-			alignment: Alignment.bottomLeft,
-			child: Material(
-				elevation: 4.0,
-				child: ConstrainedBox(
-					constraints: BoxConstraints(
-						maxHeight: 200,
-						// TODO: use the width of the text field instead:
-						// https://github.com/flutter/flutter/pull/110032
-						maxWidth: MediaQuery.of(context).size.width - 100,
-					),
-					child: listView,
-				),
-			),
-		);
+		return Material(elevation: 4.0, child: listView);
 	}
 
 	@override
@@ -739,13 +724,14 @@ class ComposerState extends State<Composer> {
 		}
 
 		return SafeArea(child: Form(key: _formKey, child: Row(children: [
-			Expanded(child: RawFlippedAutocomplete(
+			Expanded(child: RawAutocomplete(
 				optionsBuilder: _buildOptions,
 				displayStringForOption: _displayStringForOption,
 				fieldViewBuilder: _buildTextField,
 				focusNode: _focusNode,
 				textEditingController: _controller,
 				optionsViewBuilder: _buildOptionsView,
+				optionsViewOpenDirection: OptionsViewOpenDirection.up,
 			)),
 			if (addMenu != null) addMenu,
 			fab,
