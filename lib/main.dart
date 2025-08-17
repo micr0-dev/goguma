@@ -25,9 +25,6 @@ import 'prefs.dart';
 import 'push.dart';
 import 'unifiedpush.dart';
 
-// Debugging knobs for work manager.
-const _debugWorkManager = bool.fromEnvironment('debugWorkManager', defaultValue: false);
-
 Future<PushController> Function() initPush = UnifiedPushController.init;
 
 const String _userAgent = 'Goguma (+https://codeberg.org/emersion/goguma)';
@@ -240,7 +237,7 @@ Future<void> _initWorkManager() async {
 		return;
 	}
 
-	await Workmanager().initialize(_dispatchWorkManager, isInDebugMode: _debugWorkManager);
+	await Workmanager().initialize(_dispatchWorkManager);
 
 	// Terminate any currently running sync job
 	await Workmanager().cancelAll();
