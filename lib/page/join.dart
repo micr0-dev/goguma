@@ -185,7 +185,6 @@ class _JoinPageState extends State<JoinPage> {
 						decoration: InputDecoration(
 							hintText: 'Channel name or nickname',
 							filled: true,
-							border: InputBorder.none,
 							suffix: !_loading ? null : SizedBox(
 								width: 15,
 								height: 15,
