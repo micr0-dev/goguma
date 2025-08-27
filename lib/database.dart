@@ -157,6 +157,8 @@ class BufferEntry {
 
 	String? topic;
 	String? realname;
+	String? draftText;
+	int? draftReplyTo;
 
 	Map<String, Object?> toMap() {
 		return <String, Object?>{
@@ -169,6 +171,8 @@ class BufferEntry {
 			'topic': topic,
 			'realname': realname,
 			'archived': archived ? 1 : 0,
+			'draft_text': draftText,
+			'draft_reply_to': draftReplyTo,
 		};
 	}
 
@@ -189,7 +193,9 @@ class BufferEntry {
 		muted = m['muted'] == 1,
 		topic = m['topic'] as String?,
 		realname = m['realname'] as String?,
-		archived = m['archived'] == 1;
+		archived = m['archived'] == 1,
+		draftText = m['draft_text'] as String?,
+		draftReplyTo = m['draft_reply_to'] as int?;
 }
 
 class MessageEntry {
@@ -428,7 +434,10 @@ const _schema = [
 			topic TEXT,
 			realname TEXT,
 			archived INTEGER NOT NULL DEFAULT 0,
+			draft_text TEXT,
+			draft_reply_to INTEGER,
 			FOREIGN KEY (network) REFERENCES Network(id) ON DELETE CASCADE,
+			FOREIGN KEY (draft_reply_to) REFERENCES Message(id) ON DELETE SET NULL,
 			UNIQUE(name, network)
 		)
 	''',
@@ -544,6 +553,8 @@ const _migrations = [
 	''',
 	'CREATE INDEX index_reaction_reply_network_msgid on Reaction(reply_network_msgid)',
 	'ALTER TABLE Message ADD COLUMN redacted INTEGER NOT NULL DEFAULT 0',
+	'ALTER TABLE Buffer ADD COLUMN draft_text TEXT',
+	'ALTER TABLE Buffer ADD COLUMN draft_reply_to INTEGER REFERENCES Message(id) ON DELETE SET NULL',
 ];
 
 class DB {
@@ -793,6 +804,14 @@ class DB {
 	Future<MessageEntry?> fetchMessageByNetworkMsgid(int buffer, String msgid) async {
 		var messages = await fetchMessageSetByNetworkMsgid(buffer, [msgid]);
 		return messages[msgid];
+	}
+
+	Future<MessageEntry?> fetchMessage(int id) async {
+		var entries = await _db.rawQuery('SELECT * FROM Message WHERE id = ?', [id]);
+		if (entries.isEmpty) {
+			return null;
+		}
+		return MessageEntry.fromMap(entries.first);
 	}
 
 	Future<void> storeMessages(List<MessageEntry> entries) async {

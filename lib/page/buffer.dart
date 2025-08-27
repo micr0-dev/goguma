@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -303,9 +304,18 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 	}
 
 	@override
-	void didChangeAppLifecycleState(AppLifecycleState state) {
+	Future<void> didChangeAppLifecycleState(AppLifecycleState state) async {
 		super.didChangeAppLifecycleState(state);
 		_updateBufferFocus();
+		if (WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed) {
+			await _saveDraft();
+		}
+	}
+
+	@override
+	Future<AppExitResponse> didRequestAppExit() async {
+		await _saveDraft();
+		return AppExitResponse.exit;
 	}
 
 	void _updateBufferFocus() {
@@ -315,6 +325,16 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 		if (buffer.focused) {
 			_markRead();
 		}
+	}
+
+	Future<void> _saveDraft() async {
+		var composer = _composerKey.currentState;
+		if (composer == null) {
+			return;
+		}
+		var buffer = context.read<BufferModel>();
+		buffer.draft = composer.draft;
+		await context.read<DB>().storeBuffer(buffer.entry);
 	}
 
 	void _markRead() {
@@ -477,7 +497,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 					VoidCallback? onReply;
 					if (isChannel && canSendMessage) {
 						onReply = () {
-							_composerKey.currentState!.replyTo(msg);
+							_composerKey.currentState!.setReplyTo(msg);
 						};
 					}
 
@@ -541,7 +561,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 			child: DateIndicator(key: _dateIndicatorKey, date: _dateIndicatorValue),
 		);
 
-		return Scaffold(
+		var scaffold = Scaffold(
 			appBar: AppBar(
 				title: InkResponse(
 					child: Column(
@@ -636,10 +656,24 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 					),
 					child: Material(elevation: 15, child: Container(
 						padding: EdgeInsets.all(10),
-						child: Composer(key: _composerKey, sharedMedia: widget.sharedMedia),
+						child: Composer(
+							key: _composerKey,
+							sharedMedia: widget.sharedMedia,
+							draft: buffer.draft,
+						),
 					)),
 				),
 			),
+		);
+
+		return PopScope(
+			canPop: true,
+			onPopInvokedWithResult: (bool didPop, bool? result) async {
+				if (didPop) {
+					await _saveDraft();
+				}
+			},
+			child: scaffold
 		);
 	}
 }

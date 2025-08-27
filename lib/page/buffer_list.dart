@@ -292,7 +292,9 @@ class _BufferItem extends AnimatedWidget {
 
 	@override
 	Widget build(BuildContext context) {
-		var subtitle = buffer.topic ?? buffer.realname;
+		var subtitle = buffer.draft == null
+			? (buffer.topic ?? buffer.realname)
+			: 'Draft: ${buffer.draft!.text}';
 
 		Widget title;
 		if (showNetworkName) {
@@ -370,6 +372,7 @@ class _BufferItem extends AnimatedWidget {
 				stripAnsiFormatting(subtitle),
 				overflow: TextOverflow.fade,
 				softWrap: false,
+				style: buffer.draft == null ? null : TextStyle(fontStyle: FontStyle.italic),
 			),
 			onTap: () {
 				Navigator.popUntil(context, ModalRoute.withName(BufferListPage.routeName));

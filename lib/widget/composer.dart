@@ -23,8 +23,9 @@ final whitespaceRegExp = RegExp(r'\s', unicode: true);
 
 class Composer extends StatefulWidget {
 	final SharedMedia? sharedMedia;
+	final Draft? draft;
 
-	const Composer({ super.key, this.sharedMedia });
+	const Composer({ super.key, this.sharedMedia, this.draft });
 
 	@override
 	ComposerState createState() => ComposerState();
@@ -40,7 +41,6 @@ class ComposerState extends State<Composer> {
 	bool _addMenuLoading = false;
 
 	DateTime? _ownTyping;
-	String? _replyPrefix;
 	MessageModel? _replyTo;
 
 	@override
@@ -50,6 +50,10 @@ class ComposerState extends State<Composer> {
 
 		if (widget.sharedMedia != null) {
 			_initSharedMedia(widget.sharedMedia!);
+		}
+
+		if (widget.draft != null) {
+			_initDraft(widget.draft!);
 		}
 	}
 
@@ -95,6 +99,33 @@ class ComposerState extends State<Composer> {
 		}
 	}
 
+	void _initDraft(Draft draft) async {
+		_controller.text = draft.text;
+
+		if (draft.replyTo != null) {
+			var db = context.read<DB>();
+			var msg = await db.fetchMessage(draft.replyTo!);
+			if (msg != null) {
+				_replyTo = MessageModel(entry: msg);
+			}
+		}
+	}
+
+	String? _getReplyPrefix() {
+		if (_replyTo == null) {
+			return null;
+		}
+
+		var nickname = _replyTo!.msg.source!.name;
+		var prefix = '$nickname: ';
+		if (prefix.startsWith('/')) {
+			// Insert a zero-width space to ensure this doesn't end up
+			// being executed as a command
+			prefix = '\u200B$prefix';
+		}
+		return prefix;
+	}
+
 	int _getMaxPrivmsgLen() {
 		var buffer = context.read<BufferModel>();
 		var client = context.read<Client>();
@@ -119,8 +150,8 @@ class ComposerState extends State<Composer> {
 		List<IrcMessage> messages = [];
 		for (var line in text.split('\n')) {
 			Map<String, String?> tags = {};
-			if (messages.isEmpty && _replyTo?.msg.tags['msgid'] != null) {
-				tags['+draft/reply'] = _replyTo!.msg.tags['msgid']!;
+			if (messages.isEmpty && _replyTo?.entry.networkMsgid != null) {
+				tags['+draft/reply'] = _replyTo!.entry.networkMsgid!;
 			}
 
 			while (maxLen > 1 && line.length > maxLen) {
@@ -284,7 +315,6 @@ class ComposerState extends State<Composer> {
 		}
 
 		_setOwnTyping(false);
-		_replyPrefix = null;
 		_replyTo = null;
 		_controller.text = '';
 		_focusNode.requestFocus();
@@ -391,7 +421,14 @@ class ComposerState extends State<Composer> {
 		return notify;
 	}
 
-	void replyTo(MessageModel msg) {
+	Draft? get draft {
+		if (_controller.text.isEmpty) {
+			return null;
+		}
+		return Draft(text: _controller.text, replyTo: _replyTo?.id);
+	}
+
+	void setReplyTo(MessageModel msg) async {
 		var buffer = context.read<BufferModel>();
 
 		// TODO: disable swap when source is not in channel
@@ -411,7 +448,6 @@ class ComposerState extends State<Composer> {
 			prefix = '\u200B$prefix';
 		}
 
-		_replyPrefix = prefix;
 		_replyTo = msg;
 		if (!_controller.text.startsWith(prefix)) {
 			_controller.text = prefix + _controller.text;
@@ -584,8 +620,8 @@ class ComposerState extends State<Composer> {
 					_sendTypingStatus();
 				}
 
-				if (_replyPrefix != null && !value.startsWith(_replyPrefix!)) {
-					_replyPrefix = null;
+				var replyPrefix = _getReplyPrefix();
+				if (replyPrefix != null && !value.startsWith(replyPrefix)) {
 					_replyTo = null;
 				}
 

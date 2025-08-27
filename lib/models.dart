@@ -388,6 +388,13 @@ class BufferListModel extends ChangeNotifier {
 	}
 }
 
+class Draft {
+	final String text;
+	final int? replyTo;
+
+	const Draft({ required this.text, this.replyTo });
+}
+
 /// A model representing a "buffer".
 ///
 /// A buffer holds a list of IRC messages. It's often called a "conversation".
@@ -428,6 +435,9 @@ class BufferModel extends ChangeNotifier {
 	bool get pinned => entry.pinned;
 	bool get muted => entry.muted;
 	bool get archived => entry.archived;
+	Draft? get draft => entry.draftText != null
+		? Draft(text: entry.draftText!, replyTo: entry.draftReplyTo)
+		: null;
 
 	String? get topic => entry.topic;
 	bool get joining => _joining;
@@ -476,6 +486,12 @@ class BufferModel extends ChangeNotifier {
 
 	set archived(bool archived) {
 		entry.archived = archived;
+		notifyListeners();
+	}
+
+	set draft(Draft? draft) {
+		entry.draftText = draft?.text;
+		entry.draftReplyTo = draft?.replyTo;
 		notifyListeners();
 	}
 
