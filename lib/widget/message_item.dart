@@ -41,6 +41,7 @@ class RegularMessageItem extends StatelessWidget {
 		var localDateTime = entry.dateTime.toLocal();
 		var ctcp = CtcpMessage.parse(ircMsg);
 		var hasChannelContext = ircMsg.tags['+draft/channel-context'] != null;
+		var isFromMe = client.isMyNick(sender);
 		assert(ircMsg.cmd == 'PRIVMSG' || ircMsg.cmd == 'NOTICE');
 
 		var target = ircMsg.params[0];
@@ -68,7 +69,7 @@ class RegularMessageItem extends StatelessWidget {
 		var boxAlignment = Alignment.centerLeft;
 		var textColor = DefaultTextStyle.of(context).style.color!;
 
-		if (client.isMyNick(sender)) {
+		if (isFromMe) {
 			// Actions are displayed as if they were told by an external
 			// narrator. To preserve this effect, always show actions on the
 			// left side.
@@ -177,6 +178,7 @@ class RegularMessageItem extends StatelessWidget {
 					nick: network.nickname,
 					linkStyle: linkStyle,
 					backgroundColor: boxColor,
+					isFromMe: isFromMe,
 				);
 			}
 
@@ -272,7 +274,7 @@ class RegularMessageItem extends StatelessWidget {
 			);
 		}
 
-		if (!client.isMyNick(sender)) {
+		if (!isFromMe) {
 			decoratedMessage = SwipeAction(
 				background: Align(
 					alignment: Alignment.centerLeft,
@@ -611,7 +613,10 @@ TextSpan _formatText(BuildContext context, String text, {
 	required String nick,
 	required TextStyle linkStyle,
 	required Color backgroundColor,
+	required bool isFromMe,
 }) {
+	if (isFromMe) return linkify(context, text, linkStyle: linkStyle);
+
 	var highlightIndexes = findTextHighlights(text, nick);
 	List<InlineSpan> children = [];
 	for (var i in highlightIndexes) {
