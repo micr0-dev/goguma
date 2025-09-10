@@ -117,8 +117,6 @@ class RegularMessageItem extends StatelessWidget {
 		List<InlineSpan> content;
 		Widget? linkPreview;
 		if (isAction) {
-			var actionText = stripAnsiFormatting(ctcp.param ?? '');
-
 			content = [
 				WidgetSpan(
 					child: Container(
@@ -135,7 +133,7 @@ class RegularMessageItem extends StatelessWidget {
 				TextSpan(text: ' '),
 				_formatText(
 					context,
-					actionText,
+					ctcp.param ?? '',
 					nick: network.nickname,
 					linkStyle: linkStyle,
 					backgroundColor: Theme.of(context).colorScheme.surface,
@@ -178,7 +176,6 @@ class RegularMessageItem extends StatelessWidget {
 					style: TextStyle(fontStyle: FontStyle.italic),
 				);
 			} else {
-				body = stripAnsiFormatting(body);
 				bodyTextSpan = _formatText(
 					context,
 					body,
@@ -622,6 +619,8 @@ TextSpan _formatText(BuildContext context, String text, {
 	required Color backgroundColor,
 	required bool isFromMe,
 }) {
+	text = stripAnsiFormatting(text);
+
 	if (isFromMe) return linkify(context, text, linkStyle: linkStyle);
 
 	var highlightIndexes = findTextHighlights(text, nick);
