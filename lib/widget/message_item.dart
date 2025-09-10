@@ -133,7 +133,14 @@ class RegularMessageItem extends StatelessWidget {
 				),
 				senderTextSpan,
 				TextSpan(text: ' '),
-				linkify(context, actionText, linkStyle: linkStyle),
+				_formatText(
+					context,
+					actionText,
+					nick: network.nickname,
+					linkStyle: linkStyle,
+					backgroundColor: Theme.of(context).colorScheme.surface,
+					isFromMe: isFromMe,
+				),
 			];
 		} else {
 			var body = ircMsg.params[1];
