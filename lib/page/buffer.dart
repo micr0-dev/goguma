@@ -495,7 +495,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 					var key = ValueKey(msg.id);
 
 					VoidCallback? onReply;
-					if (isChannel && canSendMessage) {
+					if (isChannel) {
 						onReply = () {
 							_composerKey.currentState!.setReplyTo(msg);
 						};
@@ -531,6 +531,25 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 			);
 		} else {
 			msgList = Container();
+		}
+
+		Widget? composer;
+		if (!buffer.archived && !(isOnline && isChannel && !buffer.joined)) {
+			composer = Padding(
+				// Hack to keep the bottomNavigationBar displayed when the
+				// virtual keyboard shows up
+				padding: EdgeInsets.only(
+					bottom: MediaQuery.of(context).viewInsets.bottom,
+				),
+				child: Material(elevation: 15, child: Container(
+					padding: EdgeInsets.all(10),
+					child: Composer(
+						key: _composerKey,
+						sharedMedia: widget.sharedMedia,
+						draft: buffer.draft,
+					),
+				)),
+			);
 		}
 
 		Widget jumpToBottom = ValueListenableBuilder(
@@ -645,25 +664,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 					dateIndicator,
 				]))),
 			])),
-			bottomNavigationBar: Visibility(
-				visible: canSendMessage,
-				maintainState: true,
-				child: Padding(
-					// Hack to keep the bottomNavigationBar displayed when the
-					// virtual keyboard shows up
-					padding: EdgeInsets.only(
-						bottom: MediaQuery.of(context).viewInsets.bottom,
-					),
-					child: Material(elevation: 15, child: Container(
-						padding: EdgeInsets.all(10),
-						child: Composer(
-							key: _composerKey,
-							sharedMedia: widget.sharedMedia,
-							draft: buffer.draft,
-						),
-					)),
-				),
-			),
+			bottomNavigationBar: composer,
 		);
 
 		return PopScope(

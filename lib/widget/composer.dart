@@ -286,6 +286,15 @@ class ComposerState extends State<Composer> {
 	}
 
 	void _submit() async {
+		var buffer = context.read<BufferModel>();
+		var network = context.read<NetworkModel>();
+		if (!canSendMessageToBuffer(buffer, network)) {
+			ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+				content: Text('Network is offline'),
+			));
+			return;
+		}
+
 		// Remove empty lines at start and end of the text (can happen when
 		// pasting text)
 		var lines = _controller.text.split('\n');
@@ -691,11 +700,14 @@ class ComposerState extends State<Composer> {
 	@override
 	Widget build(BuildContext context) {
 		var client = context.read<Client>();
+		var buffer = context.watch<BufferModel>();
+		var network = context.watch<NetworkModel>();
+
+		var canSendMessage = canSendMessageToBuffer(buffer, network);
+		var canUploadFiles = client.isupport.filehost != null && canSendMessage;
 
 		var fab = FloatingActionButton(
-			onPressed: () {
-				_submit();
-			},
+			onPressed: _submit,
 			tooltip: _isCommand ? 'Execute' : 'Send',
 			backgroundColor: _isCommand ? Colors.red : null,
 			mini: true,
@@ -711,7 +723,7 @@ class ComposerState extends State<Composer> {
 				margin: EdgeInsets.all(10),
 				child: CircularProgressIndicator(strokeWidth: 2),
 			);
-		} else if (_locationServiceAvailable || client.isupport.filehost != null) {
+		} else if (_locationServiceAvailable || canUploadFiles) {
 			addMenu = IconButton(
 				icon: const Icon(Icons.add),
 				tooltip: 'Add',
@@ -727,7 +739,7 @@ class ComposerState extends State<Composer> {
 									_runAddMenuTask(_shareLocation);
 								}
 							),
-							if (client.isupport.filehost != null) ListTile(
+							if (canUploadFiles) ListTile(
 								title: Text('Share a picture'),
 								leading: Icon(Icons.add_photo_alternate),
 								onTap: () async {
@@ -740,7 +752,7 @@ class ComposerState extends State<Composer> {
 									}
 								},
 							),
-							if (client.isupport.filehost != null) ListTile(
+							if (canUploadFiles) ListTile(
 								title: Text('Share a file'),
 								leading: Icon(Icons.upload_file),
 								onTap: () async {
