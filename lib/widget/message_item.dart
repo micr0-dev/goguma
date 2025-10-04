@@ -68,7 +68,7 @@ class RegularMessageItem extends StatelessWidget {
 
 		var boxColor = isFromMe ? colorScheme.primaryContainer : colorScheme.surfaceContainer;
 		var boxAlignment = Alignment.centerLeft;
-		var textColor = DefaultTextStyle.of(context).style.color!;
+		var textColor = isFromMe ? colorScheme.onPrimaryContainer : colorScheme.onSurface;
 		var senderNickColor = isFromMe ? textColor : Colors.primaries[sender.hashCode % Colors.primaries.length].shade500;
 
 		if (isFromMe) {
@@ -78,10 +78,6 @@ class RegularMessageItem extends StatelessWidget {
 			if (!isAction) {
 				boxAlignment = Alignment.centerRight;
 			}
-		}
-
-		if (!isAction) {
-			textColor = boxColor.computeLuminance() > 0.5 ? Colors.black : Colors.white;
 		}
 
 		const margin = 16.0;
