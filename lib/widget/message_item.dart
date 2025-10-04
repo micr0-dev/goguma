@@ -62,18 +62,19 @@ class RegularMessageItem extends StatelessWidget {
 		var isFirstInGroup = showUnreadMarker || !prevMsgSameSender || prevMsgIsAction != isAction || hasChannelContext || statusMsgPrefix != '';
 		var showTime = !nextMsgSameSender || nextMsg!.entry.dateTime.difference(entry.dateTime) > Duration(minutes: 2);
 
-		var unreadMarkerColor = Theme.of(context).colorScheme.secondary;
+		var colorScheme = Theme.of(context).colorScheme;
+		var unreadMarkerColor = colorScheme.secondary;
 		var eventColor = DefaultTextStyle.of(context).style.color!.withValues(alpha: 0.5);
 
-		var boxColor = Colors.primaries[sender.hashCode % Colors.primaries.length].shade500;
+		var boxColor = isFromMe ? colorScheme.primaryContainer : colorScheme.surfaceContainer;
 		var boxAlignment = Alignment.centerLeft;
 		var textColor = DefaultTextStyle.of(context).style.color!;
+		var senderNickColor = isFromMe ? textColor : Colors.primaries[sender.hashCode % Colors.primaries.length].shade500;
 
 		if (isFromMe) {
 			// Actions are displayed as if they were told by an external
 			// narrator. To preserve this effect, always show actions on the
 			// left side.
-			boxColor = Colors.grey.shade200;
 			if (!isAction) {
 				boxAlignment = Alignment.centerRight;
 			}
@@ -95,7 +96,10 @@ class RegularMessageItem extends StatelessWidget {
 
 		var senderTextSpan = TextSpan(
 			text: sender,
-			style: TextStyle(fontWeight: FontWeight.bold),
+			style: TextStyle(
+				fontWeight: FontWeight.bold,
+				color: senderNickColor,
+			),
 		);
 		if (hasChannelContext) {
 			senderTextSpan = TextSpan(children: [
@@ -136,7 +140,7 @@ class RegularMessageItem extends StatelessWidget {
 					ctcp.param ?? '',
 					nick: network.nickname,
 					linkStyle: linkStyle,
-					backgroundColor: Theme.of(context).colorScheme.surface,
+					backgroundColor: colorScheme.surface,
 					isFromMe: isFromMe,
 				),
 			];
