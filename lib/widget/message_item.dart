@@ -191,8 +191,8 @@ class RegularMessageItem extends StatelessWidget {
 			}
 
 			content = [
-				if (isFirstInGroup) senderTextSpan,
-				if (isFirstInGroup) TextSpan(text: '\n'),
+				if (isFirstInGroup && !isFromMe) senderTextSpan,
+				if (isFirstInGroup && !isFromMe) TextSpan(text: '\n'),
 				if (replyChip != null) replyChip,
 				if (replyChip != null) WidgetSpan(child: SizedBox(width: 5, height: 5)),
 				bodyTextSpan,
