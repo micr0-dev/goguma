@@ -2,8 +2,6 @@
 
 An IRC client for mobile devices.
 
-Goals:
-
 - Modern: support for many IRCv3 extensions, plus some special support for IRC
   bouncers.
 - Easy to use: offer a simple, straightforward interface.
