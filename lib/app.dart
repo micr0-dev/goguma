@@ -542,13 +542,27 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 
 	@override
 	Widget build(BuildContext context) {
-		return DynamicColorBuilder(builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
-			ColorScheme lightColorScheme = ColorScheme.fromSeed(seedColor: Colors.indigo);
-			ColorScheme darkColorScheme = ColorScheme.fromSeed(seedColor: Colors.indigo, brightness: Brightness.dark);
+		return DynamicColorBuilder(
+				builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
+			// Fallback in case dynamic color is not available
+			ColorScheme lightColorScheme = ColorScheme.fromSeed(
+					seedColor: Colors.indigo, brightness: Brightness.light);
+			ColorScheme darkColorScheme = ColorScheme.fromSeed(
+					seedColor: Colors.indigo, brightness: Brightness.dark);
+
 			if (lightDynamic != null && darkDynamic != null) {
-				lightColorScheme = lightDynamic.harmonized();
-				darkColorScheme = darkDynamic.harmonized();
+				// Workaround for a bug in dynamic_color where surface container colors and its variants are the same color as surface. This makes message bubbles on Android the same color as the background they are being drawn on.
+				// https://github.com/material-foundation/flutter-packages/issues/649
+				lightColorScheme = ColorScheme.fromSeed(
+					seedColor: Color(lightColorScheme.primary.toARGB32()),
+					brightness: Brightness.light,
+				).harmonized();
+				darkColorScheme = ColorScheme.fromSeed(
+					seedColor: Color(darkColorScheme.primary.toARGB32()),
+					brightness: Brightness.dark,
+				).harmonized();
 			}
+
 			return MaterialApp(
 				title: 'Goguma',
 				theme: ThemeData(colorScheme: lightColorScheme),
