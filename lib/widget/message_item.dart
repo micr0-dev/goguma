@@ -69,7 +69,7 @@ class RegularMessageItem extends StatelessWidget {
 		var boxColor = colorScheme.surfaceContainer;
 		var boxAlignment = Alignment.centerLeft;
 		var textColor =  colorScheme.onSurface;
-		var senderNickColor = Colors.primaries[sender.hashCode % Colors.primaries.length].shade500;
+		var senderNickColor = _getNickColor(sender, colorScheme.brightness);
 
 		if (isFromMe) {
 			boxColor = colorScheme.primaryContainer;
@@ -486,9 +486,10 @@ class CompactMessageItem extends StatelessWidget {
 		List<InlineSpan> content = [];
 
 		if (!prevMsgSameSender) {
-			var colorSwatch = Colors.primaries[sender.hashCode % Colors.primaries.length];
-			var colorScheme = ColorScheme.fromSwatch(primarySwatch: colorSwatch);
-			var senderStyle = TextStyle(color: colorScheme.primary, fontWeight: FontWeight.bold);
+			var senderStyle = TextStyle(
+				color: _getNickColor(sender, Theme.of(context).colorScheme.brightness),
+				fontWeight: FontWeight.bold,
+			);
 			stack.add(Positioned(
 				top: 0,
 				left: 0,
@@ -651,3 +652,10 @@ TextSpan _formatText(BuildContext context, String text, {
 
 	return TextSpan(children: children);
 }
+
+// _getNickColor returns a color for the given nickname. The same nickname will always get the same color. The color is chosen from the primary colors of the current theme. The brightness parameter is used to choose a lighter or darker shade of the color.
+Color _getNickColor(String nickname, Brightness brightness) {
+	var colorSwatch = Colors.primaries[nickname.hashCode % Colors.primaries.length];
+	return brightness == Brightness.dark ? colorSwatch.shade400 : colorSwatch.shade800;
+}
+
