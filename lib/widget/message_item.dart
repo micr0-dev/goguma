@@ -66,18 +66,19 @@ class RegularMessageItem extends StatelessWidget {
 		var unreadMarkerColor = colorScheme.secondary;
 		var eventColor = DefaultTextStyle.of(context).style.color!.withValues(alpha: 0.5);
 
-		var boxColor = isFromMe ? colorScheme.primaryContainer : colorScheme.surfaceContainer;
+		var boxColor = colorScheme.surfaceContainer;
 		var boxAlignment = Alignment.centerLeft;
-		var textColor = isFromMe ? colorScheme.onPrimaryContainer : colorScheme.onSurface;
-		var senderNickColor = isFromMe ? textColor : Colors.primaries[sender.hashCode % Colors.primaries.length].shade500;
+		var textColor =  colorScheme.onSurface;
+		var senderNickColor = Colors.primaries[sender.hashCode % Colors.primaries.length].shade500;
 
 		if (isFromMe) {
+			boxColor = colorScheme.primaryContainer;
 			// Actions are displayed as if they were told by an external
 			// narrator. To preserve this effect, always show actions on the
 			// left side.
-			if (!isAction) {
-				boxAlignment = Alignment.centerRight;
-			}
+			if (!isAction) boxAlignment = Alignment.centerRight;
+			textColor = colorScheme.onPrimaryContainer;
+			senderNickColor = textColor;
 		}
 
 		const margin = 16.0;
