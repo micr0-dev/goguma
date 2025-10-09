@@ -50,7 +50,7 @@ String stripAnsiFormatting(String s) {
 	return out;
 }
 
-var colorHexCodes = [
+var _colorHexCodes = [
 	0xffffffff, 0xff000000, 0xff00007f, 0xff009300, 0xffff0000, 0xff7f0000, 0xff9c009c, 0xfffc7f00, 0xffffff00, 0xff00fc00, 0xff009393, 0xff00ffff, 0xff0000fc, 0xffff00ff, 0xff7f7f7f, 0xff2d2d2d,
 	0xff470000, 0xff472100, 0xff474700, 0xff324700, 0xff004700, 0xff00472c, 0xff004747, 0xff002747, 0xff000047, 0xff2e0047, 0xff470047, 0xff47002a,
 	0xff740000, 0xff743a00, 0xff747400, 0xff517400, 0xff007400, 0xff007449, 0xff007474, 0xff004074, 0xff000074, 0xff4b0074, 0xff740074, 0xff740045,
@@ -126,7 +126,7 @@ List<TextSpan> applyAnsiFormatting(String s, TextStyle base) {
 				fg *= 10;
 				fg += s[i].codeUnits[0] - '0'.codeUnits[0];
 			}
-			fgColor = fg == 99 ? null : Color(colorHexCodes[fg]);
+			fgColor = fg == 99 ? null : Color(_colorHexCodes[fg]);
 			if (i + 2 < s.length && s[i + 1] == ',' && _isDigit(s[i + 2])) {
 				i += 2;
 				var bg = s[i].codeUnits[0] - '0'.codeUnits[0];
@@ -135,7 +135,7 @@ List<TextSpan> applyAnsiFormatting(String s, TextStyle base) {
 					bg *= 10;
 					bg += s[i].codeUnits[0] - '0'.codeUnits[0];
 				}
-				bgColor = bg == 99 ? null : Color(colorHexCodes[bg]);
+				bgColor = bg == 99 ? null : Color(_colorHexCodes[bg]);
 			}
 			break;
 		case '\x04': // hex color
