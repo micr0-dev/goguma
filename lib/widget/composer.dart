@@ -439,6 +439,16 @@ class ComposerState extends State<Composer> {
 
 	void setReplyTo(MessageModel msg) async {
 		var buffer = context.read<BufferModel>();
+		var client = context.read<Client>();
+
+		var sender = msg.msg.source!.name;
+		var areRepliesAllowed = client.isupport.isClientTagAllowed('draft/reply');
+		if (client.isMyNick(sender) && !areRepliesAllowed) {
+			ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+				content: Text('This server doesn\'t support replies. Replying to yourself won\'t work.'),
+			));
+			return;
+		}
 
 		// TODO: disable swap when source is not in channel
 		// TODO: query members when BufferPage is first displayed

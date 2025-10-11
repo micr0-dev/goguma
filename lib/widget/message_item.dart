@@ -251,53 +251,48 @@ class RegularMessageItem extends StatelessWidget {
 
 		Widget decoratedMessage;
 		if (isAction) {
-			decoratedMessage = Align(
-				alignment: boxAlignment,
-				child: Container(
-					child: inner,
-				),
-			);
+			decoratedMessage = inner;
 		} else {
-			decoratedMessage = Align(
-				alignment: boxAlignment,
-				child: ConstrainedBox(
-					constraints: BoxConstraints(
-						// Message bubbles are 80% of the screen width at most
-						maxWidth: MediaQuery.of(context).size.width * 0.8,
-					),
-					child: Stack(children: [
-						Container(
-							decoration: BoxDecoration(
-								borderRadius: BorderRadius.circular(10),
-								color: boxColor,
-							),
-							margin: msg.reactions.isEmpty ? null : EdgeInsets.only(bottom: 25),
-							padding: EdgeInsets.all(10),
-							child: inner,
-						),
-						if (!msg.reactions.isEmpty) Positioned(
-							bottom: 4,
-							right: 10,
-							child: _ReactionsRow(msg),
-						),
-					]),
+			decoratedMessage = ConstrainedBox(
+				constraints: BoxConstraints(
+					// Message bubbles are 80% of the screen width at most
+					maxWidth: MediaQuery.of(context).size.width * 0.8,
 				),
+				child: Stack(children: [
+					Container(
+						decoration: BoxDecoration(
+							borderRadius: BorderRadius.circular(10),
+							color: boxColor,
+						),
+						margin: msg.reactions.isEmpty ? null : EdgeInsets.only(bottom: 25),
+						padding: EdgeInsets.all(10),
+						child: inner,
+					),
+					if (!msg.reactions.isEmpty) Positioned(
+						bottom: 4,
+						right: 10,
+						child: _ReactionsRow(msg),
+					),
+				]),
 			);
 		}
 
-		if (!isFromMe) {
-			decoratedMessage = SwipeAction(
-				background: Align(
-					alignment: Alignment.centerLeft,
-					child: Opacity(
-						opacity: 0.6,
-						child: Icon(Icons.reply),
-					),
+		decoratedMessage = SwipeAction(
+			background: Align(
+				alignment: Alignment.centerLeft,
+				child: Opacity(
+					opacity: 0.6,
+					child: Icon(Icons.reply),
 				),
-				onSwipe: onReply,
-				child: decoratedMessage,
-			);
-		}
+			),
+			onSwipe: onReply,
+			child: decoratedMessage,
+		);
+
+		decoratedMessage = Align(
+			alignment: boxAlignment,
+			child: decoratedMessage,
+		);
 
 		decoratedMessage = GestureDetector(
 			onLongPress: () {
