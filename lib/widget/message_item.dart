@@ -95,7 +95,7 @@ class RegularMessageItem extends StatelessWidget {
 			text: sender,
 			style: TextStyle(
 				fontWeight: FontWeight.bold,
-				color: senderNickColor,
+				color: isAction ? textColor : senderNickColor,
 			),
 		);
 		if (hasChannelContext) {
@@ -126,7 +126,7 @@ class RegularMessageItem extends StatelessWidget {
 						margin: EdgeInsets.all(3.0),
 						decoration: BoxDecoration(
 							shape: BoxShape.circle,
-							color: boxColor,
+							color: senderNickColor,
 						),
 					),
 				),
