@@ -80,6 +80,8 @@ class MessageSheet extends StatelessWidget {
 		var buffer = context.watch<BufferModel>();
 		var network = context.watch<NetworkModel>();
 		var isOwn = client.isMyNick(sender);
+		var ctcp = CtcpMessage.parse(ircMsg);
+		var isAction = ctcp != null && ctcp.cmd == 'ACTION';
 		var canSendMessage = canSendMessageToBuffer(buffer, network);
 		// TODO: we can redact if we are channel operator too
 		var canRedact = canSendMessage && client.caps.enabled.contains('draft/message-redaction') && ircMsg.tags['msgid'] != null && isOwn && !message.entry.redacted;
@@ -142,8 +144,18 @@ class MessageSheet extends StatelessWidget {
 				title: Text('Copy'),
 				leading: Icon(Icons.content_copy),
 				onTap: () async {
-					var body = stripAnsiFormatting(ircMsg.params[1]);
-					var text = '<$sender> $body';
+					var text = '';
+					if (isAction) {
+						var body = ctcp.param;
+						if (body == null) {
+							return;
+						}
+						body = stripAnsiFormatting(body);
+						text = '$sender $body';
+					} else {
+						var body = stripAnsiFormatting(ircMsg.params[1]);
+						text = '<$sender> $body';
+					}
 					await Clipboard.setData(ClipboardData(text: text));
 					if (context.mounted) {
 						Navigator.pop(context);

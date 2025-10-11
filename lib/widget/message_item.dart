@@ -299,16 +299,13 @@ class RegularMessageItem extends StatelessWidget {
 			);
 		}
 
-		// TODO: support actions as well
-		if (!isAction) {
-			decoratedMessage = GestureDetector(
-				onLongPress: () {
-					var buffer = context.read<BufferModel>();
-					MessageSheet.open(context, buffer, msg, onReply);
-				},
-				child: decoratedMessage,
-			);
-		}
+		decoratedMessage = GestureDetector(
+			onLongPress: () {
+				var buffer = context.read<BufferModel>();
+				MessageSheet.open(context, buffer, msg, onReply);
+			},
+			child: decoratedMessage,
+		);
 
 		return Column(children: [
 			if (showUnreadMarker) Container(
