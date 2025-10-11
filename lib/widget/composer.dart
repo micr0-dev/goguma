@@ -450,7 +450,6 @@ class ComposerState extends State<Composer> {
 			return;
 		}
 
-		// TODO: disable swap when source is not in channel
 		// TODO: query members when BufferPage is first displayed
 		var nickname = msg.msg.source!.name;
 		if (buffer.members != null && !buffer.members!.members.containsKey(nickname)) {
