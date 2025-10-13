@@ -9,6 +9,7 @@ import '../database.dart';
 import '../irc.dart';
 import '../models.dart';
 import '../page/buffer.dart';
+import '../page/buffer_details.dart';
 import './emoji_sheet.dart';
 
 const _defaultReactions = ['❤️', '👍', '👎', '😂', '😮', '😢'];
@@ -35,6 +36,22 @@ class MessageSheet extends StatelessWidget {
 				);
 			},
 		);
+	}
+
+	void _handleViewProfile(BuildContext context, String sender) async {
+		var db = context.read<DB>();
+		var bufferList = context.read<BufferListModel>();
+		var network = context.read<NetworkModel>();
+		var navigator = Navigator.of(context);
+
+		var buffer = bufferList.get(sender, network);
+		if (buffer == null) {
+			var entry = await db.storeBuffer(BufferEntry(name: sender, network: network.networkId));
+			buffer = BufferModel(entry: entry, network: network);
+			bufferList.add(buffer);
+		}
+
+		await navigator.pushNamed(BufferDetailsPage.routeName, arguments: buffer);
 	}
 
 	void _handleReact(BuildContext context, String reaction) async {
@@ -138,6 +155,14 @@ class MessageSheet extends StatelessWidget {
 					var network = context.read<NetworkModel>();
 					Navigator.pop(context);
 					BufferPage.open(context, sender, network);
+				},
+			),
+			if (!isOwn) ListTile(
+				title: Text('View profile'),
+				leading: Icon(Icons.person),
+				onTap: () {
+					Navigator.pop(context);
+					_handleViewProfile(context, sender);
 				},
 			),
 			ListTile(
