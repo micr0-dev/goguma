@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../ansi.dart';
 import '../client.dart';
+import '../emoji.dart';
 import '../irc.dart';
 import '../linkify.dart';
 import '../models.dart';
@@ -43,6 +44,13 @@ class RegularMessageItem extends StatelessWidget {
 		var hasChannelContext = ircMsg.tags['+draft/channel-context'] != null;
 		var isFromMe = client.isMyNick(sender);
 		assert(ircMsg.cmd == 'PRIVMSG' || ircMsg.cmd == 'NOTICE');
+
+		var body = ircMsg.params[1];
+		const maxEmotesForBigFont = 5;
+		// use .take to avoid processing the entire string
+		var bigEmotes = body.isNotEmpty &&
+			body.characters.take(maxEmotesForBigFont + 1).length <= maxEmotesForBigFont &&
+			body.characters.every(isEmoji);
 
 		var target = ircMsg.params[0];
 		var i = parseTargetPrefix(target, client.isupport.statusMsg);
@@ -141,8 +149,13 @@ class RegularMessageItem extends StatelessWidget {
 					isFromMe: isFromMe,
 				),
 			];
+		} else if (bigEmotes) {
+			content = [
+				if (isFirstInGroup && !isFromMe) senderTextSpan,
+				if (isFirstInGroup && !isFromMe) TextSpan(text: '\n'),
+				TextSpan(text: ircMsg.params[1], style: TextStyle(fontSize: 42)),
+			];
 		} else {
-			var body = ircMsg.params[1];
 			WidgetSpan? replyChip;
 			if (msg.replyTo != null && msg.replyTo!.msg.source != null) {
 				var replyNickname = msg.replyTo!.msg.source!.name;
@@ -250,7 +263,7 @@ class RegularMessageItem extends StatelessWidget {
 		inner = DefaultTextStyle.merge(style: TextStyle(color: textColor), child: inner);
 
 		Widget decoratedMessage;
-		if (isAction) {
+		if (isAction || bigEmotes) {
 			decoratedMessage = inner;
 		} else {
 			decoratedMessage = ConstrainedBox(
