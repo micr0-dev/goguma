@@ -77,10 +77,10 @@ Future<void> handlePushMessage(DB db, WebPushSubscriptionEntry sub, List<int> ci
 		}
 
 		var target = msg.params[0];
-		var isChannel = _isChannel(target, networkEntry.isupport);
+		var isChannel = networkEntry.isupport.isChannel(target);
 		if (!isChannel) {
 			var channelCtx = msg.tags['+draft/channel-context'];
-			if (channelCtx != null && _isChannel(channelCtx, networkEntry.isupport) && await _fetchBuffer(db, channelCtx, networkEntry) != null) {
+			if (channelCtx != null && networkEntry.isupport.isChannel(channelCtx) && await _fetchBuffer(db, channelCtx, networkEntry) != null) {
 				target = channelCtx;
 				isChannel = true;
 			} else {
@@ -137,10 +137,6 @@ Future<void> handlePushMessage(DB db, WebPushSubscriptionEntry sub, List<int> ci
 		log.print('Ignoring ${msg.cmd} message');
 		return;
 	}
-}
-
-bool _isChannel(String name, IrcIsupportRegistry isupport) {
-	return name.length > 0 && isupport.chanTypes.contains(name[0]);
 }
 
 Future<NetworkEntry?> _fetchNetwork(DB db, int id) async {
