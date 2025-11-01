@@ -48,7 +48,7 @@ class RegularMessageItem extends StatelessWidget {
 		var body = ircMsg.params[1];
 		const maxEmotesForBigFont = 5;
 		// use .take to avoid processing the entire string
-		var bigEmotes = body.isNotEmpty &&
+		var bigEmotes = !entry.redacted && body.isNotEmpty &&
 			body.characters.take(maxEmotesForBigFont + 1).length <= maxEmotesForBigFont &&
 			body.characters.every(isEmoji);
 
