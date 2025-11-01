@@ -33,9 +33,9 @@ class DateIndicatorState extends State<DateIndicator> with SingleTickerProviderS
 
 	@override
 	void dispose() {
-		super.dispose();
 		_controller.dispose();
 		_timer?.cancel();
+		super.dispose();
 	}
 
 	void show() {
