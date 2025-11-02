@@ -672,6 +672,7 @@ class IrcIsupportRegistry {
 	String? get vapid => _raw['VAPID'];
 	String? get filehost => _raw['soju.im/FILEHOST'];
 	String get statusMsg => _raw['STATUSMSG'] ?? '';
+	String? get icon => _raw['draft/ICON'];
 
 	void parse(List<String> tokens) {
 		for (var tok in tokens) {

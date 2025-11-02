@@ -136,6 +136,14 @@ class NetworkModel extends ChangeNotifier {
 			port: serverEntry.port,
 		);
 	}
+
+	String? get icon {
+		var icon = networkEntry.isupport.icon;
+		if (icon == null || !icon.startsWith('https://')) {
+			return null;
+		}
+		return icon;
+	}
 }
 
 class BouncerNetworkListModel extends ChangeNotifier {

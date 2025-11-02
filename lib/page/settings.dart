@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../cached_network_image.dart';
 import '../client.dart';
 import '../client_controller.dart';
 import '../database.dart';
@@ -250,12 +251,25 @@ class _NetworkItem extends AnimatedWidget {
 			}
 		}
 
+		var icon = network.icon;
+
 		return ListTile(
 			title: Text(network.displayName),
 			subtitle: Text(subtitle),
 			leading: Column(
 				mainAxisAlignment: MainAxisAlignment.center,
-				children: const [Icon(Icons.hub)],
+				children: [ClipRRect(
+					borderRadius: BorderRadius.circular(5),
+					child: Container(
+						width: 40,
+						height: 40,
+						color: Theme.of(context).colorScheme.surfaceContainerHigh,
+						child: icon != null ? Image(
+							image: CachedNetworkImage(icon),
+							fit: BoxFit.contain,
+						) : Icon(Icons.hub),
+					),
+				)],
 			),
 			onTap: () {
 				Navigator.pushNamed(context, NetworkDetailsPage.routeName, arguments: network);
