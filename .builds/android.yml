@@ -46,6 +46,9 @@ tasks:
   - analyze: |
       cd goguma
       flutter analyze --no-fatal-infos
+  - test: |
+      cd goguma
+      flutter test --reporter expanded
   - build: |
       cd goguma
       tag="$(git describe --abbrev=0)"
