@@ -85,14 +85,14 @@ class _UrlLinkifier extends Linkifier {
 
 	void _parseText(List<LinkifyElement> out, String text) {
 		while (text != '') {
-			var i = -1;
+			var i = text.length;
 			for (var proto in ['http', 'https', 'irc', 'ircs']) {
-				i = text.indexOf(proto + '://');
-				if (i >= 0) {
-					break;
+				var j = text.indexOf(proto + '://');
+				if (j >= 0 && j < i) {
+					i = j;
 				}
 			}
-			if (i < 0) {
+			if (i == text.length) {
 				out.add(TextElement(text));
 				return;
 			}
