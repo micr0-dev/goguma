@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../cached_network_image.dart';
+
 class GalleryPageArguments {
 	final Uri uri;
 	final Object heroTag;
@@ -40,8 +42,8 @@ class _GalleryPageState extends State<GalleryPage> {
 				],
 			),
 			backgroundColor: Colors.black,
-			body: Hero(tag: widget.heroTag, child: Image.network(
-				widget.uri.toString(),
+			body: Hero(tag: widget.heroTag, child: Image(
+				image: CachedNetworkImage(widget.uri.toString()),
 				filterQuality: FilterQuality.medium,
 				loadingBuilder: (context, child, loadingProgress) {
 					if (loadingProgress == null) {

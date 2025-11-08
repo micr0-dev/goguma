@@ -17,6 +17,7 @@ dependencies:
   async: ^2.11.0
   characters: ^1.4.0
   connectivity_plus: ^6.0.2
+  crypto: ^3.0.7
   dynamic_color: ^1.7.0
   file_selector: ^1.0.1
   firebase_core: ^4.0.0
@@ -33,6 +34,7 @@ dependencies:
   linkify: ^5.0.0
   mime: ^2.0.0
   path: ^1.8.1
+  path_provider: ^2.1.5
   provider: ^6.0.1
   scrollable_positioned_list: ^0.3.5
   sentry: ^9.3.0

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../cached_network_image.dart';
 import '../link_preview.dart' as lib;
 import '../page/gallery.dart';
 
@@ -68,8 +69,8 @@ class _PhotoPreview extends StatelessWidget {
 					}
 				}
 			},
-			child: Hero(tag: _heroTag, child: Image.network(
-				preview.imageUrl.toString(),
+			child: Hero(tag: _heroTag, child: Image(
+				image: CachedNetworkImage(preview.imageUrl.toString()),
 				height: 250,
 				fit: BoxFit.cover,
 				filterQuality: FilterQuality.medium,
