@@ -319,6 +319,7 @@ class _ConnectPageState extends State<ConnectPage> {
 						decoration: InputDecoration(
 							labelText: 'Server',
 							errorText: serverErr,
+							errorMaxLines: 10,
 						),
 						controller: serverController,
 						autofocus: true,
