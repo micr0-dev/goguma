@@ -9,6 +9,8 @@ import 'package:flutter/painting.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 
+import 'logging.dart';
+
 class CachedNetworkImage extends ImageProvider<CachedNetworkImage> {
 	final String url;
 
@@ -144,6 +146,54 @@ class CachedNetworkImage extends ImageProvider<CachedNetworkImage> {
 
 	@override
 	int get hashCode => url.hashCode;
+}
+
+void pruneNetworkImageCache() async {
+	var rootDir = await _getRootDir();
+
+	var lastScanFile = File(path.join(rootDir.path, '.last-scan'));
+	DateTime? dueDate;
+	try {
+		var lastScan = await lastScanFile.lastModified();
+		dueDate = lastScan.add(Duration(days: 7));
+	} on PathNotFoundException {
+		// ignore
+	}
+	if (dueDate != null && DateTime.now().isBefore(dueDate)) {
+		return;
+	}
+
+	var start = DateTime.now();
+	log.print('Started cached network image cleanup');
+
+	var tooOld = DateTime.now().subtract(Duration(days: 30));
+	var total = 0;
+	var deleted = 0;
+	await for (var entry in rootDir.list()) {
+		if (path.basename(entry.path).startsWith('.')) {
+			continue;
+		}
+
+		var lastCheckFile = File(path.join(entry.path, '.last-check'));
+		DateTime? lastCheck;
+		try {
+			lastCheck = await lastCheckFile.lastModified();
+		} on PathNotFoundException {
+			// ignore
+		}
+
+		if (lastCheck == null || lastCheck.isBefore(tooOld)) {
+			await entry.delete(recursive: true);
+			deleted++;
+		}
+
+		total++;
+	}
+
+	await lastScanFile.writeAsString('');
+
+	var ellapsed = DateTime.now().difference(start);
+	log.print('Finished cached network image cleanup (took $ellapsed, scanned $total entries, deleted $deleted entries)');
 }
 
 Future<File?> _findLatestBlob(Directory entryDir) async {

@@ -13,6 +13,7 @@ import 'package:workmanager/workmanager.dart';
 import 'android_le.dart';
 import 'apns.dart';
 import 'app.dart';
+import 'cached_network_image.dart';
 import 'client.dart';
 import 'client_controller.dart';
 import 'database.dart';
@@ -161,6 +162,8 @@ void main() async {
 			rethrow;
 		}
 	});
+
+	unawaited(Future.delayed(Duration(seconds: 15), pruneNetworkImageCache));
 
 	runApp(MultiProvider(
 		providers: [
