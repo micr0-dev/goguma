@@ -7,6 +7,8 @@ analyzer:
     strict-casts: true
     strict-inference: true
     strict-raw-types: true
+  exclude:
+    - lib/widget/scrollable_positioned_list/**
 
 linter:
   rules:

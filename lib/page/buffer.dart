@@ -3,7 +3,6 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:share_handler/share_handler.dart';
 
 import '../ansi.dart';
@@ -19,6 +18,7 @@ import '../widget/composer.dart';
 import '../widget/date_indicator.dart';
 import '../widget/message_item.dart';
 import '../widget/network_indicator.dart';
+import '../widget/scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'buffer_details.dart';
 import 'buffer_list.dart';
 
