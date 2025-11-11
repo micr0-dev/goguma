@@ -65,37 +65,6 @@ class ScrollablePositionedList extends StatefulWidget {
         assert(itemBuilder != null),
         itemPositionsNotifier = itemPositionsListener as ItemPositionsNotifier?,
         scrollOffsetNotifier = scrollOffsetListener as ScrollOffsetNotifier?,
-        separatorBuilder = null,
-        super(key: key);
-
-  /// Create a [ScrollablePositionedList] whose items are provided by
-  /// [itemBuilder] and separators provided by [separatorBuilder].
-  const ScrollablePositionedList.separated({
-    required this.itemCount,
-    required this.itemBuilder,
-    required this.separatorBuilder,
-    Key? key,
-    this.shrinkWrap = false,
-    this.itemScrollController,
-    ItemPositionsListener? itemPositionsListener,
-    this.scrollOffsetController,
-    ScrollOffsetListener? scrollOffsetListener,
-    this.initialScrollIndex = 0,
-    this.initialAlignment = 0,
-    this.scrollDirection = Axis.vertical,
-    this.reverse = false,
-    this.physics,
-    this.semanticChildCount,
-    this.padding,
-    this.addSemanticIndexes = true,
-    this.addAutomaticKeepAlives = true,
-    this.addRepaintBoundaries = true,
-    this.minCacheExtent,
-  })  : assert(itemCount != null),
-        assert(itemBuilder != null),
-        assert(separatorBuilder != null),
-        itemPositionsNotifier = itemPositionsListener as ItemPositionsNotifier?,
-        scrollOffsetNotifier = scrollOffsetListener as ScrollOffsetNotifier?,
         super(key: key);
 
   /// Number of items the [itemBuilder] can produce.
@@ -104,10 +73,6 @@ class ScrollablePositionedList extends StatefulWidget {
   /// Called to build children for the list with
   /// 0 <= index < itemCount.
   final IndexedWidgetBuilder itemBuilder;
-
-  /// Called to build separators for between each item in the list.
-  /// Called with 0 <= index < itemCount - 1.
-  final IndexedWidgetBuilder? separatorBuilder;
 
   /// Controller for jumping or scrolling to an item.
   final ItemScrollController? itemScrollController;
@@ -425,7 +390,6 @@ class _ScrollablePositionedListState extends State<ScrollablePositionedList>
                     onNotification: (_) => _isTransitioning,
                     child: PositionedList(
                       itemBuilder: widget.itemBuilder,
-                      separatorBuilder: widget.separatorBuilder,
                       itemCount: widget.itemCount,
                       positionedIndex: primary.target,
                       controller: primary.scrollController,
@@ -455,7 +419,6 @@ class _ScrollablePositionedListState extends State<ScrollablePositionedList>
                       onNotification: (_) => false,
                       child: PositionedList(
                         itemBuilder: widget.itemBuilder,
-                        separatorBuilder: widget.separatorBuilder,
                         itemCount: widget.itemCount,
                         itemPositionsNotifier: secondary.itemPositionsNotifier,
                         positionedIndex: secondary.target,
