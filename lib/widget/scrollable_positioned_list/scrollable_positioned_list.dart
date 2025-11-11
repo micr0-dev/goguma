@@ -46,7 +46,6 @@ class ScrollablePositionedList extends StatefulWidget {
     required this.itemBuilder,
     Key? key,
     this.itemScrollController,
-    this.shrinkWrap = false,
     ItemPositionsListener? itemPositionsListener,
     this.scrollOffsetController,
     ScrollOffsetListener? scrollOffsetListener,
@@ -105,15 +104,6 @@ class ScrollablePositionedList extends StatefulWidget {
   ///
   /// See [ScrollView.reverse].
   final bool reverse;
-
-  /// {@template flutter.widgets.scroll_view.shrinkWrap}
-  /// Whether the extent of the scroll view in the [scrollDirection] should be
-  /// determined by the contents being viewed.
-  ///
-  ///  Defaults to false.
-  ///
-  /// See [ScrollView.shrinkWrap].
-  final bool shrinkWrap;
 
   /// How the scroll view should respond to user input.
   ///
@@ -399,7 +389,6 @@ class _ScrollablePositionedListState extends State<ScrollablePositionedList>
                       cacheExtent: cacheExtent,
                       alignment: primary.alignment,
                       physics: widget.physics,
-                      shrinkWrap: widget.shrinkWrap,
                       addSemanticIndexes: widget.addSemanticIndexes,
                       semanticChildCount: widget.semanticChildCount,
                       padding: widget.padding,
@@ -428,7 +417,6 @@ class _ScrollablePositionedListState extends State<ScrollablePositionedList>
                         cacheExtent: cacheExtent,
                         alignment: secondary.alignment,
                         physics: widget.physics,
-                        shrinkWrap: widget.shrinkWrap,
                         addSemanticIndexes: widget.addSemanticIndexes,
                         semanticChildCount: widget.semanticChildCount,
                         padding: widget.padding,
