@@ -44,10 +44,10 @@ class ItemPosition {
   @override
   bool operator ==(dynamic other) {
     if (other.runtimeType != runtimeType) return false;
-    final ItemPosition otherPosition = other;
-    return otherPosition.index == index &&
-        otherPosition.itemLeadingEdge == itemLeadingEdge &&
-        otherPosition.itemTrailingEdge == itemTrailingEdge;
+    return other is ItemPosition &&
+        other.index == index &&
+        other.itemLeadingEdge == itemLeadingEdge &&
+        other.itemTrailingEdge == itemTrailingEdge;
   }
 
   @override

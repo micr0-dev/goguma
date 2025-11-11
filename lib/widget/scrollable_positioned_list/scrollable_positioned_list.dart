@@ -279,14 +279,14 @@ class _ScrollablePositionedListState extends State<ScrollablePositionedList>
 
   bool _isTransitioning = false;
 
-  var _animationController;
+  AnimationController? _animationController;
 
   double previousOffset = 0;
 
   @override
   void initState() {
     super.initState();
-    ItemPosition? initialPosition = PageStorage.of(context).readState(context);
+    final initialPosition = PageStorage.of(context).readState(context) as ItemPosition?;
     primary.target = initialPosition?.index ?? widget.initialScrollIndex;
     primary.alignment =
         initialPosition?.itemLeadingEdge ?? widget.initialAlignment;
@@ -521,7 +521,7 @@ class _ScrollablePositionedListState extends State<ScrollablePositionedList>
           _animationController =
               AnimationController(vsync: this, duration: duration)..forward();
           opacity.parent = _opacityAnimation(opacityAnimationWeights)
-              .animate(_animationController);
+              .animate(_animationController!.view);
           secondary.scrollController.jumpTo(-direction *
               (_screenScrollCount *
                       primary.scrollController.position.viewportDimension -
