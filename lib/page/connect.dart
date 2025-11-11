@@ -9,6 +9,7 @@ import '../client.dart';
 import '../client_controller.dart';
 import '../database.dart';
 import '../irc.dart';
+import '../l10n/app_localizations.dart';
 import '../logging.dart';
 import '../models.dart';
 import '../prefs.dart';
@@ -268,6 +269,8 @@ class _ConnectPageState extends State<ConnectPage> {
 
 	@override
 	Widget build(BuildContext context) {
+		var l10n = AppLocalizations.of(context)!;
+
 		String? serverErr, nicknameErr, passwordErr;
 		if (_error is IrcException) {
 			var ircErr = _error as IrcException;
@@ -317,7 +320,7 @@ class _ConnectPageState extends State<ConnectPage> {
 						keyboardType: TextInputType.url,
 						autocorrect: false,
 						decoration: InputDecoration(
-							labelText: 'Server',
+							labelText: l10n.connect_server,
 							errorText: serverErr,
 							errorMaxLines: 10,
 						),

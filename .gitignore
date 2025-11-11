@@ -48,3 +48,4 @@ app.*.map.json
 
 # Generated code
 /lib/main_generated.dart
+/lib/l10n/*.dart

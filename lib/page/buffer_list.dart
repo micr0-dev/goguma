@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../ansi.dart';
 import '../client_controller.dart';
 import '../database.dart';
+import '../l10n/app_localizations.dart';
 import '../models.dart';
 import '../page/edit_bouncer_network.dart';
 import '../page/join.dart';
@@ -92,6 +93,8 @@ class _BufferListPageState extends State<BufferListPage> {
 
 	@override
 	Widget build(BuildContext context) {
+		var l10n = AppLocalizations.of(context)!;
+
 		List<BufferModel> buffers = context.watch<BufferListModel>().buffers;
 		if (_searchQuery != null) {
 			var query = _searchQuery!;
@@ -180,7 +183,7 @@ class _BufferListPageState extends State<BufferListPage> {
 				}),
 				actions: _searchQuery != null ? null : [
 					IconButton(
-						tooltip: 'Search',
+						tooltip: l10n.bufferList_search,
 						icon: const Icon(Icons.search),
 						onPressed: _startSearch,
 					),

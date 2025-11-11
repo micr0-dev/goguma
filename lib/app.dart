@@ -13,6 +13,7 @@ import 'client.dart';
 import 'client_controller.dart';
 import 'dialog/authenticate.dart';
 import 'irc.dart';
+import 'l10n/app_localizations.dart';
 import 'logging.dart';
 import 'models.dart';
 import 'network_state_aggregator.dart';
@@ -574,6 +575,8 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 				navigatorKey: _navigatorKey,
 				scaffoldMessengerKey: _scaffoldMessengerKey,
 				debugShowCheckedModeBanner: false,
+				localizationsDelegates: AppLocalizations.localizationsDelegates,
+				supportedLocales: AppLocalizations.supportedLocales,
 			);
 		});
 	}

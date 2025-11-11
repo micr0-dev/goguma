@@ -26,10 +26,13 @@ dependencies:
   flutter_apns_only: ^1.6.0
   flutter_background: ^1.3.0
   flutter_local_notifications: ^19.0.0
+  flutter_localizations:
+    sdk: flutter
   geolocator: ^14.0.0
   hex: ^0.2.0
   html: ^0.15.2
   image_picker: ^1.0.4
+  intl: any
   linkify: ^5.0.0
   mime: ^2.0.0
   path: ^1.8.1
@@ -56,3 +59,4 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  generate: true
