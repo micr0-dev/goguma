@@ -36,6 +36,8 @@ tasks:
       # workaround for OOM
       sudo mkswap -U clear --size 4G --file /swapfile
       sudo swapon /swapfile
+      # clear package cache to save some disk space
+      yay -Scc --noconfirm
   - configure: |
       cd goguma
       [ -e ~/keystore.properties ] && ln -s ~/keystore.properties android/keystore.properties
