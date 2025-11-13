@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert' show base64UrlEncode;
+import 'dart:io';
 import 'dart:math';
 
 import 'package:unifiedpush/unifiedpush.dart';
@@ -17,6 +18,12 @@ class UnifiedPushController extends PushController {
 	UnifiedPushController._();
 
 	Future<void> _init() async {
+		// initialize() succeeds when missing LinuxOptions, but then
+		// getDistributor() fails an assertion
+		if (Platform.isLinux) {
+			throw Exception('UnifiedPush not supported on Linux');
+		}
+
 		try {
 			await UnifiedPush.initialize(
 				onNewEndpoint: _handleNewEndpoint,
