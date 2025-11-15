@@ -431,7 +431,7 @@ class ComposerState extends State<Composer> {
 	}
 
 	Draft? get draft {
-		if (_controller.text.isEmpty || _isCommand) {
+		if (_controller.text.isEmpty) {
 			return null;
 		}
 		return Draft(text: _controller.text, replyTo: _replyTo?.id);
