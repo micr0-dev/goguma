@@ -92,6 +92,7 @@ class _EmojiSheetState extends State<EmojiSheet> {
 				expand: false,
 				snap: true,
 				minChildSize: 0.5,
+				maxChildSize: 0.8,
 				builder: (context, scrollController) => Column(children: [
 					Container(
 						padding: EdgeInsets.all(15),
