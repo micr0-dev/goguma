@@ -13,7 +13,7 @@ environment:
   flutter: ^3.9.0
 
 dependencies:
-  app_links: ^6.1.1
+  app_links: ^7.0.0
   async: ^2.11.0
   characters: ^1.4.0
   connectivity_plus: ^7.0.0
