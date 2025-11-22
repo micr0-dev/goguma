@@ -281,7 +281,7 @@ class ComposerState extends State<Composer> {
 			return true;
 		} else if (messages.length > 3) {
 			var confirmed = await _showConfirmSendDialog(text, messages.length);
-			if (!confirmed) {
+			if (!confirmed || !mounted) {
 				return false;
 			}
 		}
