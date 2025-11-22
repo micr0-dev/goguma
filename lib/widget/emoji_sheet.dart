@@ -56,9 +56,19 @@ class _EmojiSheetState extends State<EmojiSheet> {
 
 	@override
 	Widget build(BuildContext context) {
+		var mediaQuery = MediaQuery.of(context);
+
+		// Padding to ensure the user can scroll past the system UI at the end
+		// of the list. Use padding instead of viewPadding because we don't want
+		// additional padding when the keyboard is up.
+		var bottomPadding = SliverToBoxAdapter(child: Container(height: mediaQuery.padding.bottom));
+
 		List<Widget> slivers;
 		if (_filteredEmojis != null) {
-			slivers = [_EmojiGrid(_filteredEmojis!)];
+			slivers = [
+				_EmojiGrid(_filteredEmojis!),
+				bottomPadding,
+			];
 		} else {
 			slivers = Category.values.expand((category) => [
 				_EmojiHeader(category.description),
@@ -70,13 +80,14 @@ class _EmojiSheetState extends State<EmojiSheet> {
 					_EmojiHeader('Recent'),
 					_EmojiGrid(_recentEmojis),
 					...slivers,
+					bottomPadding,
 				];
 			}
 		}
 
 		// Padding ensures the full list is visible when the OSK is open
 		return Padding(
-			padding: MediaQuery.of(context).viewInsets,
+			padding: mediaQuery.viewInsets,
 			child: DraggableScrollableSheet(
 				expand: false,
 				snap: true,
