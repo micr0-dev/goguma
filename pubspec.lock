@@ -1392,11 +1392,10 @@ packages:
   webcrypto:
     dependency: "direct main"
     description:
-      path: "."
-      ref: "5a834498f53837f8378e73b699057e942b879c96"
-      resolved-ref: "5a834498f53837f8378e73b699057e942b879c96"
-      url: "https://github.com/google/webcrypto.dart.git"
-    source: git
+      name: webcrypto
+      sha256: "6b43001c4110856ff7fa5e5e65e7b2d44bec1d8b54a4d84d5fa2c7622267c5c1"
+      url: "https://pub.dev"
+    source: hosted
     version: "0.6.0"
   webkit_inspection_protocol:
     dependency: transitive
