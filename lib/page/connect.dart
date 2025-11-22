@@ -45,6 +45,7 @@ class _ConnectPageState extends State<ConnectPage> {
 	_ServerFeatures _serverFeatures = _ServerFeatures();
 	Client? _client;
 	String? _pinnedCertSHA1;
+	bool _obscurePassword = true;
 
 	final formKey = GlobalKey<FormState>();
 	final serverController = TextEditingController();
@@ -143,6 +144,7 @@ class _ConnectPageState extends State<ConnectPage> {
 
 		setState(() {
 			_loading = true;
+			_obscurePassword = true;
 		});
 
 		// TODO: only connect once (but be careful not to loose messages
@@ -359,10 +361,19 @@ class _ConnectPageState extends State<ConnectPage> {
 						autofillHints: [AutofillHints.username],
 					),
 					if (!_serverFeatures.passwordUnsupported) TextFormField(
-						obscureText: true,
+						obscureText: _obscurePassword,
 						decoration: InputDecoration(
 							labelText: _serverFeatures.passwordRequired ? 'Password' : 'Password (optional)',
 							errorText: passwordErr,
+							suffixIcon: IconButton(
+								tooltip: _obscurePassword ? 'Show password' : 'Hide password',
+								onPressed: () {
+									setState(() {
+										_obscurePassword = !_obscurePassword;
+									});
+								},
+								icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off),
+							),
 						),
 						controller: passwordController,
 						onFieldSubmitted: (_) {
