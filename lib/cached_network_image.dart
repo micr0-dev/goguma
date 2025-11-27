@@ -166,6 +166,8 @@ void pruneNetworkImageCache() async {
 	var start = DateTime.now();
 	log.print('Started cached network image cleanup');
 
+	await rootDir.create(recursive: true);
+
 	var tooOld = DateTime.now().subtract(Duration(days: 30));
 	var total = 0;
 	var deleted = 0;
