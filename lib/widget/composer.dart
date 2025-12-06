@@ -849,7 +849,7 @@ class ComposerState extends State<Composer> {
 									}
 								},
 							),
-							if (client.isupport.filehost != null) ListTile(
+							if (canUploadFiles) ListTile(
 								title: Text('Record audio'),
 								leading: Icon(Icons.mic),
 								onTap: () async {
