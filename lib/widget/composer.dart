@@ -105,6 +105,7 @@ class ComposerState extends State<Composer> {
 
 	void _initDraft(Draft draft) async {
 		_controller.text = draft.text;
+		_isCommand = draft.text.startsWith('/') && !draft.text.contains('\n');
 
 		if (draft.replyTo != null) {
 			var db = context.read<DB>();
