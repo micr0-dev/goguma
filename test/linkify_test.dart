@@ -1,6 +1,6 @@
+import 'package:flutter_test/flutter_test.dart';
 import 'package:goguma/linkify.dart';
 import 'package:linkify/linkify.dart';
-import 'package:test/test.dart';
 
 // goguma's _UrlLinkifier doesn't set custom text content.
 UrlElement urlElement(String url) {
