@@ -286,8 +286,9 @@ Future<void> _syncChatHistory(ClientProvider clientProvider, NetworkListModel ne
 void _dispatchWorkManager() {
 	Workmanager().executeTask((taskName, data) async {
 		try {
-			await log.init();
+			DartPluginRegistrant.ensureInitialized();
 			WidgetsFlutterBinding.ensureInitialized();
+			await log.init();
 
 			log.print('Executing work manager task: $taskName');
 

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_apns_only/flutter_apns_only.dart';
@@ -29,7 +30,7 @@ class ApnsPushController extends PushController {
 		var connector = ApnsPushConnectorOnly();
 		connector.configureApns(
 			onMessage: _handleApnsMessage,
-			onBackgroundMessage: _handleApnsMessage,
+			onBackgroundMessage: _handleBackgroundApnsMessage,
 			onLaunch: _handleApnsMessage,
 			onResume: _handleApnsMessage,
 		);
@@ -59,7 +60,6 @@ class ApnsPushController extends PushController {
 }
 
 // This function may called from a separate Isolate
-@pragma('vm:entry-point')
 Future<void> _handleApnsMessage(ApnsRemoteMessage msg) async {
 	log.print('Received APNs push message: ${msg.payload}');
 
@@ -79,6 +79,12 @@ Future<void> _handleApnsMessage(ApnsRemoteMessage msg) async {
 
 	List<int> ciphertext = base64.decode(encodedPayload);
 	await handlePushMessage(db, sub, ciphertext);
+}
+
+@pragma('vm:entry-point')
+Future<void> _handleBackgroundApnsMessage(ApnsRemoteMessage msg) async {
+	DartPluginRegistrant.ensureInitialized();
+	await _handleApnsMessage(msg);
 }
 
 Future<WebPushSubscriptionEntry?> _fetchWebPushSubscription(DB db, String tag) async {

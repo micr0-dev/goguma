@@ -1,7 +1,4 @@
-import 'dart:io';
-
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:shared_preferences_android/shared_preferences_android.dart';
 
 const _bufferCompactKey = 'buffer_compact';
 const _typingIndicatorKey = 'typing_indicator';
@@ -21,11 +18,6 @@ class Prefs {
 	Prefs._(this._prefs);
 
 	static Future<Prefs> load() async {
-		// See: https://github.com/flutter/flutter/issues/98473#issuecomment-1060952450
-		if (Platform.isAndroid) {
-			SharedPreferencesAndroid.registerWith();
-		}
-
 		return Prefs._(await SharedPreferences.getInstance());
 	}
 

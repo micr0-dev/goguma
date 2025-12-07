@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert' show base64UrlEncode;
 import 'dart:io';
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:unifiedpush/unifiedpush.dart';
 
@@ -127,6 +128,8 @@ class UnifiedPushController extends PushController {
 // This function may called from a separate Isolate
 @pragma('vm:entry-point')
 void _handleMessage(PushMessage message, String instance) async {
+	DartPluginRegistrant.ensureInitialized();
+
 	var ciphertext = message.content;
 	log.print('Got UnifiedPush message for $instance');
 

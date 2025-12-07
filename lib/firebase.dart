@@ -1,5 +1,6 @@
 import 'dart:convert' show json, base64, utf8;
 import 'dart:io';
+import 'dart:ui';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -39,7 +40,7 @@ class FirebasePushController extends PushController {
 		await _updateToken(token);
 		// TODO: listen to FirebaseMessaging.instance.onTokenRefresh
 
-		FirebaseMessaging.onBackgroundMessage(_handleFirebaseMessage);
+		FirebaseMessaging.onBackgroundMessage(_handleFirebaseBackgroundMessage);
 		FirebaseMessaging.onMessage.listen(_handleFirebaseMessage);
 
 		log.print('Firebase messaging initialized');
@@ -154,7 +155,6 @@ Future<void> _checkRespStatusCode(HttpClientResponse resp) async {
 }
 
 // This function may called from a separate Isolate
-@pragma('vm:entry-point')
 Future<void> _handleFirebaseMessage(RemoteMessage message) async {
 	log.print('Received Firebase push message: ${message.data}');
 
@@ -174,6 +174,12 @@ Future<void> _handleFirebaseMessage(RemoteMessage message) async {
 
 	List<int> ciphertext = base64.decode(encodedPayload);
 	await handlePushMessage(db, sub, ciphertext);
+}
+
+@pragma('vm:entry-point')
+Future<void> _handleFirebaseBackgroundMessage(RemoteMessage message) async {
+	DartPluginRegistrant.ensureInitialized();
+	await _handleFirebaseMessage(message);
 }
 
 Future<WebPushSubscriptionEntry?> _fetchWebPushSubscription(DB db, Uri endpoint) async {

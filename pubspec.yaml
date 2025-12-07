@@ -42,7 +42,6 @@ dependencies:
   share_handler: ^0.0.21
   share_plus: ^12.0.1
   shared_preferences: '^2.0.5'
-  shared_preferences_android: ^2.0.12
   sqflite: ^2.0.2
   # TODO: remove upper version constraints once this issue is fixed:
   # https://github.com/tekartik/sqflite/issues/1192

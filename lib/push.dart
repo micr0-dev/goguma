@@ -1,8 +1,5 @@
 import 'dart:async';
 import 'dart:convert' show utf8;
-import 'dart:io';
-
-import 'package:shared_preferences_android/shared_preferences_android.dart';
 
 import 'database.dart';
 import 'irc.dart';
@@ -56,10 +53,6 @@ Future<void> handlePushMessage(DB db, WebPushSubscriptionEntry sub, List<int> ci
 		throw Exception('Network #${sub.network} has an unknown server #${networkEntry.server}');
 	}
 
-	// See: https://github.com/flutter/flutter/issues/98473#issuecomment-1060952450
-	if (Platform.isAndroid) {
-		SharedPreferencesAndroid.registerWith();
-	}
 	var prefs = await Prefs.load();
 
 	var nickname = serverEntry.nick ?? prefs.nickname;
