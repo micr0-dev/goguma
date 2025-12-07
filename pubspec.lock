@@ -1273,10 +1273,10 @@ packages:
     dependency: transitive
     description:
       name: webpush_encryption
-      sha256: "63046b7d6909f4a72ce3c153fa574726e257aaf21b1995ba063dc241a1b1520b"
+      sha256: "5b83272b91acda6ae515fcd980c94f06bf413702282497c5a68f5dfc64fed27f"
       url: "https://pub.dev"
     source: hosted
-    version: "1.0.0"
+    version: "1.0.1"
   win32:
     dependency: transitive
     description:
