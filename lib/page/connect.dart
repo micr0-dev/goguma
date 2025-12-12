@@ -220,7 +220,7 @@ class _ConnectPageState extends State<ConnectPage> {
 			_serverFeatures = features;
 		});
 
-		if (!features.passwordUnsupported) {
+		if (features.passwordUnsupported) {
 			passwordController.text = '';
 		}
 	}
