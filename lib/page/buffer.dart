@@ -300,7 +300,10 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 	void activate() {
 		super.activate();
 		_activated = true;
-		_updateBufferFocus();
+		// Timer.run prevents calling setState() from inside activate()
+		Timer.run(() {
+			_updateBufferFocus();
+		});
 	}
 
 	@override
