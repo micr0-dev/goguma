@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:crypto/crypto.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
@@ -19,8 +20,8 @@ class CachedNetworkImage extends ImageProvider<CachedNetworkImage> {
 	static final _httpClient = HttpClient();
 
 	@override
-	Future<CachedNetworkImage> obtainKey(ImageConfiguration configuration) async {
-		return this;
+	Future<CachedNetworkImage> obtainKey(ImageConfiguration configuration) {
+		return SynchronousFuture(this);
 	}
 
 	@override
