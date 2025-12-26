@@ -42,13 +42,13 @@ class _GalleryPageState extends State<GalleryPage> {
 				],
 			),
 			backgroundColor: Colors.black,
-			body: Hero(tag: widget.heroTag, child: Image(
+			body: Image(
 				image: CachedNetworkImage(widget.uri.toString()),
 				filterQuality: FilterQuality.medium,
 				loadingBuilder: (context, child, loadingProgress) {
 					if (loadingProgress == null) {
 						return InteractiveViewer(
-							child: Center(child: child),
+							child: Center(child: Hero(tag: widget.heroTag, child: child)),
 						);
 					}
 					double? progress;
@@ -69,7 +69,7 @@ class _GalleryPageState extends State<GalleryPage> {
 						],
 					));
 				},
-			)),
+			),
 		);
 	}
 }
