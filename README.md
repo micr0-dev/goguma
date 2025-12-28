@@ -62,8 +62,7 @@ distribute Goguma yourself on the App Store, or a third-party platform.
 
 ## Contributing
 
-Send patches on [Codeberg], report bugs on the [issue tracker]. Discuss
-in [#goguma on Libera Chat].
+Send patches and report bugs on [Codeberg]. Discuss in [#goguma on Libera Chat].
 
 ## License
 
@@ -83,6 +82,5 @@ Copyright (C) 2021 The goguma Contributors
 [Apple App Store]: https://apps.apple.com/fr/app/goguma-irc/id6470394620
 [documentation]: doc/README.md
 [Codeberg]: https://codeberg.org/emersion/goguma
-[issue tracker]: https://todo.sr.ht/~emersion/goguma
 [#goguma on Libera Chat]: ircs://irc.libera.chat/#goguma
 [Transporter]: https://apps.apple.com/us/app/transporter/id1450874784
