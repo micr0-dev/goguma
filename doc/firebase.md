@@ -16,4 +16,4 @@ instance:
 For instance, to connect from the Android emulator to a locally running
 instance of pushgarden, one can use `http://10.0.2.2:8080`.
 
-[pushgarden]: https://git.sr.ht/~emersion/pushgarden
+[pushgarden]: https://codeberg.org/emersion/pushgarden
