@@ -47,8 +47,10 @@ class LinkPreview extends StatelessWidget {
 				Widget child;
 				if (preview.imageUrl != null) {
 					child = _PhotoPreview(preview);
-				} else {
+				} else if (preview.audioUrl != null) {
 					child = _AudioPreview(preview: preview);
+				} else {
+					throw StateError('Preview has no image nor audio');
 				}
 				return builder(context, child);
 			},
