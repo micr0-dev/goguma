@@ -48,7 +48,7 @@ class LinkPreview extends StatelessWidget {
 				if (preview.imageUrl != null) {
 					child = _PhotoPreview(preview);
 				} else if (preview.audioUrl != null) {
-					child = _AudioPreview(preview: preview);
+					child = _AudioPreview(preview);
 				} else {
 					throw StateError('Preview has no image nor audio');
 				}
@@ -124,7 +124,7 @@ class _PhotoPreview extends StatelessWidget {
 class _AudioPreview extends StatefulWidget {
 	final lib.LinkPreview preview;
 
-	_AudioPreview({ required this.preview });
+	_AudioPreview(this.preview);
 
 	@override
 	State<StatefulWidget> createState() {
