@@ -117,6 +117,7 @@ class LinkPreviewer {
 		}
 
 		// TODO: add support for oEmbed, see https://oembed.com/
+		// TODO: handle og:audio
 
 		// OpenGraph, see https://ogp.me/
 		var ogImage = _findOpenGraph(doc, 'og:image');
