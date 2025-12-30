@@ -12,8 +12,11 @@ class ReactionsSheet extends StatelessWidget {
 	final MessageModel message;
 	final UserListModel _userList; // TODO: watch list and individual users
 
-	ReactionsSheet({ super.key, required this.message, required UserListModel userList }) :
-		_userList = userList;
+	const ReactionsSheet({
+		super.key,
+		required this.message,
+		required UserListModel userList,
+	}) : _userList = userList;
 
 	static void open(BuildContext context, BufferModel buffer, MessageModel message) {
 		var network = context.read<NetworkModel>();

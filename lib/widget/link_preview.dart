@@ -124,7 +124,7 @@ class _PhotoPreview extends StatelessWidget {
 class _AudioPreview extends StatefulWidget {
 	final lib.LinkPreview preview;
 
-	_AudioPreview(this.preview);
+	const _AudioPreview(this.preview);
 
 	@override
 	State<StatefulWidget> createState() {
