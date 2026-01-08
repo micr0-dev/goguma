@@ -403,11 +403,11 @@ class _ConnectPageState extends State<ConnectPage> {
 			builder: (BuildContext context) {
 				Widget noButton = TextButton(
 					child: const Text('Reject'),
-					onPressed:  () { Navigator.pop(context); },
+					onPressed: () { Navigator.pop(context); },
 				);
 				Widget yesButton = TextButton(
 					child: const Text('Accept Always'),
-					onPressed:  () {
+					onPressed: () {
 						Navigator.pop(context);
 						setState(() => _pinnedCertSHA1 = HEX.encode(cert.sha1));
 						_handleServerFocusChange(false);

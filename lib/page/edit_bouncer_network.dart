@@ -71,7 +71,7 @@ class _EditBouncerNetworkPageState extends State<EditBouncerNetworkPage> {
 
 		_nameController = TextEditingController(text: name);
 		_urlController = TextEditingController(text: url);
-		_nicknameController = TextEditingController(text:  network?.nickname);
+		_nicknameController = TextEditingController(text: network?.nickname);
 		_usernameController = TextEditingController(text: network?.username);
 		_realnameController = TextEditingController(text: network?.realname);
 		_passController = TextEditingController(text: network?.pass);

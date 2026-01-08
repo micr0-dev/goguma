@@ -76,7 +76,7 @@ class RegularMessageItem extends StatelessWidget {
 
 		var boxColor = colorScheme.surfaceContainer;
 		var boxAlignment = Alignment.centerLeft;
-		var textColor =  colorScheme.onSurface;
+		var textColor = colorScheme.onSurface;
 		var senderNickColor = _getNickColor(sender, colorScheme.brightness);
 
 		if (isFromMe) {
@@ -242,7 +242,7 @@ class RegularMessageItem extends StatelessWidget {
 				child: Text(
 					time,
 					style: timeStyle.apply(color: Color(0x00000000)),
-					semanticsLabel: '',  // Make screen reader quiet
+					semanticsLabel: '', // Make screen reader quiet
 				),
 			));
 
@@ -507,7 +507,7 @@ class CompactMessageItem extends StatelessWidget {
 					child: Text(
 						sender,
 						style: senderStyle.apply(color: Color(0x00000000)),
-						semanticsLabel: '',  // Make screen reader quiet
+						semanticsLabel: '', // Make screen reader quiet
 						textScaler: TextScaler.noScaling,
 					),
 				),
@@ -532,7 +532,7 @@ class CompactMessageItem extends StatelessWidget {
 					child: Text(
 						timeText,
 						style: timeStyle.apply(color: Color(0x00000000)),
-						semanticsLabel: '',  // Make screen reader quiet
+						semanticsLabel: '', // Make screen reader quiet
 						textScaler: TextScaler.noScaling,
 					),
 				),
