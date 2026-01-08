@@ -851,6 +851,19 @@ class ComposerState extends State<Composer> {
 									}
 								},
 							),
+							if (canUploadFiles && _imagePicker.supportsImageSource(ImageSource.camera)) ListTile(
+								title: Text('Take a picture'),
+								leading: Icon(Icons.photo_camera),
+								onTap: () async {
+									Navigator.pop(context);
+									var file = await _imagePicker.pickImage(source: ImageSource.camera);
+									if (file != null) {
+										await _runAddMenuTask(() async {
+											await _uploadFile(file);
+										});
+									}
+								},
+							),
 							if (canUploadFiles) ListTile(
 								title: Text('Record audio'),
 								leading: Icon(Icons.mic),
