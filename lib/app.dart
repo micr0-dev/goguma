@@ -80,6 +80,11 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 				// Some servers may be missing AWAY support
 				return;
 			}
+			if (err.msg.cmd == 'FAIL' && err.msg.params[0] == 'METADATA' && err.msg.params[1] == 'KEY_INVALID') {
+				// We blindly subscribe to all metadata keys we're interested
+				// in, regardless of server support
+				return;
+			}
 
 			SnackBarAction? action;
 			if (err.msg.cmd == ERR_SASLFAIL) {
