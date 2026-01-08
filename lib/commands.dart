@@ -11,10 +11,12 @@ typedef CommandExec = String? Function(BuildContext context, String? param);
 
 class Command {
 	final CommandExec _exec;
+	final String usage;
 	final String description;
 	final CommandIsAvailable isAvailable;
 
 	const Command(this._exec, {
+		required this.usage,
 		required this.description,
 		this.isAvailable = _alwaysAvailable,
 	});
@@ -141,11 +143,11 @@ String? _quote(BuildContext context, String? param) {
 }
 
 const Map<String, Command> commands = {
-	'join': Command(_join, description: 'Join a channel', isAvailable: _availableIfChannelsAreSupported),
-	'kick': Command(_kick, description: 'Remove another user from the channel', isAvailable: _availableInChannels),
-	'me': Command(_me, description: 'Send an action message'),
-	'mode': Command(_mode, description: 'Change a channel or user mode'),
-	'oper': Command(_oper, description: 'Obtain server operator privileges'),
-	'part': Command(_part, description: 'Leave a channel', isAvailable: _availableInChannels),
-	'quote': Command(_quote, description: 'Execute a raw IRC command'),
+	'join': Command(_join, usage: '<channel>', description: 'Join a channel', isAvailable: _availableIfChannelsAreSupported),
+	'kick': Command(_kick, usage: '<nickname> [reason]', description: 'Remove another user from the channel', isAvailable: _availableInChannels),
+	'me': Command(_me, usage: '<message>', description: 'Send an action message'),
+	'mode': Command(_mode, usage: '±<mode> [args...]', description: 'Change a channel or user mode'),
+	'oper': Command(_oper, usage: '<name> <password>', description: 'Obtain server operator privileges'),
+	'part': Command(_part, usage: '[reason]', description: 'Leave a channel', isAvailable: _availableInChannels),
+	'quote': Command(_quote, usage: '<command> [args...]', description: 'Execute a raw IRC command'),
 };

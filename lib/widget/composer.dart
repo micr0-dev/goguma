@@ -36,7 +36,7 @@ class Composer extends StatefulWidget {
 class ComposerState extends State<Composer> {
 	final _formKey = GlobalKey<FormState>();
 	final _focusNode = FocusNode();
-	final _controller = TextEditingController();
+	final _controller = _CommandTextEditingController();
 	final _imagePicker = ImagePicker();
 
 	bool _isCommand = false;
@@ -899,4 +899,34 @@ class _AutocompleteOption {
 	final String? description;
 
 	const _AutocompleteOption(this.value, [this.description]);
+}
+
+class _CommandTextEditingController extends TextEditingController {
+	@override
+	TextSpan buildTextSpan({
+		required BuildContext context,
+		TextStyle? style,
+		required bool withComposing,
+	}) {
+		var textSpan = super.buildTextSpan(context: context, style: style, withComposing: withComposing);
+		if (!text.startsWith('/')) {
+			return textSpan;
+		}
+
+		var cmd = commands[text.toLowerCase().substring(1).trim()];
+		if (cmd == null) {
+			return textSpan;
+		}
+
+		var suggestion = cmd.usage;
+		if (!text.endsWith(' ')) {
+			suggestion = ' ' + cmd.usage;
+		}
+
+		var suggestColor = (style ?? DefaultTextStyle.of(context).style).color!.withValues(alpha: 0.5);
+		return TextSpan(style: style, children: [
+			textSpan,
+			TextSpan(text: suggestion, style: TextStyle(color: suggestColor)),
+		]);
+	}
 }
