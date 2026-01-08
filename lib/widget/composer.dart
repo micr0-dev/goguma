@@ -37,6 +37,7 @@ class ComposerState extends State<Composer> {
 	final _formKey = GlobalKey<FormState>();
 	final _focusNode = FocusNode();
 	final _controller = TextEditingController();
+	final _imagePicker = ImagePicker();
 
 	bool _isCommand = false;
 	bool _locationServiceAvailable = false;
@@ -829,7 +830,7 @@ class ComposerState extends State<Composer> {
 								leading: Icon(Icons.add_photo_alternate),
 								onTap: () async {
 									Navigator.pop(context);
-									var file = await ImagePicker().pickImage(source: ImageSource.gallery);
+									var file = await _imagePicker.pickImage(source: ImageSource.gallery);
 									if (file != null) {
 										await _runAddMenuTask(() async {
 											await _uploadFile(file);
