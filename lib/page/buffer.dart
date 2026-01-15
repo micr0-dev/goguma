@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -491,6 +492,9 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 				itemCount: messages.length,
 				initialScrollIndex: _initialScrollIndex,
 				initialAlignment: _initialScrollIndex > 0 ? 1 : 0,
+				keyboardDismissBehavior: Platform.isIOS
+					? ScrollViewKeyboardDismissBehavior.onDrag
+					: ScrollViewKeyboardDismissBehavior.manual,
 				itemBuilder: (context, index) {
 					var msgIndex = messages.length - index - 1;
 					var msg = messages[msgIndex];
