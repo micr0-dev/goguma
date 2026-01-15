@@ -38,7 +38,12 @@ dependencies:
   path_provider: ^2.1.5
   provider: ^6.0.1
   record: ^6.0.0
-  scrollable_positioned_list: ^0.3.5
+  # TODO: drop this unmaintained library
+  scrollable_positioned_list:
+    git:
+      url: https://github.com/emersion/flutter.widgets.git
+      ref: goguma
+      path: packages/scrollable_positioned_list
   sentry: ^9.3.0
   share_handler: ^0.0.21
   share_plus: ^12.0.1

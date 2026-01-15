@@ -907,11 +907,12 @@ packages:
   scrollable_positioned_list:
     dependency: "direct main"
     description:
-      name: scrollable_positioned_list
-      sha256: "1b54d5f1329a1e263269abc9e2543d90806131aa14fe7c6062a8054d57249287"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.3.8"
+      path: "packages/scrollable_positioned_list"
+      ref: goguma
+      resolved-ref: edc742a7e93fbd39d2e20fc5d7f38913d8450a68
+      url: "https://github.com/emersion/flutter.widgets.git"
+    source: git
+    version: "0.3.8+1"
   sentry:
     dependency: "direct main"
     description:
