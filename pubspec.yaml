@@ -6,7 +6,7 @@ publish_to: 'none'
 # Build number is the Git commit count, obtained via:
 #
 #     git rev-list --first-parent --count HEAD
-version: 0.8.0+1206
+version: 0.9.0+1360
 
 environment:
   sdk: ^3.0.0
