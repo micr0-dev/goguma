@@ -35,6 +35,7 @@ class RegularMessageItem extends StatelessWidget {
 		var client = context.read<Client>();
 		var prefs = context.read<Prefs>();
 		var network = context.read<NetworkModel>();
+		var buffer = context.read<BufferModel>();
 
 		var ircMsg = msg.msg;
 		var entry = msg.entry;
@@ -43,6 +44,7 @@ class RegularMessageItem extends StatelessWidget {
 		var ctcp = CtcpMessage.parse(ircMsg);
 		var hasChannelContext = ircMsg.tags['+draft/channel-context'] != null;
 		var isFromMe = client.isMyNick(sender);
+		var isChannel = client.isChannel(buffer.name);
 		assert(ircMsg.cmd == 'PRIVMSG' || ircMsg.cmd == 'NOTICE');
 
 		var body = ircMsg.params[1];
@@ -151,8 +153,8 @@ class RegularMessageItem extends StatelessWidget {
 			];
 		} else if (bigEmotes) {
 			content = [
-				if (isFirstInGroup && !isFromMe) senderTextSpan,
-				if (isFirstInGroup && !isFromMe) TextSpan(text: '\n'),
+				if (isFirstInGroup && !isFromMe && isChannel) senderTextSpan,
+				if (isFirstInGroup && !isFromMe && isChannel) TextSpan(text: '\n'),
 				TextSpan(text: ircMsg.params[1], style: TextStyle(fontSize: 42)),
 			];
 		} else {
@@ -201,8 +203,8 @@ class RegularMessageItem extends StatelessWidget {
 			}
 
 			content = [
-				if (isFirstInGroup && !isFromMe) senderTextSpan,
-				if (isFirstInGroup && !isFromMe) TextSpan(text: '\n'),
+				if (isFirstInGroup && !isFromMe && isChannel) senderTextSpan,
+				if (isFirstInGroup && !isFromMe && isChannel) TextSpan(text: '\n'),
 				if (replyChip != null) replyChip,
 				if (replyChip != null) WidgetSpan(child: SizedBox(width: 5, height: 5)),
 				bodyTextSpan,
