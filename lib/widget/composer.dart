@@ -826,11 +826,11 @@ class ComposerState extends State<Composer> {
 								}
 							),
 							if (canUploadFiles) ListTile(
-								title: Text('Share a picture'),
+								title: Text('Share from gallery'),
 								leading: Icon(Icons.add_photo_alternate),
 								onTap: () async {
 									Navigator.pop(context);
-									var file = await _imagePicker.pickImage(source: ImageSource.gallery);
+									var file = await _imagePicker.pickMedia();
 									if (file != null) {
 										await _runAddMenuTask(() async {
 											await _uploadFile(file);
