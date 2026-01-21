@@ -15,7 +15,7 @@ An IRC client for mobile devices.
 If you want to try out goguma on Android, you can use [our F-Droid repository]
 which provides nightly builds. Goguma is also available on the
 [official F-Droid repository]. Community-supported Goguma versions are
-available on the [Google Play Store] and the [Apple App Store].
+available on [Google Play Store], [Apple App Store] and [AltStore PAL].
 
 For more information about using Goguma, see our [documentation].
 
@@ -80,6 +80,7 @@ Copyright (C) 2021 The goguma Contributors
 [official F-Droid repository]: https://f-droid.org/packages/fr.emersion.goguma/
 [Google Play Store]: https://play.google.com/store/apps/details?id=fr.emersion.goguma.play
 [Apple App Store]: https://apps.apple.com/fr/app/goguma-irc/id6470394620
+[AltStore PAL]: https://altstore.goguma.im
 [documentation]: doc/README.md
 [Codeberg]: https://codeberg.org/emersion/goguma
 [#goguma on Libera Chat]: ircs://irc.libera.chat/#goguma
