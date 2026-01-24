@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart';
 import 'package:unifiedpush/unifiedpush.dart';
 
 import 'database.dart';
@@ -19,6 +20,10 @@ class UnifiedPushController extends PushController {
 	UnifiedPushController._();
 
 	Future<void> _init() async {
+		if (kIsWeb) {
+			throw Exception('UnifiedPush not supported on Web');
+		}
+
 		// initialize() succeeds when missing LinuxOptions, but then
 		// getDistributor() fails an assertion
 		if (Platform.isLinux) {

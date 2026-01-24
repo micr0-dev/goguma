@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:app_links/app_links.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dynamic_color/dynamic_color.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:share_handler/share_handler.dart';
@@ -132,7 +133,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 		_networkStateAggregator.addListener(_handleNetworkStateChange);
 		_handleNetworkStateChange();
 
-		if (Platform.isAndroid || Platform.isIOS) {
+		if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
 			// Ignore initialUri: appLinks.stringLinkStream will trigger an
 			// event for that URI
 			var appLinks = context.read<AppLinks>();

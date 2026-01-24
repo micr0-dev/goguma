@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
@@ -492,7 +493,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 				itemCount: messages.length,
 				initialScrollIndex: _initialScrollIndex,
 				initialAlignment: _initialScrollIndex > 0 ? 1 : 0,
-				keyboardDismissBehavior: Platform.isIOS
+				keyboardDismissBehavior: !kIsWeb && Platform.isIOS
 					? ScrollViewKeyboardDismissBehavior.onDrag
 					: ScrollViewKeyboardDismissBehavior.manual,
 				itemBuilder: (context, index) {

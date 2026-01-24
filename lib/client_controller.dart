@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_background/flutter_background.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -160,14 +161,14 @@ class ClientProvider {
 			return client.caps.available.containsKey('soju.im/webpush');
 		});
 
-		var useWorkManager = Platform.isAndroid && hasChatHistory;
+		var useWorkManager = !kIsWeb && Platform.isAndroid && hasChatHistory;
 		var usePush = _pushController != null && hasWebPush;
 		_setupWorkManagerSync(useWorkManager, usePush);
 		_setupBackgroundServiceSync(!useWorkManager);
 
 		_askNotificationPermissions();
 
-		if (Platform.isIOS && !hasChatHistory) {
+		if (!kIsWeb && Platform.isIOS && !hasChatHistory) {
 			// Background service is unavailable on iOS
 			backgroundSyncStatus.value = BackgroundSyncStatus(
 				isUnavailable: true,
@@ -203,7 +204,7 @@ class ClientProvider {
 	}
 
 	void _setupBackgroundServiceSync(bool enable) async {
-		if (!Platform.isAndroid) {
+		if (kIsWeb || !Platform.isAndroid) {
 			return;
 		}
 

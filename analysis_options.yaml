@@ -14,6 +14,8 @@ linter:
     directives_ordering: true
     avoid_catches_without_on_clauses: true
     unawaited_futures: true
+    #discarded_futures: true
+    #avoid_void_async: true
     unnecessary_final: true
     prefer_is_empty: false
     prefer_is_not_empty: false

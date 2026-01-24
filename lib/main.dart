@@ -53,37 +53,40 @@ void main() async {
 	// Override the http client implementation to set user agent
 	HttpOverrides.global = UserAgentHttpOverrides();
 
-	var syncReceivePort = ReceivePort('main:sync');
-	var syncPortRegistered = false;
-	var widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
-	var appLifecycleListener = AppLifecycleListener(
-		binding: widgetsBinding,
-		onStateChange: (state) {
-			if (state == AppLifecycleState.detached) {
-				if (syncPortRegistered) {
-					if (!IsolateNameServer.removePortNameMapping('main:sync')) {
-						log.print('Warning: failed to unregister sync port');
+	ReceivePort? syncReceivePort;
+	if (!kIsWeb) {
+		syncReceivePort = ReceivePort('main:sync');
+		var syncPortRegistered = false;
+		var widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+		var appLifecycleListener = AppLifecycleListener(
+			binding: widgetsBinding,
+			onStateChange: (state) {
+				if (state == AppLifecycleState.detached) {
+					if (syncPortRegistered) {
+						if (!IsolateNameServer.removePortNameMapping('main:sync')) {
+							log.print('Warning: failed to unregister sync port');
+						}
+						syncPortRegistered = false;
 					}
-					syncPortRegistered = false;
-				}
-			} else {
-				if (!syncPortRegistered) {
-					syncPortRegistered = IsolateNameServer.registerPortWithName(syncReceivePort.sendPort, 'main:sync');
+				} else {
 					if (!syncPortRegistered) {
-						log.print('Warning: failed to register sync port');
+						syncPortRegistered = IsolateNameServer.registerPortWithName(syncReceivePort!.sendPort, 'main:sync');
+						if (!syncPortRegistered) {
+							log.print('Warning: failed to register sync port');
+						}
 					}
 				}
-			}
-		},
-	);
-	appLifecycleListener.onStateChange!(widgetsBinding.lifecycleState ?? AppLifecycleState.resumed);
+			},
+		);
+		appLifecycleListener.onStateChange!(widgetsBinding.lifecycleState ?? AppLifecycleState.resumed);
+	}
 
 	var prefs = await Prefs.load();
 	log.isSentryEnabled = () => prefs.uploadErrorReports;
 
 	await _initWorkManager();
 
-	if (Platform.isIOS) {
+	if (!kIsWeb && Platform.isIOS) {
 		initPush = wrapApnsInitPush(initPush);
 	}
 
@@ -94,14 +97,14 @@ void main() async {
 		log.print('Warning: failed to initialize push controller', error: err);
 	}
 
-	if (Platform.isAndroid) {
+	if (!kIsWeb && Platform.isAndroid) {
 		trustIsrgRootX1();
 	}
 
 	var appLinks = AppLinks();
 	IrcUri? initialUri;
 	SharedMedia? initialSharedMedia;
-	if (Platform.isAndroid || Platform.isIOS) {
+	if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
 		var initialUriStr = await appLinks.getInitialLinkString();
 		if (initialUriStr != null) {
 			initialUri = IrcUri.parse(initialUriStr);
@@ -152,7 +155,7 @@ void main() async {
 	);
 
 	// Listen for sync requests coming from the work manager Isolate
-	syncReceivePort.listen((data) async {
+	syncReceivePort?.listen((data) async {
 		var sendPort = data as SendPort;
 		try {
 			await _syncChatHistory(clientProvider, networkList);
@@ -236,7 +239,7 @@ Future<void> _initModels({
 }
 
 Future<void> _initWorkManager() async {
-	if (!Platform.isAndroid) {
+	if (kIsWeb || !Platform.isAndroid) {
 		return;
 	}
 

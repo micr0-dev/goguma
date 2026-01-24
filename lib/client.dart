@@ -5,6 +5,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:hex/hex.dart';
+import 'package:web_socket/web_socket.dart';
 
 import 'irc.dart';
 import 'logging.dart';
@@ -122,6 +123,42 @@ Set<String> _getDefaultCaps(ConnectParams params) {
 	return caps;
 }
 
+abstract class _IrcSocket {
+	Stream<IrcMessage> get messages;
+	Future<void> close();
+	void send(IrcMessage msg);
+}
+
+class _IrcWebSocket extends _IrcSocket {
+	final WebSocket _ws;
+
+	_IrcWebSocket(this._ws);
+
+	static Future<_IrcWebSocket> connect(Uri uri) async {
+		var ws = await WebSocket.connect(uri, protocols: ['text.ircv3.net']);
+		return _IrcWebSocket(ws);
+	}
+
+	Stream<IrcMessage> get messages {
+		return _ws.events.map((event) {
+			switch (event) {
+			case TextDataReceived(text: var text):
+				return IrcMessage.parse(text);
+			default:
+				return null;
+			}
+		}).where((msg) => msg != null).map((msg) => msg!);
+	}
+
+	Future<void> close() async {
+		await _ws.close();
+	}
+
+	void send(IrcMessage msg) {
+		_ws.sendText(msg.toString());
+	}
+}
+
 enum ClientState { disconnected, connecting, connected }
 
 const _autoReconnectDelay = Duration(seconds: 10);
@@ -134,7 +171,7 @@ class Client {
 	final Set<String> _requestCaps;
 	ConnectParams _params;
 	ConnectionTask<Socket>? _connectionTask;
-	Socket? _socket;
+	_IrcSocket? _socket;
 	String _nick;
 	String _realname;
 	final String? _pinnedCertSHA1;
@@ -213,8 +250,8 @@ class Client {
 		params ??= _params;
 		_log('Connecting to ${params.host}...');
 
-		Future<ConnectionTask<Socket>> connectionTaskFuture;
-		if (params.tls) {
+		Future<_IrcSocket> socketFuture = _IrcWebSocket.connect(Uri.parse('ws://localhost:8080/socket'));
+		/*if (params.tls) {
 			connectionTaskFuture = SecureSocket.startConnect(
 				params.host,
 				params.port,
@@ -231,21 +268,15 @@ class Client {
 				params.host,
 				params.port,
 			);
-		}
+		}*/
 
 		const connectTimeout = Duration(seconds: 15);
-		Socket socket;
+		_IrcSocket socket;
 		try {
-			var connectionTask = await connectionTaskFuture;
-			_connectionTask = connectionTask;
-
-			socket = await connectionTask.socket.timeout(connectTimeout, onTimeout: () {
+			socket = await socketFuture.timeout(connectTimeout, onTimeout: () {
 				throw TimeoutException('Connection timed out');
 			});
-			_connectionTask = null;
 		} on Exception catch (err) {
-			_connectionTask?.cancel();
-			_connectionTask = null;
 			_log('Connection failed', error: err);
 			if (!_connectErrorsController.isClosed) {
 				_connectErrorsController.add(err);
@@ -258,14 +289,13 @@ class Client {
 		_log('Connection opened');
 		_socket = socket;
 		_setState(ClientState.connected);
-		_monitorSocket(socket);
+		//_monitorSocket(socket);
 
-		var decoder = Utf8Decoder(allowMalformed: true);
+		/*var decoder = Utf8Decoder(allowMalformed: true);
 		var text = decoder.bind(socket);
-		var lines = text.transform(const LineSplitter());
+		var lines = text.transform(const LineSplitter());*/
 
-		lines.listen((l) {
-			var msg = IrcMessage.parse(l);
+		socket.messages.listen((msg) {
 			_handleMessage(msg);
 		}, onDone: () {
 			// This callback is invoked when the incoming side of the
@@ -324,7 +354,7 @@ class Client {
 		_reconnectTimer?.cancel();
 		_reconnectTimer = null;
 		_connectionTask?.cancel();
-		_socket?.destroy();
+		//_socket?.destroy();
 	}
 
 	void _log(String s, { Object? error }) {
@@ -768,7 +798,8 @@ class Client {
 		if (kDebugMode) {
 			_log('-> ' + msg.toString());
 		}
-		_socket!.write(msg.toString() + '\r\n');
+		//_socket!.write(msg.toString() + '\r\n');
+		_socket!.send(msg);
 	}
 
 	bool isChannel(String name) {

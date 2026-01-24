@@ -31,7 +31,8 @@ class LinkPreviewer {
 	}
 
 	bool _validateUrl(Uri url) {
-		return url.scheme == 'https' && !url.host.isEmpty;
+		return true;
+		//return url.scheme == 'https' && !url.host.isEmpty;
 	}
 
 	bool _validateUrlStr(String str) {

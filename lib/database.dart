@@ -2,10 +2,12 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart' show sqfliteFfiInit, databaseFactoryFfi;
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart' show databaseFactoryFfiWeb;
 
 import 'irc.dart';
 import 'logging.dart';
@@ -571,7 +573,9 @@ class DB {
 	static Future<DB> open() async {
 		WidgetsFlutterBinding.ensureInitialized();
 
-		if (Platform.isWindows || Platform.isLinux) {
+		if (kIsWeb) {
+			databaseFactory = databaseFactoryFfiWeb;
+		} else if (Platform.isWindows || Platform.isLinux) {
 			sqfliteFfiInit();
 			databaseFactory = databaseFactoryFfi;
 		}
@@ -610,6 +614,9 @@ class DB {
 	}
 
 	static Future<String> _getBasePath() {
+		if (kIsWeb) {
+			return getDatabasesPath();
+		}
 		if (Platform.isWindows) {
 			return Future.value(join(Platform.environment['APPDATA']!, 'goguma'));
 		}
