@@ -8,6 +8,9 @@
     <!-- To share the current location -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
 
+    <!-- record_android implicitly adds a permission on RECORD_AUDIO, which adds an implicit required microphone feature. Explicitly mark it as optional. -->
+    <uses-feature android:name="android.hardware.microphone" android:required="false"/>
+
     <queries>
         <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
