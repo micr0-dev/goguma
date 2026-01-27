@@ -186,6 +186,10 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 		var client = context.read<Client>();
 		var userList = context.read<NetworkModel>().users;
 
+		if (!client.registered) {
+			return;
+		}
+
 		if (client.isChannel(buffer.name)) {
 			if (buffer.members != null) {
 				return;
