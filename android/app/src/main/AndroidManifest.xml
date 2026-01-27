@@ -5,8 +5,9 @@
     <!-- To keep running in the background (flutter_background package) -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
 
-    <!-- To share the current location -->
+    <!-- To share the current location (keeping the feature optional) -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-feature android:name="android.hardware.location" android:required="false"/>
 
     <!-- record_android implicitly adds a permission on RECORD_AUDIO, which adds an implicit required microphone feature. Explicitly mark it as optional. -->
     <uses-feature android:name="android.hardware.microphone" android:required="false"/>
