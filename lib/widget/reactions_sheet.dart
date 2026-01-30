@@ -78,15 +78,17 @@ class ReactionsSheet extends StatelessWidget {
 		context.watch<BufferModel>();
 
 		var client = context.read<Client>();
+
 		var reactionsByNickname = <String, Set<String>>{};
 		for (var reaction in message.reactions) {
 			reactionsByNickname.putIfAbsent(reaction.msg.source!.name, () => {}).add(reaction.text);
 		}
+
 		var reactionsByType = <String, int>{};
-		for (var reaction in message.reactions) {
-			var current = reactionsByType[reaction.text] ?? 0;
-			reactionsByType[reaction.text] = current + 1;
+		for (var entry in message.reactionMap.entries) {
+			reactionsByType[entry.key] = entry.value.length;
 		}
+
 		var bgSelected = Theme.of(context).colorScheme.secondaryContainer;
 
 		var reactionsByTypeSorted = reactionsByType.entries.toList();
