@@ -672,7 +672,7 @@ class MessageModel {
 	UnmodifiableListView<ReactionEntry> get reactions => UnmodifiableListView(_reactions);
 
 	Map<String, Set<String>> get reactionMap {
-		Map<String,Set<String>> reactionMap = {};
+		Map<String, Set<String>> reactionMap = {};
 		for (var entry in reactions) {
 			var nick = entry.msg.source!.name;
 			reactionMap.update(
