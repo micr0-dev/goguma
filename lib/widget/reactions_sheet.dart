@@ -99,17 +99,16 @@ class ReactionsSheet extends StatelessWidget {
 				padding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
 				child: Row(
 					spacing: 10,
-					children: reactionsByTypeSorted.map((entry) => ActionChip(
-							backgroundColor: (reactionsByNickname[client.nick]?.contains(entry.key) ?? false) ? bgSelected : null,
-							avatar: Text(entry.key),
-							label: Text('${entry.value}'),
-							labelPadding: EdgeInsets.only(left: 4, right: 1),
-							visualDensity: VisualDensity(vertical: -4),
-							onPressed: () {
-								_handleReact(context, entry.key);
-							},
-						) as Widget
-					).followedBy([
+					children: reactionsByTypeSorted.map<Widget>((entry) => ActionChip(
+						backgroundColor: (reactionsByNickname[client.nick]?.contains(entry.key) ?? false) ? bgSelected : null,
+						avatar: Text(entry.key),
+						label: Text('${entry.value}'),
+						labelPadding: EdgeInsets.only(left: 4, right: 1),
+						visualDensity: VisualDensity(vertical: -4),
+						onPressed: () {
+							_handleReact(context, entry.key);
+						},
+					)).followedBy([
 						ActionChip(
 							avatar: Icon(Icons.add_reaction),
 							label: Text(''),
@@ -124,7 +123,7 @@ class ReactionsSheet extends StatelessWidget {
 									_handleReact(context, reaction);
 								}
 							},
-						) as Widget
+						),
 					]).toList(),
 				),
 			),
