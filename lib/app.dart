@@ -547,16 +547,13 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 
 	@override
 	Widget build(BuildContext context) {
-		return DynamicColorBuilder(
-				builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
-			// Fallback in case dynamic color is not available
-			ColorScheme lightColorScheme = ColorScheme.fromSeed(
-					seedColor: Colors.indigo, brightness: Brightness.light);
-			ColorScheme darkColorScheme = ColorScheme.fromSeed(
-					seedColor: Colors.indigo, brightness: Brightness.dark);
-
+		return DynamicColorBuilder(builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
+			ColorScheme lightColorScheme, darkColorScheme;
 			if (lightDynamic != null && darkDynamic != null) {
-				// Workaround for a bug in dynamic_color where surface container colors and its variants are the same color as surface. This makes message bubbles on Android the same color as the background they are being drawn on.
+				// Workaround for a bug in dynamic_color where surface
+				// container colors and its variants are the same color as
+				// surface. This makes message bubbles on Android the same
+				// color as the background they are being drawn on.
 				// https://github.com/material-foundation/flutter-packages/issues/649
 				lightColorScheme = ColorScheme.fromSeed(
 					seedColor: Color(lightDynamic.primary.toARGB32()),
@@ -566,6 +563,16 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 					seedColor: Color(darkDynamic.primary.toARGB32()),
 					brightness: Brightness.dark,
 				).harmonized();
+			} else {
+				// Fallback in case dynamic color is not available
+				lightColorScheme = ColorScheme.fromSeed(
+					seedColor: Colors.indigo,
+					brightness: Brightness.light,
+				);
+				darkColorScheme = ColorScheme.fromSeed(
+					seedColor: Colors.indigo,
+					brightness: Brightness.dark,
+				);
 			}
 
 			return MaterialApp(
