@@ -559,11 +559,11 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 				// Workaround for a bug in dynamic_color where surface container colors and its variants are the same color as surface. This makes message bubbles on Android the same color as the background they are being drawn on.
 				// https://github.com/material-foundation/flutter-packages/issues/649
 				lightColorScheme = ColorScheme.fromSeed(
-					seedColor: Color(lightColorScheme.primary.toARGB32()),
+					seedColor: Color(lightDynamic.primary.toARGB32()),
 					brightness: Brightness.light,
 				).harmonized();
 				darkColorScheme = ColorScheme.fromSeed(
-					seedColor: Color(darkColorScheme.primary.toARGB32()),
+					seedColor: Color(darkDynamic.primary.toARGB32()),
 					brightness: Brightness.dark,
 				).harmonized();
 			}
