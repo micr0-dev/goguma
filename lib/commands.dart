@@ -76,6 +76,15 @@ List<String> _chompParam(String params) {
 	return (i >= params.length) ? [first] : [first, params.substring(i)];
 }
 
+String? _invite(BuildContext context, String? param) {
+	var client = context.read<Client>();
+	var parts = _requireParam(param).split(' ');
+	var nick = parts[0];
+	var channel = parts.length > 1 ? parts[1] : context.read<BufferModel>().name;
+	client.send(IrcMessage('INVITE', [nick, channel]));
+	return null;
+}
+
 String? _join(BuildContext context, String? param) {
 	var client = context.read<Client>();
 	client.join([_requireParam(param)]);
@@ -143,6 +152,7 @@ String? _quote(BuildContext context, String? param) {
 }
 
 const Map<String, Command> commands = {
+	'invite': Command(_invite, usage: '<nickname> [channel]', description: 'Invite a user to the channel', isAvailable: _availableInChannels),
 	'join': Command(_join, usage: '<channel>', description: 'Join a channel', isAvailable: _availableIfChannelsAreSupported),
 	'kick': Command(_kick, usage: '<nickname> [reason]', description: 'Remove another user from the channel', isAvailable: _availableInChannels),
 	'me': Command(_me, usage: '<message>', description: 'Send an action message'),
