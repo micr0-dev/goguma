@@ -49,6 +49,7 @@ class ReactionsSheet extends StatelessWidget {
 
 		var msg = await client.sendTextMessage(IrcMessage('TAGMSG', [buffer.name], tags: {
 			'+draft/reply': message.entry.networkMsgid!,
+			'+reply': message.entry.networkMsgid!,
 			reactTag: reaction,
 		}));
 

@@ -886,7 +886,7 @@ class ClientController {
 		List<MessageEntry> privmsgs = [];
 		List<ReactionEntry> reactions = [];
 		for (var msg in messages) {
-			var reply = msg.tags['+draft/reply'];
+			var reply = msg.inReplyTo;
 			var react = msg.tags['+draft/react'];
 			var unreact = msg.tags['+draft/unreact'];
 			if (reply != null && (react != null || unreact != null)) {
@@ -1302,7 +1302,7 @@ Future<List<MessageModel>> buildMessageModelList(DB db, List<MessageEntry> entri
 
 	List<String> parentMsgids = [];
 	for (var entry in entries) {
-		var parentMsgid = entry.msg.tags['+draft/reply'];
+		var parentMsgid = entry.msg.inReplyTo;
 		if (parentMsgid != null) {
 			parentMsgids.add(parentMsgid);
 		}
@@ -1313,7 +1313,7 @@ Future<List<MessageModel>> buildMessageModelList(DB db, List<MessageEntry> entri
 	var reactionMap = await db.fetchReactionSetBetweenMessages(bufferId, entries.first, entries.last);
 	return entries.map((entry) {
 		MessageEntry? replyTo;
-		var parentMsgid = entry.msg.tags['+draft/reply'];
+		var parentMsgid = entry.msg.inReplyTo;
 		if (parentMsgid != null) {
 			replyTo = parentMap[parentMsgid];
 		}

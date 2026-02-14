@@ -267,7 +267,7 @@ class ReactionEntry {
 		assert(msg.tags.containsKey('+draft/react') || msg.tags.containsKey('+draft/unreact')),
 		time = msg.tags['time'] ?? formatIrcTime(DateTime.now()),
 		networkMsgid = msg.tags['msgid'],
-		replyNetworkMsgid = msg.tags['+draft/reply']!,
+		replyNetworkMsgid = msg.inReplyTo!,
 		raw = msg.toString(),
 		redacted = false,
 		_msg = msg;

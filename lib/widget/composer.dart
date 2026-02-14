@@ -157,7 +157,7 @@ class ComposerState extends State<Composer> {
 		for (var line in text.split('\n')) {
 			Map<String, String?> tags = {};
 			if (messages.isEmpty && _replyTo?.entry.networkMsgid != null) {
-				tags['+draft/reply'] = _replyTo!.entry.networkMsgid!;
+				tags['+reply'] = tags['+draft/reply'] = _replyTo!.entry.networkMsgid!;
 			}
 
 			while (maxLen > 1 && line.length > maxLen) {
@@ -448,7 +448,8 @@ class ComposerState extends State<Composer> {
 		var client = context.read<Client>();
 
 		var sender = msg.msg.source!.name;
-		var areRepliesAllowed = client.isupport.isClientTagAllowed('draft/reply');
+		var areRepliesAllowed = client.isupport.isClientTagAllowed('draft/reply')
+			|| client.isupport.isClientTagAllowed('reply');
 		if (client.isMyNick(sender) && !areRepliesAllowed) {
 			ScaffoldMessenger.of(context).showSnackBar(SnackBar(
 				content: Text('This server doesn\'t support replies. Replying to yourself won\'t work.'),
