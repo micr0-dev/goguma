@@ -684,18 +684,49 @@ class MessageModel {
 
 	int get id => entry.id!;
 	IrcMessage get msg => entry.msg;
-	UnmodifiableListView<ReactionEntry> get reactions => UnmodifiableListView(_reactions.where((r) => !r.redacted));
 
 	Map<String, Set<String>> get reactionsByText {
-		Map<String, Set<String>> reactionMap = {};
-		for (var entry in reactions) {
+		Map<String, Set<String>> reactionsByText = {};
+		for (var entry in _reactions) {
+			if (entry.redacted) {
+				continue;
+			}
 			var nick = entry.msg.source!.name;
-			var reactionNicks = reactionMap.putIfAbsent(entry.text, () => <String>{});
-			reactionNicks.add(nick);
+			var reactionNicks = reactionsByText.putIfAbsent(entry.text, () => {});
+			if (entry.unreact) {
+				reactionNicks.remove(nick);
+			} else {
+				reactionNicks.add(nick);
+			}
+			if (reactionNicks.isEmpty) {
+				reactionsByText.remove(entry.text);
+			}
 		}
-		reactionMap.updateAll((_, set) => UnmodifiableSetView(set));
 
-		return UnmodifiableMapView(reactionMap);
+		reactionsByText.updateAll((_, set) => UnmodifiableSetView(set));
+		return UnmodifiableMapView(reactionsByText);
+	}
+
+	Map<String, Set<String>> get reactionsByNickname {
+		var reactionsByNickname = <String, Set<String>>{};
+		for (var entry in _reactions) {
+			if (entry.redacted) {
+				continue;
+			}
+			var nick = entry.msg.source!.name;
+			var reactionTexts = reactionsByNickname.putIfAbsent(nick, () => {});
+			if (entry.unreact) {
+				reactionTexts.remove(entry.text);
+			} else {
+				reactionTexts.add(entry.text);
+			}
+			if (reactionTexts.isEmpty) {
+				reactionsByNickname.remove(nick);
+			}
+		}
+
+		reactionsByNickname.updateAll((_, set) => UnmodifiableSetView(set));
+		return UnmodifiableMapView(reactionsByNickname);
 	}
 }
 

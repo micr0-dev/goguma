@@ -264,12 +264,12 @@ class ReactionEntry {
 	String? _text;
 
 	ReactionEntry(IrcMessage msg, this.buffer) :
+		assert(msg.tags.containsKey('+draft/react') || msg.tags.containsKey('+draft/unreact')),
 		time = msg.tags['time'] ?? formatIrcTime(DateTime.now()),
 		networkMsgid = msg.tags['msgid'],
 		replyNetworkMsgid = msg.tags['+draft/reply']!,
 		raw = msg.toString(),
 		redacted = false,
-		_text = msg.tags['+draft/react']!,
 		_msg = msg;
 
 	Map<String, Object?> toMap() {
@@ -299,7 +299,7 @@ class ReactionEntry {
 	}
 
 	String get text {
-		_text ??= msg.tags['+draft/react']!;
+		_text ??= (msg.tags['+draft/react'] ?? msg.tags['+draft/unreact'])!;
 		return _text!;
 	}
 
@@ -307,6 +307,8 @@ class ReactionEntry {
 		_dateTime ??= DateTime.parse(time);
 		return _dateTime!;
 	}
+
+	bool get unreact => msg.tags.containsKey('+draft/unreact');
 }
 
 class WebPushSubscriptionEntry {

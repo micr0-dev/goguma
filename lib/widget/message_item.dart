@@ -268,6 +268,7 @@ class RegularMessageItem extends StatelessWidget {
 		if (isAction || bigEmotes) {
 			decoratedMessage = inner;
 		} else {
+			var hasReactions = !msg.reactionsByText.isEmpty;
 			decoratedMessage = ConstrainedBox(
 				constraints: BoxConstraints(
 					// Message bubbles are 80% of the screen width at most
@@ -279,11 +280,11 @@ class RegularMessageItem extends StatelessWidget {
 							borderRadius: BorderRadius.circular(10),
 							color: boxColor,
 						),
-						margin: msg.reactions.isEmpty ? null : EdgeInsets.only(bottom: 25),
+						margin: hasReactions ? EdgeInsets.only(bottom: 25) : null,
 						padding: EdgeInsets.all(10),
 						child: inner,
 					),
-					if (!msg.reactions.isEmpty) Positioned(
+					if (hasReactions) Positioned(
 						bottom: 4,
 						right: 10,
 						child: _ReactionsRow(msg),

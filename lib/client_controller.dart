@@ -888,7 +888,8 @@ class ClientController {
 		for (var msg in messages) {
 			var reply = msg.tags['+draft/reply'];
 			var react = msg.tags['+draft/react'];
-			if (reply != null && react != null) {
+			var unreact = msg.tags['+draft/unreact'];
+			if (reply != null && (react != null || unreact != null)) {
 				reactions.add(ReactionEntry(msg, buf.id));
 			} else if (msg.cmd == 'NOTICE' || msg.cmd == 'PRIVMSG') {
 				privmsgs.add(MessageEntry(msg, buf.id));

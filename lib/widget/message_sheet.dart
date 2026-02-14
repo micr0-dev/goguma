@@ -61,16 +61,12 @@ class MessageSheet extends StatelessWidget {
 		var client = context.read<Client>();
 		var network = context.read<NetworkModel>();
 
-		if (message.reactionsByText[reaction]?.contains(client.nick) == true) {
-			ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-				content: Text('Cannot remove reaction'),
-			));
-			return;
-		}
+		var reacted = message.reactionsByText[reaction]?.contains(client.nick) == true;
+		var reactTag = reacted ? '+draft/unreact' : '+draft/react';
 
 		var msg = await client.sendTextMessage(IrcMessage('TAGMSG', [buffer.name], tags: {
 			'+draft/reply': message.entry.networkMsgid!,
-			'+draft/react': reaction,
+			reactTag: reaction,
 		}));
 
 		if (client.caps.enabled.contains('echo-message')) {
