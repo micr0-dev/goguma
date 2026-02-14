@@ -253,6 +253,7 @@ class MessageEntry {
 class ReactionEntry {
 	int? id;
 	final String time;
+	final String? networkMsgid;
 	final String replyNetworkMsgid;
 	final int buffer;
 	final String raw;
@@ -263,6 +264,7 @@ class ReactionEntry {
 
 	ReactionEntry(IrcMessage msg, this.buffer) :
 		time = msg.tags['time'] ?? formatIrcTime(DateTime.now()),
+		networkMsgid = msg.tags['msgid'],
 		replyNetworkMsgid = msg.tags['+draft/reply']!,
 		raw = msg.toString(),
 		_text = msg.tags['+draft/react']!,
@@ -272,6 +274,7 @@ class ReactionEntry {
 		return <String, Object?>{
 			'id': id,
 			'time': time,
+			'network_msgid': networkMsgid,
 			'reply_network_msgid': replyNetworkMsgid,
 			'buffer': buffer,
 			'raw': raw,
@@ -281,6 +284,7 @@ class ReactionEntry {
 	ReactionEntry.fromMap(Map<String, dynamic> m) :
 		id = m['id'] as int,
 		time = m['time'] as String,
+		networkMsgid = m['network_msgid'] as String?,
 		replyNetworkMsgid = m['reply_network_msgid'] as String,
 		buffer = m['buffer'] as int,
 		raw = m['raw'] as String;
@@ -467,11 +471,13 @@ const _schema = [
 			id INTEGER PRIMARY KEY,
 			buffer INTEGER NOT NULL,
 			time TEXT NOT NULL,
+			network_msgid TEXT,
 			raw TEXT NOT NULL,
 			reply_network_msgid TEXT NOT NULL,
 			FOREIGN KEY (buffer) REFERENCES Buffer(id) ON DELETE CASCADE
 		)
 	''',
+	'CREATE INDEX index_reaction_network_msgid on Reaction(network_msgid)',
 	'CREATE INDEX index_reaction_reply_network_msgid on Reaction(reply_network_msgid)',
 	'''
 		CREATE TABLE WebPushSubscription (
@@ -561,6 +567,8 @@ const _migrations = [
 	'ALTER TABLE Buffer ADD COLUMN draft_text TEXT',
 	'ALTER TABLE Buffer ADD COLUMN draft_reply_to INTEGER REFERENCES Message(id) ON DELETE SET NULL',
 	'ALTER TABLE Buffer ADD COLUMN avatar TEXT',
+	'ALTER TABLE Reaction ADD COLUMN network_msgid TEXT',
+	'CREATE INDEX index_reaction_network_msgid on Reaction(network_msgid)',
 ];
 
 class DB {
