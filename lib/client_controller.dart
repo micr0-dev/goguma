@@ -945,15 +945,21 @@ class ClientController {
 	}
 
 	Future<void> _handleRedact(BufferModel buffer, String msgid) async {
-		var msg = await _db.fetchMessageByNetworkMsgid(buffer.id, msgid);
-		if (msg == null) {
+		var (msg, reaction) = await (
+			_db.fetchMessageByNetworkMsgid(buffer.id, msgid),
+			_db.fetchReactionByNetworkMsgid(buffer.id, msgid),
+		).wait;
+		if (msg != null) {
+			msg.redacted = true;
+			await _db.storeMessages([msg]);
+			buffer.redactMessage(msgid);
+		} else if (reaction != null) {
+			reaction.redacted = true;
+			await _db.storeReactions([reaction]);
+			buffer.redactReaction(reaction);
+		} else {
 			log.print('Received REDACT for unknown msgid "$msgid"');
-			return;
 		}
-		msg.redacted = true;
-		await _db.storeMessages([msg]);
-
-		buffer.redactMessage(msgid);
 	}
 
 	Future<void> _handleBouncerNetworksBatch(ClientBatch batch) async {

@@ -257,6 +257,7 @@ class ReactionEntry {
 	final String replyNetworkMsgid;
 	final int buffer;
 	final String raw;
+	bool redacted;
 
 	IrcMessage? _msg;
 	DateTime? _dateTime;
@@ -267,6 +268,7 @@ class ReactionEntry {
 		networkMsgid = msg.tags['msgid'],
 		replyNetworkMsgid = msg.tags['+draft/reply']!,
 		raw = msg.toString(),
+		redacted = false,
 		_text = msg.tags['+draft/react']!,
 		_msg = msg;
 
@@ -278,6 +280,7 @@ class ReactionEntry {
 			'reply_network_msgid': replyNetworkMsgid,
 			'buffer': buffer,
 			'raw': raw,
+			'redacted': redacted ? 1 : 0,
 		};
 	}
 
@@ -287,7 +290,8 @@ class ReactionEntry {
 		networkMsgid = m['network_msgid'] as String?,
 		replyNetworkMsgid = m['reply_network_msgid'] as String,
 		buffer = m['buffer'] as int,
-		raw = m['raw'] as String;
+		raw = m['raw'] as String,
+		redacted = m['redacted'] == 1;
 
 	IrcMessage get msg {
 		_msg ??= IrcMessage.parse(raw);
@@ -474,6 +478,7 @@ const _schema = [
 			network_msgid TEXT,
 			raw TEXT NOT NULL,
 			reply_network_msgid TEXT NOT NULL,
+			redacted INTEGER NOT NULL DEFAULT 0,
 			FOREIGN KEY (buffer) REFERENCES Buffer(id) ON DELETE CASCADE
 		)
 	''',
@@ -569,6 +574,7 @@ const _migrations = [
 	'ALTER TABLE Buffer ADD COLUMN avatar TEXT',
 	'ALTER TABLE Reaction ADD COLUMN network_msgid TEXT',
 	'CREATE INDEX index_reaction_network_msgid on Reaction(network_msgid)',
+	'ALTER TABLE Reaction ADD COLUMN redacted INTEGER NOT NULL DEFAULT 0',
 ];
 
 class DB {
@@ -865,6 +871,26 @@ class DB {
 			);
 		}
 		return reactions;
+	}
+
+	Future<Map<String, ReactionEntry>> fetchReactionSetByNetworkMsgid(int buffer, List<String> msgids) async {
+		var inList = List.filled(msgids.length, '?').join(', ');
+		var entries = await _db.rawQuery('''
+			SELECT *
+			FROM Reaction
+			WHERE buffer = ? AND network_msgid IN ($inList)
+		''', <Object>[buffer] + msgids);
+		Map<String, ReactionEntry> reactions = {};
+		for (var m in entries) {
+			var entry = ReactionEntry.fromMap(m);
+			reactions[entry.networkMsgid!] = entry;
+		}
+		return reactions;
+	}
+
+	Future<ReactionEntry?> fetchReactionByNetworkMsgid(int buffer, String msgid) async {
+		var reactions = await fetchReactionSetByNetworkMsgid(buffer, [msgid]);
+		return reactions[msgid];
 	}
 
 	Future<void> storeReactions(List<ReactionEntry> entries) async {

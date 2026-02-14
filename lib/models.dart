@@ -595,6 +595,21 @@ class BufferModel extends ChangeNotifier {
 		notifyListeners();
 	}
 
+	void redactReaction(ReactionEntry reaction) {
+		var msg = _messagesByNetworkMsgid[reaction.replyNetworkMsgid];
+		if (msg == null) {
+			return;
+		}
+
+		var msgReactions = msg._reactions.where((r) => r.id == reaction.id);
+		if (msgReactions.isEmpty) {
+			return;
+		}
+
+		msgReactions.first.redacted = true;
+		notifyListeners();
+	}
+
 	void populateMessageHistory(List<MessageModel> l) {
 		// The messages passed here must be already sorted by the caller, and
 		// must always come before the existing messages
@@ -669,7 +684,7 @@ class MessageModel {
 
 	int get id => entry.id!;
 	IrcMessage get msg => entry.msg;
-	UnmodifiableListView<ReactionEntry> get reactions => UnmodifiableListView(_reactions);
+	UnmodifiableListView<ReactionEntry> get reactions => UnmodifiableListView(_reactions.where((r) => !r.redacted));
 
 	Map<String, Set<String>> get reactionMap {
 		Map<String, Set<String>> reactionMap = {};
