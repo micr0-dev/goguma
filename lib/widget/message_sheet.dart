@@ -61,7 +61,7 @@ class MessageSheet extends StatelessWidget {
 		var client = context.read<Client>();
 		var network = context.read<NetworkModel>();
 
-		if (message.reactionMap[reaction]?.contains(client.nick) == true) {
+		if (message.reactionsByText[reaction]?.contains(client.nick) == true) {
 			ScaffoldMessenger.of(context).showSnackBar(SnackBar(
 				content: Text('Cannot remove reaction'),
 			));
@@ -102,7 +102,7 @@ class MessageSheet extends StatelessWidget {
 		var canSendMessage = canSendMessageToBuffer(buffer, network);
 		// TODO: we can redact if we are channel operator too
 		var canRedact = canSendMessage && client.caps.enabled.contains('draft/message-redaction') && ircMsg.tags['msgid'] != null && isOwn && !message.entry.redacted;
-		var reactions = message.reactionMap;
+		var reactions = message.reactionsByText;
 		var canReact = canSendMessage && client.caps.enabled.contains('message-tags') && client.isupport.isClientTagAllowed('draft/react') && message.entry.networkMsgid != null;
 
 		return SafeArea(child: Column(mainAxisSize: MainAxisSize.min, children: [

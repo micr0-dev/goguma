@@ -686,7 +686,7 @@ class MessageModel {
 	IrcMessage get msg => entry.msg;
 	UnmodifiableListView<ReactionEntry> get reactions => UnmodifiableListView(_reactions.where((r) => !r.redacted));
 
-	Map<String, Set<String>> get reactionMap {
+	Map<String, Set<String>> get reactionsByText {
 		Map<String, Set<String>> reactionMap = {};
 		for (var entry in reactions) {
 			var nick = entry.msg.source!.name;

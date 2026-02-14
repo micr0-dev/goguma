@@ -350,8 +350,8 @@ class _ReactionsRow extends StatelessWidget {
 	late final int _overflow;
 
 	_ReactionsRow(this.message) {
-		var map = message.reactionMap;
-		var entries = map.entries
+		var map = message.reactionsByText;
+		var entries = message.reactionsByText.entries
 			.map((entry) => MapEntry(entry.key, entry.value.length))
 			.toList();
 		if (entries.length > 3) {
@@ -542,7 +542,7 @@ class CompactMessageItem extends StatelessWidget {
 		}
 
 		var fg = Theme.of(context).colorScheme.secondaryContainer;
-		var reactions = msg.reactionMap.entries.map((reactionEntry) {
+		var reactions = msg.reactionsByText.entries.map((reactionEntry) {
 			return _ReactionChip(
 				text: reactionEntry.key,
 				count: reactionEntry.value.length,

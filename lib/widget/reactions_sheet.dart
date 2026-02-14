@@ -44,7 +44,7 @@ class ReactionsSheet extends StatelessWidget {
 		var client = context.read<Client>();
 		var network = context.read<NetworkModel>();
 
-		if (message.reactionMap[reaction]?.contains(client.nick) == true) {
+		if (message.reactionsByText[reaction]?.contains(client.nick) == true) {
 			ScaffoldMessenger.of(context).showSnackBar(SnackBar(
 				content: Text('Cannot remove reaction'),
 			));
@@ -85,7 +85,7 @@ class ReactionsSheet extends StatelessWidget {
 		}
 
 		var reactionsByType = <String, int>{};
-		for (var entry in message.reactionMap.entries) {
+		for (var entry in message.reactionsByText.entries) {
 			reactionsByType[entry.key] = entry.value.length;
 		}
 
