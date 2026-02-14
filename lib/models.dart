@@ -690,11 +690,8 @@ class MessageModel {
 		Map<String, Set<String>> reactionMap = {};
 		for (var entry in reactions) {
 			var nick = entry.msg.source!.name;
-			reactionMap.update(
-				entry.text,
-				(set) => set..add(nick),
-				ifAbsent: () => { nick },
-			);
+			var reactionNicks = reactionMap.putIfAbsent(entry.text, () => <String>{});
+			reactionNicks.add(nick);
 		}
 		reactionMap.updateAll((_, set) => UnmodifiableSetView(set));
 
