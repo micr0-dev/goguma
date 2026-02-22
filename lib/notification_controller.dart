@@ -74,16 +74,19 @@ class NotificationController {
 	NotificationController._();
 
 	Future<void> _init() async {
-		await _plugin.initialize(InitializationSettings(
-			iOS: DarwinInitializationSettings(
-				requestAlertPermission: true,
-				requestBadgePermission: true,
-				requestSoundPermission: true,
+		await _plugin.initialize(
+			settings: InitializationSettings(
+				iOS: DarwinInitializationSettings(
+					requestAlertPermission: true,
+					requestBadgePermission: true,
+					requestSoundPermission: true,
+				),
+				linux: LinuxInitializationSettings(defaultActionName: 'Open'),
+				android: AndroidInitializationSettings('ic_stat_name'),
+				windows: WindowsInitializationSettings(appName: 'Goguma', appUserModelId: 'fr.emersion.goguma', guid: '41b2ec15-f640-44be-a9c2-a4144969e94b'),
 			),
-			linux: LinuxInitializationSettings(defaultActionName: 'Open'),
-			android: AndroidInitializationSettings('ic_stat_name'),
-			windows: WindowsInitializationSettings(appName: 'Goguma', appUserModelId: 'fr.emersion.goguma', guid: '41b2ec15-f640-44be-a9c2-a4144969e94b'),
-		), onDidReceiveNotificationResponse: _handleNotificationResponse);
+			onDidReceiveNotificationResponse: _handleNotificationResponse,
+		);
 
 		var androidPlugin = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
 		if (androidPlugin != null) {
@@ -141,7 +144,10 @@ class NotificationController {
 
 			MessagingStyleInformation? messagingStyleInfo;
 			try {
-				messagingStyleInfo = await androidPlugin.getActiveNotificationMessagingStyle(notif.id!, tag: notif.tag);
+				messagingStyleInfo = await androidPlugin.getActiveNotificationMessagingStyle(
+					id: notif.id!,
+					tag: notif.tag,
+				);
 			} on Exception catch (err) {
 				log.print('Failed to get active notification messaging style', error: err);
 			}
@@ -305,7 +311,7 @@ class NotificationController {
 
 			// TODO: on non-Android, check notification timestamp
 			if (messages.isEmpty || channel == null || prevMessagingStyleInfo == null) {
-				futures.add(_plugin.cancel(notif.id, tag: notif.tag));
+				futures.add(_plugin.cancel(id: notif.id, tag: notif.tag));
 				_active.remove(notif);
 				continue;
 			}
@@ -386,21 +392,27 @@ class NotificationController {
 			messagingStyleInfo: messagingStyleInfo,
 		));
 
-		await _plugin.show(id, title, body, NotificationDetails(
-			linux: LinuxNotificationDetails(
-				category: LinuxNotificationCategory.imReceived,
+		await _plugin.show(
+			id: id,
+			title: title,
+			body: body,
+			notificationDetails: NotificationDetails(
+				linux: LinuxNotificationDetails(
+					category: LinuxNotificationCategory.imReceived,
+				),
+				android: AndroidNotificationDetails(channel.id, channel.name,
+					channelDescription: channel.description,
+					importance: Importance.high,
+					priority: Priority.high,
+					category: AndroidNotificationCategory.message,
+					when: dateTime?.millisecondsSinceEpoch,
+					styleInformation: messagingStyleInfo,
+					tag: tag,
+					enableLights: true,
+					onlyAlertOnce: onlyAlertOnce,
+				),
 			),
-			android: AndroidNotificationDetails(channel.id, channel.name,
-				channelDescription: channel.description,
-				importance: Importance.high,
-				priority: Priority.high,
-				category: AndroidNotificationCategory.message,
-				when: dateTime?.millisecondsSinceEpoch,
-				styleInformation: messagingStyleInfo,
-				tag: tag,
-				enableLights: true,
-				onlyAlertOnce: onlyAlertOnce,
-			),
-		), payload: tag);
+			payload: tag,
+		);
 	}
 }
