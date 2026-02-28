@@ -654,6 +654,7 @@ class IrcIsupportRegistry {
 	List<IrcIsupportMembership>? _memberships;
 	int? _monitor;
 	int? _topicLen, _nickLen, _realnameLen, _usernameLen, _hostnameLen, _lineLen;
+	int? _chathistoryLimit;
 	List<String>? _chanModes;
 	IrcIsupportElist? _elist;
 
@@ -671,6 +672,7 @@ class IrcIsupportRegistry {
 	int get usernameLen => _usernameLen ?? _defaultUsernameLen;
 	int get hostnameLen => _hostnameLen ?? _defaultHostnameLen;
 	int get lineLen => _lineLen ?? _defaultLineLen;
+	int get chathistoryLimit => _chathistoryLimit ?? (throw StateError('CHATHISTORY ISUPPORT was not given'));
 	List<String> get chanModes => UnmodifiableListView(_chanModes ?? _defaultChanModes);
 	IrcIsupportElist? get elist => _elist;
 	String? get vapid => _raw['VAPID'];
@@ -810,6 +812,13 @@ class IrcIsupportRegistry {
 					_usernameLen = int.parse(v);
 				}
 				break;
+			case 'CHATHISTORY':
+				if (v == null || v == '') {
+					_chathistoryLimit = null;
+				} else {
+					_chathistoryLimit = int.parse(v);
+				}
+				break;
 			}
 		}
 	}
@@ -826,6 +835,7 @@ class IrcIsupportRegistry {
 		_hostnameLen = null;
 		_lineLen = null;
 		_elist = null;
+		_chathistoryLimit = null;
 	}
 
 	List<String> format() {
