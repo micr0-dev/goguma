@@ -862,11 +862,10 @@ class Client {
 		return registry;
 	}
 
-	Future<List<ChatHistoryTarget>> fetchChatHistoryTargets(String t1, String t2) async {
-		// TODO: paging
+	Future<List<ChatHistoryTarget>> fetchChatHistoryTargets(String t1, String t2, int limit) async {
 		var msg = IrcMessage(
 			'CHATHISTORY',
-			['TARGETS', 'timestamp=' + t1, 'timestamp=' + t2, '100'],
+			['TARGETS', 'timestamp=' + t1, 'timestamp=' + t2, '$limit'],
 		);
 
 		var batch = await _roundtripBatch(msg, (batch) {

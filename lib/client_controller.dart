@@ -1146,6 +1146,48 @@ class ClientController {
 		return buffer;
 	}
 
+	Future<List<ChatHistoryTarget>> _fetchAllChatHistoryTargets(String t1, String t2) async {
+		var chatHistoryLimit = client.isupport.chathistoryLimit;
+		if (chatHistoryLimit == 0) {
+			// Pick arbitrarily high value.
+			chatHistoryLimit = 1000;
+		}
+
+		var targets = LinkedHashMap<String, ChatHistoryTarget>();
+		while (true) {
+			var page = await client.fetchChatHistoryTargets(t1, t2, chatHistoryLimit);
+
+			page.forEach((t) => targets.putIfAbsent(t.name, () => t));
+
+			if (page.length < chatHistoryLimit) {
+				// This page wasn't full, so there's nothing
+				// else to fetch.
+				break;
+			}
+
+			// This page *was* full.  We'll start the next page so that it
+			// overlaps in the last element(s) with this one.  We do this so
+			// that if a scenario like the following happens:
+			//
+			//   CHATHISTORY TARGETS #gentoo-dev-help 2026-02-28T08:52:45.767Z
+			//   -- page break --
+			//   CHATHISTORY TARGETS #gentoo-proxy-maint 2026-02-28T08:52:45.767Z
+			//
+			// ... the latter channel(s) are not lost.
+			//
+			// If, however, we hit the disaster scenario of all channels in the
+			// page being of the same timestamp, we'll just use the last
+			// timestamp in the page.  :-(
+			var lastTs = page.last.time;
+			t1 = page.map((m) => m.time)
+				.lastWhere(
+					(ts) => ts != lastTs,
+					orElse: () => lastTs
+				);
+		}
+		return targets.values.toList();
+	}
+
 	Future<void> _fetchBacklog(String from, String to) async {
 		if (!client.caps.enabled.contains('draft/chathistory')) {
 			return;
@@ -1156,7 +1198,7 @@ class ClientController {
 			max = 1000;
 		}
 
-		var targets = await client.fetchChatHistoryTargets(from, to);
+		var targets = await _fetchAllChatHistoryTargets(from, to);
 		await Future.wait(targets.map((target) async {
 			// Query read marker if this is a user (ie, we haven't received the
 			// read marker as part of an auto-JOIN) and we haven't queried it
