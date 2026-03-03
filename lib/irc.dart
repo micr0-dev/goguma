@@ -679,6 +679,7 @@ class IrcIsupportRegistry {
 	String? get filehost => _raw['soju.im/FILEHOST'];
 	String get statusMsg => _raw['STATUSMSG'] ?? '';
 	String? get icon => _raw['draft/ICON'];
+	bool get accountRequired => _raw.containsKey('draft/ACCOUNTREQUIRED');
 
 	void parse(List<String> tokens) {
 		for (var tok in tokens) {

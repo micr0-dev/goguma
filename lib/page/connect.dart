@@ -253,7 +253,7 @@ class _ConnectPageState extends State<ConnectPage> {
 		}
 		return _ServerFeatures(
 			passwordUnsupported: !availableCaps.containsSasl('PLAIN'),
-			passwordRequired: availableCaps.accountRequired,
+			passwordRequired: availableCaps.accountRequired || isupport.accountRequired,
 			networkName: isupport.network,
 			nickLen: isupport.nickLen,
 		);
