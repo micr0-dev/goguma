@@ -152,11 +152,12 @@ class ComposerState extends State<Composer> {
 	List<IrcMessage> _buildPrivmsg(String text) {
 		var buffer = context.read<BufferModel>();
 		var maxLen = _getMaxPrivmsgLen();
+		var client = context.read<Client>();
 
 		List<IrcMessage> messages = [];
 		for (var line in text.split('\n')) {
 			Map<String, String?> tags = {};
-			if (messages.isEmpty && _replyTo?.entry.networkMsgid != null) {
+			if (messages.isEmpty && _replyTo?.entry.networkMsgid != null && client.canReply) {
 				tags['+reply'] = tags['+draft/reply'] = _replyTo!.entry.networkMsgid!;
 			}
 
@@ -448,9 +449,7 @@ class ComposerState extends State<Composer> {
 		var client = context.read<Client>();
 
 		var sender = msg.msg.source!.name;
-		var areRepliesAllowed = client.isupport.isClientTagAllowed('draft/reply')
-			|| client.isupport.isClientTagAllowed('reply');
-		if (client.isMyNick(sender) && !areRepliesAllowed) {
+		if (client.isMyNick(sender) && !client.canReply) {
 			ScaffoldMessenger.of(context).showSnackBar(SnackBar(
 				content: Text('This server doesn\'t support replies. Replying to yourself won\'t work.'),
 			));

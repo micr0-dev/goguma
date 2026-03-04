@@ -1328,6 +1328,12 @@ class Client {
 			return reply.cmd == 'BOUNCER' && reply.params[0] == 'DELNETWORK' && reply.params[1] == id;
 		});
 	}
+
+	bool get canReply => 
+		caps.enabled.contains('message-tags') &&
+			(isupport.isClientTagAllowed('draft/reply') || isupport.isClientTagAllowed('reply'));
+
+	bool get canReact => canReply && isupport.isClientTagAllowed('draft/react');
 }
 
 class ClientMessage extends IrcMessage {
