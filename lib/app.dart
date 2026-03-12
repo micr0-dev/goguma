@@ -303,7 +303,23 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 		if (faultyNetworks.length == 1) {
 			faultyNetworkName = faultyNetworks.first.displayName;
 		} else if (faultyNetworks.length == networkList.networks.length) {
-			faultyNetworkName = 'all servers';
+			// If all networks belong to the same server (e.g. bouncer), use
+			// that server's display name in the status message
+			int? serverId;
+			for (var network in faultyNetworks) {
+				if (serverId == null) {
+					serverId = network.serverEntry.id;
+				} else if (serverId != network.serverEntry.id) {
+					faultyNetworkName = null;
+					break;
+				}
+
+				if (network.networkEntry.bouncerId == null) {
+					faultyNetworkName = network.displayName;
+				}
+			}
+
+			faultyNetworkName ??= 'all servers';
 		} else {
 			faultyNetworkName = '${faultyNetworks.length} servers';
 		}
