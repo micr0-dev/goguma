@@ -46,6 +46,10 @@ Build with:
 
 The built APK is in `build/app/outputs/flutter-apk/app-release.apk`.
 
+When running from the Android emulator, the server address
+`irc+insecure://10.0.2.2` can be used to connect to a locally running IRC
+server.
+
 ### For the iOS platform
 
 Build with:
