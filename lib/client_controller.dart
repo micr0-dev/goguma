@@ -412,7 +412,11 @@ class ClientController {
 		});
 
 		client.connectErrors.listen((err) {
-			network.connectError = err.toString();
+			if (err is SocketException) {
+				network.connectError = 'Network error: ${err.message}';
+			} else {
+				network.connectError = err.toString();
+			}
 		});
 
 		client.isupportStream.listen((isupport) {

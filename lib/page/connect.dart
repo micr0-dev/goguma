@@ -303,6 +303,8 @@ class _ConnectPageState extends State<ConnectPage> {
 			}
 		} else if (err is BadCertException) {
 			serverErr = 'Bad server certificate';
+		} else if (err is SocketException) {
+			serverErr = 'Network error: ${err.message}';
 		} else {
 			serverErr = _error?.toString();
 		}
