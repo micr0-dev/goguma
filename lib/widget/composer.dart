@@ -13,7 +13,6 @@ import 'package:record/record.dart';
 import 'package:share_handler/share_handler.dart';
 
 import '../client.dart';
-import '../client_controller.dart';
 import '../commands.dart';
 import '../database.dart';
 import '../irc.dart';
@@ -185,36 +184,14 @@ class ComposerState extends State<Composer> {
 	}
 
 	void _send(List<IrcMessage> messages) async {
-		var buffer = context.read<BufferModel>();
 		var client = context.read<Client>();
-		var db = context.read<DB>();
-		var bufferList = context.read<BufferListModel>();
-		var network = context.read<NetworkModel>();
 
 		List<Future<IrcMessage>> futures = [];
 		for (var msg in messages) {
 			futures.add(client.sendTextMessage(msg));
 		}
 
-		if (!client.caps.enabled.contains('echo-message')) {
-			messages = await Future.wait(futures);
-
-			List<MessageEntry> entries = [];
-			for (var msg in messages) {
-				var entry = MessageEntry(msg, buffer.id);
-				entries.add(entry);
-			}
-			await db.storeMessages(entries);
-
-			var models = await buildMessageModelList(db, entries);
-			if (buffer.messageHistoryLoaded) {
-				buffer.addMessages(models, append: true);
-			}
-			bufferList.bumpLastDeliveredTime(buffer, entries.last.time);
-			if (network.networkEntry.bumpLastDeliveredTime(entries.last.time)) {
-				await db.storeNetwork(network.networkEntry);
-			}
-		}
+		await Future.wait(futures);
 	}
 
 	void _submitCommand(String text) {

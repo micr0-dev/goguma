@@ -55,35 +55,17 @@ class MessageSheet extends StatelessWidget {
 	}
 
 	void _handleReact(BuildContext context, String reaction) async {
-		var bufferList = context.read<BufferListModel>();
 		var buffer = context.read<BufferModel>();
-		var db = context.read<DB>();
 		var client = context.read<Client>();
-		var network = context.read<NetworkModel>();
 
 		var reacted = message.reactionsByText[reaction]?.contains(client.nick) == true;
 		var reactTag = reacted ? '+draft/unreact' : '+draft/react';
 
-		var msg = await client.sendTextMessage(IrcMessage('TAGMSG', [buffer.name], tags: {
+		await client.sendTextMessage(IrcMessage('TAGMSG', [buffer.name], tags: {
 			'+draft/reply': message.entry.networkMsgid!,
 			'+reply': message.entry.networkMsgid!,
 			reactTag: reaction,
 		}));
-
-		if (client.caps.enabled.contains('echo-message')) {
-			return;
-		}
-
-		var entry = ReactionEntry(msg, buffer.id);
-		await db.storeReactions([entry]);
-		if (buffer.messageHistoryLoaded) {
-			buffer.addReactions([entry]);
-		}
-
-		bufferList.bumpLastDeliveredTime(buffer, entry.time);
-		if (network.networkEntry.bumpLastDeliveredTime(entry.time)) {
-			await db.storeNetwork(network.networkEntry);
-		}
 	}
 
 	@override

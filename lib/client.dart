@@ -919,6 +919,9 @@ class Client {
 		}
 	}
 
+	/// Send a PRIVMSG, NOTICE or TAGMSG.
+	///
+	/// If the server doesn't support echo-message, it's emulated.
 	Future<IrcMessage> sendTextMessage(IrcMessage req) async {
 		assert(req.cmd == 'PRIVMSG' || req.cmd == 'NOTICE' || req.cmd == 'TAGMSG');
 		assert(req.params.length >= 1);
@@ -989,7 +992,14 @@ class Client {
 			// TODO: catch errors
 			send(req);
 			await ping();
-			return req.copyWith(source: IrcSource(nick));
+
+			// Simulate echo-message to simplify message handling
+			var emulatedEcho = req.copyWith(source: IrcSource(nick));
+			if (!_messagesController.isClosed) {
+				_messagesController.add(ClientMessage._(emulatedEcho));
+			}
+
+			return emulatedEcho;
 		}
 	}
 
