@@ -835,7 +835,7 @@ class IrcIsupportRegistry {
 				l.add(entry.key);
 			} else {
 				// Note, clients are expected to handle '=' correctly
-				var v = entry.value!.replaceAll(' ', '\\x20').replaceAll('\\', '\\x5C');
+				var v = entry.value!.replaceAll('\\', '\\x5C').replaceAll(' ', '\\x20');
 				l.add('${entry.key}=$v');
 			}
 		}
