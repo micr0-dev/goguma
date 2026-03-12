@@ -222,9 +222,9 @@ class IrcMessage {
 		}
 	}
 
-	String? get inReplyTo => this.tags['+reply'] ?? this.tags['+draft/reply'];
+	String? get inReplyTo => tags['+reply'] ?? tags['+draft/reply'];
 
-	set inReplyTo(String? reply) => this.tags['+reply'] = this.tags['+draft/reply'] = reply;
+	set inReplyTo(String? reply) => tags['+reply'] = tags['+draft/reply'] = reply;
 
 	IrcMessage copyWith({
 		IrcSource? source,
