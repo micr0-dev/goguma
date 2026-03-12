@@ -12,8 +12,14 @@ To obtain Android logs from a computer:
 - Reproduce the bug in Goguma.
 - Stop collecting logs and share the file.
 
-It's possible to filter the logs with "flutter", however this will hide
-messages produced by the Android libraries used by Goguma.
+To filter logs and only print messages produced by Goguma:
+
+    adb logcat --pid $(adb shell pidof fr.emersion.goguma)
+
+To further filter logs and only print messages produced by Flutter (but exclude
+Android library messages):
+
+    adb logcat '*:S flutter'
 
 ## From a phone
 
