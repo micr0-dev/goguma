@@ -270,38 +270,38 @@ class _ConnectPageState extends State<ConnectPage> {
 
 	@override
 	Widget build(BuildContext context) {
+		var err = _error;
 		String? serverErr, nicknameErr, passwordErr;
-		if (_error is IrcException) {
-			var ircErr = _error as IrcException;
-			switch (ircErr.msg.cmd) {
+		if (err is IrcException) {
+			switch (err.msg.cmd) {
 			case 'FAIL':
-				var code = ircErr.msg.params[1];
+				var code = err.msg.params[1];
 				if (code == 'ACCOUNT_REQUIRED') {
-					passwordErr = ircErr.toString();
+					passwordErr = err.toString();
 				} else {
-					serverErr = ircErr.toString();
+					serverErr = err.toString();
 				}
 				break;
 			case ERR_PASSWDMISMATCH:
-				serverErr = 'Server password required but not supported ($ircErr)';
+				serverErr = 'Server password required but not supported ($err)';
 				break;
 			case ERR_SASLFAIL:
 			case ERR_SASLTOOLONG:
 			case ERR_SASLABORTED:
-				passwordErr = ircErr.toString();
+				passwordErr = err.toString();
 				break;
 			case ERR_NICKLOCKED:
 			case ERR_ERRONEUSNICKNAME:
 			case ERR_NICKNAMEINUSE:
 			case ERR_NICKCOLLISION:
 			case ERR_YOUREBANNEDCREEP:
-				nicknameErr = ircErr.toString();
+				nicknameErr = err.toString();
 				break;
 			default:
-				serverErr = ircErr.toString();
+				serverErr = err.toString();
 				break;
 			}
-		} else if (_error is BadCertException) {
+		} else if (err is BadCertException) {
 			serverErr = 'Bad server certificate';
 		} else {
 			serverErr = _error?.toString();
