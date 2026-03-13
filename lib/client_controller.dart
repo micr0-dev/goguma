@@ -807,15 +807,13 @@ class ClientController {
 			});
 		case 'REDACT':
 			var target = msg.params[0];
-			var msgid = msg.params[1];
 
-			var buffer = _bufferList.get(target, network);
-			if (buffer == null) {
+			if (msg.batchByType('chathistory') != null) {
 				break;
 			}
 
-			// TODO: handle REDACT in a chathistory batch
-			return _handleRedact(buffer, msgid);
+			// TODO: handle REDACT referring to messages not yet fetched
+			return _handleChatMessages(target, [msg]);
 		case RPL_MONONLINE:
 		case RPL_MONOFFLINE:
 			var online = msg.cmd == RPL_MONONLINE;
@@ -889,6 +887,7 @@ class ClientController {
 
 		List<MessageEntry> privmsgs = [];
 		List<ReactionEntry> reactions = [];
+		List<String> redactedMsgids = [];
 		for (var msg in messages) {
 			var reply = msg.inReplyTo;
 			var react = msg.tags['+draft/react'];
@@ -897,6 +896,8 @@ class ClientController {
 				reactions.add(ReactionEntry(msg, buf.id));
 			} else if (msg.cmd == 'NOTICE' || msg.cmd == 'PRIVMSG') {
 				privmsgs.add(MessageEntry(msg, buf.id));
+			} else if (msg.cmd == 'REDACT') {
+				redactedMsgids.add(msg.params[1]);
 			}
 		}
 
@@ -911,6 +912,10 @@ class ClientController {
 			var models = await buildMessageModelList(_db, privmsgs);
 			buf.addMessages(models, append: !isHistory);
 			buf.addReactions(reactions);
+		}
+
+		for (var msgid in redactedMsgids) {
+			await _handleRedact(buf, msgid);
 		}
 
 		// Only privmsgs affects unread count / lastReadTime
