@@ -655,7 +655,6 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 								Navigator.pushNamed(context, BufferDetailsPage.routeName, arguments: buffer);
 								break;
 							case 'pin':
-								var client = context.read<Client>();
 								if (client.metadataSubs.contains('soju.im/pinned')) {
 									client.setMetadata(buffer.name, 'soju.im/pinned', buffer.pinned ? '0' : '1');
 								} else {
@@ -664,13 +663,15 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 								}
 								break;
 							case 'mute':
-								var client = context.read<Client>();
 								if (client.metadataSubs.contains('soju.im/muted')) {
 									client.setMetadata(buffer.name, 'soju.im/muted', buffer.muted ? '0' : '1');
 								} else {
 									bufferList.setMuted(buffer, !buffer.muted);
 									db.storeBuffer(buffer.entry);
 								}
+								break;
+							case 'block':
+								client.setMetadata(buffer.name, 'soju.im/blocked', user?.blocked == true ? '0' : '1');
 								break;
 							case 'part':
 								var client = context.read<Client>();
@@ -695,6 +696,13 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 								PopupMenuItem(value: 'details', child: Text('Details')),
 								if (isOnline) PopupMenuItem(value: 'pin', child: Text(buffer.pinned ? 'Unpin' : 'Pin')),
 								if (isOnline) PopupMenuItem(value: 'mute', child: Text(buffer.muted ? 'Unmute' : 'Mute')),
+								if (isOnline && client.metadataSubs.contains('soju.im/blocked') && user != null) PopupMenuItem(
+									value: 'block',
+									child: ListenableBuilder(
+										listenable: user,
+										builder: (context, child) => Text(user.blocked ? 'Unblock' : 'Block'),
+									),
+								),
 								if (!buffer.archived && (isOnline || !isChannel)) PopupMenuItem(value: 'part', child: Text(buffer.joined ? 'Leave' : 'Archive')),
 								if (buffer.archived) PopupMenuItem(value: 'delete', child: Text('Delete')),
 							];
