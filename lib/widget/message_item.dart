@@ -305,6 +305,23 @@ class RegularMessageItem extends StatelessWidget {
 			child: decoratedMessage,
 		);
 
+		var user = network.users.getOrInitUser(sender);
+		decoratedMessage = ListenableBuilder(
+			listenable: user,
+			child: decoratedMessage,
+			builder: (context, child) => !user.blocked ? child! : Text(
+				'Blocked message.',
+				style: TextStyle(fontStyle: FontStyle.italic),
+			),
+		);
+		if (linkPreview != null) {
+			linkPreview = ListenableBuilder(
+				listenable: user,
+				child: linkPreview,
+				builder: (context, child) => user.blocked ? SizedBox.shrink() : child!,
+			);
+		}
+
 		decoratedMessage = Align(
 			alignment: boxAlignment,
 			child: decoratedMessage,
@@ -449,6 +466,7 @@ class CompactMessageItem extends StatelessWidget {
 	@override
 	Widget build(BuildContext context) {
 		var prefs = context.read<Prefs>();
+		var network = context.read<NetworkModel>();
 		var ircMsg = msg.msg;
 		var entry = msg.entry;
 		var sender = ircMsg.source!.name;
@@ -570,14 +588,6 @@ class CompactMessageItem extends StatelessWidget {
 
 		Widget decoratedMessage = Stack(children: stack);
 
-		decoratedMessage = GestureDetector(
-			onLongPress: () {
-				var buffer = context.read<BufferModel>();
-				MessageSheet.open(context, buffer, msg, onReply);
-			},
-			child: decoratedMessage,
-		);
-
 		Widget? linkPreview;
 		if (prefs.linkPreview && text != null) {
 			var body = stripAnsiFormatting(text);
@@ -594,6 +604,31 @@ class CompactMessageItem extends StatelessWidget {
 				},
 			);
 		}
+
+		var user = network.users.getOrInitUser(sender);
+		decoratedMessage = ListenableBuilder(
+			listenable: user,
+			child: decoratedMessage,
+			builder: (context, child) => !user.blocked ? child! : Text(
+				'Blocked message.',
+				style: TextStyle(fontStyle: FontStyle.italic),
+			),
+		);
+		if (linkPreview != null) {
+			linkPreview = ListenableBuilder(
+				listenable: user,
+				child: linkPreview,
+				builder: (context, child) => user.blocked ? SizedBox.shrink() : child!,
+			);
+		}
+
+		decoratedMessage = GestureDetector(
+			onLongPress: () {
+				var buffer = context.read<BufferModel>();
+				MessageSheet.open(context, buffer, msg, onReply);
+			},
+			child: decoratedMessage,
+		);
 
 		return Column(children: [
 			if (showUnreadMarker) Row(children: [
