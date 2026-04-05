@@ -289,13 +289,20 @@ class _BufferItem extends AnimatedWidget {
 	final BufferModel buffer;
 	final bool showNetworkName;
 
-	const _BufferItem({ required this.buffer, this.showNetworkName = false }) : super(listenable: buffer);
+	_BufferItem({ required this.buffer, this.showNetworkName = false }) :
+		super(listenable: Listenable.merge([
+			buffer,
+			!buffer.network.networkEntry.isupport.isChannel(buffer.name)
+				? buffer.network.users.getOrInitUser(buffer.name)
+				: null,
+		]));
 
 	@override
 	Widget build(BuildContext context) {
 		var subtitle = buffer.draft == null
 			? (buffer.topic ?? buffer.realname)
 			: 'Draft: ${buffer.draft!.text}';
+		var blocked = buffer.network.users.map[buffer.name]?.blocked ?? false;
 
 		Widget title;
 		if (showNetworkName) {
@@ -335,7 +342,14 @@ class _BufferItem extends AnimatedWidget {
 				color: Theme.of(context).textTheme.bodySmall!.color,
 			));
 		}
-		if (buffer.unreadCount != 0) {
+		if (blocked) {
+			trailing.add(Icon(
+				Icons.block,
+				size: 20,
+				color: Theme.of(context).textTheme.bodySmall!.color,
+			));
+		}
+		if (buffer.unreadCount != 0 && !blocked) {
 			var theme = Theme.of(context);
 			trailing.add(Container(
 				padding: EdgeInsets.all(3),
