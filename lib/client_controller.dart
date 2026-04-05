@@ -17,7 +17,7 @@ import 'prefs.dart';
 import 'push.dart';
 import 'webpush.dart';
 
-const _metadataSubs = ['avatar', 'soju.im/pinned', 'soju.im/muted'];
+const _metadataSubs = ['avatar', 'soju.im/blocked', 'soju.im/pinned', 'soju.im/muted'];
 
 ConnectParams connectParamsFromServerEntry(ServerEntry entry, Prefs prefs) {
 	var nick = entry.nick ?? prefs.nickname;
@@ -711,6 +711,10 @@ class ClientController {
 					_db.storeBuffer(buffer.entry);
 				}
 			}
+
+			if (!client.isChannel(target) && key == 'soju.im/blocked') {
+				network.users.getOrInitUser(target).blocked = value == '1';
+			}
 			break;
 		case 'PRIVMSG':
 		case 'NOTICE':
@@ -1121,6 +1125,10 @@ class ClientController {
 			return false;
 		}
 		if (isChannel && findTextHighlights(entry.msg.params[1], client.nick).isEmpty) {
+			return false;
+		}
+		var user = network.users.map[entry.msg.source!.name];
+		if (user != null && user.blocked) {
 			return false;
 		}
 		var ctcp = CtcpMessage.parse(entry.msg);

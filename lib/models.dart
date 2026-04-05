@@ -791,17 +791,25 @@ class UserListModel extends ChangeNotifier {
 class UserModel extends ChangeNotifier {
 	String _nickname;
 	String? _realname;
+	bool _blocked;
 
 	UserModel({
 		required String nickname,
 		String? realname,
-	}) : _nickname = nickname, _realname = realname;
+		bool blocked = false,
+	}) : _nickname = nickname, _realname = realname, _blocked = blocked;
 
 	String get nickname => _nickname;
 	String? get realname => _realname;
+	bool get blocked => _blocked;
 
 	set realname(String? realname) {
 		_realname = realname;
+		notifyListeners();
+	}
+
+	set blocked(bool blocked) {
+		_blocked = blocked;
 		notifyListeners();
 	}
 }
