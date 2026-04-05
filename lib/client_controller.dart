@@ -690,8 +690,10 @@ class ClientController {
 			var target = msg.params[0];
 			var key = msg.params[1];
 			var value = msg.params[3];
+
 			var buffer = _bufferList.get(target, network);
 			if (buffer != null) {
+				var bufferUpdated = true;
 				switch (key) {
 				case 'avatar':
 					buffer.avatar = value;
@@ -702,8 +704,12 @@ class ClientController {
 				case 'soju.im/muted':
 					_bufferList.setMuted(buffer, value == '1');
 					break;
+				default:
+					bufferUpdated = false;
 				}
-				_db.storeBuffer(buffer.entry);
+				if (bufferUpdated) {
+					_db.storeBuffer(buffer.entry);
+				}
 			}
 			break;
 		case 'PRIVMSG':
