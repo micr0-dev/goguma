@@ -406,6 +406,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 		var isOnline = network.state == NetworkState.synchronizing || network.state == NetworkState.online;
 		var canSendMessage = canSendMessageToBuffer(buffer, network);
 		var isChannel = client.isChannel(buffer.name);
+		var user = isChannel ? null : network.users.getOrInitUser(buffer.name);
 		var messages = buffer.messages;
 
 		var compact = prefs.bufferCompact;
@@ -541,6 +542,37 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 			msgList = Container();
 		}
 
+		msgList = user == null ? msgList : ListenableBuilder(
+			listenable: user,
+			child: msgList,
+			builder: (context, child) => !user.blocked ? child! : Center(child: Column(
+				mainAxisAlignment: MainAxisAlignment.center,
+				children: [
+					Icon(Icons.block, size: 100),
+					Text(
+						buffer.name,
+						style: Theme.of(context).textTheme.headlineSmall,
+						textAlign: TextAlign.center,
+					),
+					SizedBox(height: 15),
+					Container(
+						constraints: BoxConstraints(maxWidth: 300),
+						child: Text(
+							'This user is blocked.',
+							textAlign: TextAlign.center,
+						),
+					),
+					SizedBox(height: 15),
+					ElevatedButton(
+						child: Text('Unblock'),
+						onPressed: () {
+							client.setMetadata(buffer.name, 'soju.im/blocked', '0');
+						},
+					),
+				],
+			)),
+		);
+
 		Widget? composer;
 		if (!buffer.archived && !(isOnline && isChannel && !buffer.joined)) {
 			composer = Padding(
@@ -559,6 +591,12 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 				)),
 			);
 		}
+
+		composer = user == null ? composer : ListenableBuilder(
+			listenable: user,
+			child: composer,
+			builder: (context, child) => user.blocked ? SizedBox.shrink() : child!,
+		);
 
 		Widget jumpToBottom = ValueListenableBuilder(
 			valueListenable: _showJumpToBottomValue,
@@ -682,7 +720,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 					await _saveDraft();
 				}
 			},
-			child: scaffold
+			child: scaffold,
 		);
 	}
 }
