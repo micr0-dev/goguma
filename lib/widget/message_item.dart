@@ -558,21 +558,25 @@ class CompactMessageItem extends StatelessWidget {
 			child: Stack(children: [
 				Container(
 					margin: reactions.isEmpty ? null : EdgeInsets.only(bottom: 30),
-					child: GestureDetector(
-						onLongPress: () {
-							var buffer = context.read<BufferModel>();
-							MessageSheet.open(context, buffer, msg, onReply);
-						},
-						child: Text.rich(
-							TextSpan(
-								children: content,
-							),
+					child: Text.rich(
+						TextSpan(
+							children: content,
 						),
 					),
 				),
 				if (!reactions.isEmpty) Positioned(bottom: 4, child: Row(spacing: 2, children: reactions)),
 			]),
 		));
+
+		Widget decoratedMessage = Stack(children: stack);
+
+		decoratedMessage = GestureDetector(
+			onLongPress: () {
+				var buffer = context.read<BufferModel>();
+				MessageSheet.open(context, buffer, msg, onReply);
+			},
+			child: decoratedMessage,
+		);
 
 		Widget? linkPreview;
 		if (prefs.linkPreview && text != null) {
@@ -610,7 +614,7 @@ class CompactMessageItem extends StatelessWidget {
 				child: DefaultTextStyle.merge(
 					style: TextStyle(height: 1.15),
 					child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-						Stack(children: stack),
+						decoratedMessage,
 						if (linkPreview != null) linkPreview,
 					]),
 				),
