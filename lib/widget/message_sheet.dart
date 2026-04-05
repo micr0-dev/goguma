@@ -83,6 +83,8 @@ class MessageSheet extends StatelessWidget {
 		var canRedact = canSendMessage && client.caps.enabled.contains('draft/message-redaction') && ircMsg.tags['msgid'] != null && isOwn && !message.entry.redacted;
 		var reactions = message.reactionsByText;
 		var canReact = canSendMessage && message.entry.networkMsgid != null && client.canReact;
+		var canBlock = !isOwn && client.metadataSubs.contains('soju.im/blocked');
+		var user = network.users.getOrInitUser(sender);
 
 		return SafeArea(child: Column(mainAxisSize: MainAxisSize.min, children: [
 			if (canReact) Container(
@@ -169,12 +171,23 @@ class MessageSheet extends StatelessWidget {
 			if (canRedact) ListTile(
 				title: Text('Delete'),
 				leading: Icon(Icons.delete),
-				onTap: () async {
+				onTap: () {
 					var buffer = context.read<BufferModel>();
 					client.send(IrcMessage('REDACT', [buffer.name, ircMsg.tags['msgid']!]));
 					Navigator.pop(context);
 				},
 			),
+			if (canBlock) ListenableBuilder(
+				listenable: user,
+				builder: (context, child) => ListTile(
+					title: Text(user.blocked ? 'Unblock' : 'Block'),
+					leading: Icon(Icons.block),
+					onTap: () {
+						client.setMetadata(sender, 'soju.im/blocked', user.blocked ? '0' : '1');
+						Navigator.pop(context);
+					},
+				),
+			)
 		]));
 	}
 }
