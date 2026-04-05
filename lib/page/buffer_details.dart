@@ -282,17 +282,32 @@ class _BufferDetailsPageState extends State<BufferDetailsPage> {
 				(context, index) {
 					var member = _members![index];
 					var membership = _membershipDescription(member.membershipPrefix ?? '');
+					var user = network.users.getOrInitUser(member.nickname);
+
 					String? realname;
 					if (!isStubRealname(member.realname, member.nickname)) {
 						realname = stripAnsiFormatting(member.realname);
 					}
-					return ListTile(
-						leading: CircleAvatar(child: Text(_initials(member.nickname))),
-						title: Text(member.nickname),
-						subtitle: realname == null ? null : Text(realname, overflow: TextOverflow.fade, softWrap: false),
-						trailing: membership == null ? null : Text(membership),
-						onTap: () {
-							BufferPage.open(context, member.nickname, network);
+
+					return ListenableBuilder(
+						listenable: user,
+						builder: (context, child) {
+							Widget? trailing;
+							if (user.blocked) {
+								trailing = Icon(Icons.block);
+							} else if (membership != null) {
+								trailing = Text(membership);
+							}
+
+							return ListTile(
+								leading: CircleAvatar(child: Text(_initials(member.nickname))),
+								title: Text(member.nickname),
+								subtitle: realname == null ? null : Text(realname, overflow: TextOverflow.fade, softWrap: false),
+								trailing: trailing,
+								onTap: () {
+									BufferPage.open(context, member.nickname, network);
+								},
+							);
 						},
 					);
 				},
