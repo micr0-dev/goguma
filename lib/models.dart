@@ -357,6 +357,13 @@ class BufferListModel extends ChangeNotifier {
 	void _rebuildSorted() {
 		var l = [..._buffers.values];
 		l.sort((a, b) {
+			// TODO: this isn't updated at the correct time
+			var aBlocked = a.network.users.map[a.name]?.blocked ?? false;
+			var bBlocked = b.network.users.map[b.name]?.blocked ?? false;
+			if (aBlocked != bBlocked) {
+				return aBlocked ? 1 : -1;
+			}
+
 			if (a.pinned != b.pinned) {
 				return a.pinned ? -1 : 1;
 			}
