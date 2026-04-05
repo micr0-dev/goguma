@@ -33,6 +33,7 @@ class _SettingsPageState extends State<SettingsPage> {
 	late bool _linkExtApp;
 	late bool _uploadErrorReports;
 	late String? _uploadErrorReportsHost;
+	bool _supportsInAppBrowserView = true;
 
 	@override
 	void initState() {
@@ -45,6 +46,16 @@ class _SettingsPageState extends State<SettingsPage> {
 		_linkExtApp = prefs.linkExtApp;
 		_uploadErrorReports = prefs.uploadErrorReports;
 		_uploadErrorReportsHost = log.sentryHost;
+
+		unawaited(() async {
+			var supportsInAppBrowserView = await supportsLaunchMode(LaunchMode.inAppBrowserView);
+			if (!mounted) {
+				return;
+			}
+			setState(() {
+				_supportsInAppBrowserView = supportsInAppBrowserView;
+			});
+		}());
 	}
 
 	void _showLogoutDialog() {
@@ -187,7 +198,7 @@ class _SettingsPageState extends State<SettingsPage> {
 						});
 					},
 				),
-				SwitchListTile(
+				if (_supportsInAppBrowserView) SwitchListTile(
 					title: Text('Open links in external app'),
 					subtitle: Text('Use an external application (web browser, navigation, etc.) for opening links.'),
 					secondary: Icon(Icons.link),
