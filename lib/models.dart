@@ -760,16 +760,14 @@ class UserListModel extends ChangeNotifier {
 
 	UnmodifiableMapView<String, UserModel> get map => UnmodifiableMapView(_map);
 
-	void updateUser(UserModel updatedUser) {
-		var user = _map[updatedUser.nickname];
+	UserModel getOrInitUser(String nickname) {
+		var user = _map[nickname];
 		if (user == null) {
-			_map[updatedUser.nickname] = updatedUser;
+			user = UserModel(nickname: nickname);
+			_map[nickname] = user;
 			notifyListeners();
-			return;
 		}
-		if (updatedUser.realname != null) {
-			user.realname = updatedUser.realname;
-		}
+		return user;
 	}
 
 	void updateNickname(String oldNickname, String newNickname) {

@@ -207,10 +207,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 			var members = MemberListModel(client.isupport.caseMapping);
 			for (var reply in replies) {
 				members.set(reply.nickname, reply.membershipPrefix!);
-				userList.updateUser(UserModel(
-					nickname: reply.nickname,
-					realname: reply.realname,
-				));
+				userList.getOrInitUser(reply.nickname).realname = reply.realname;
 			}
 
 			buffer.members = members;

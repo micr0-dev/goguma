@@ -305,10 +305,7 @@ class ClientProvider {
 		buffer.away = reply.away;
 		unawaited(_db.storeBuffer(buffer.entry));
 
-		buffer.network.users.updateUser(UserModel(
-			nickname: reply.nickname,
-			realname: reply.realname,
-		));
+		buffer.network.users.getOrInitUser(reply.nickname).realname = reply.realname;
 	}
 
 	Future<void> fetchChatHistory(BufferModel buffer) async {
@@ -547,10 +544,7 @@ class ClientController {
 			// https://codeberg.org/emersion/soju/commit/a2a4181440824b29bf2b317cbcf77a527f54e10c
 			if (client.caps.enabled.contains('extended-join') && msg.params.length >= 3) {
 				var realname = msg.params[2];
-				network.users.updateUser(UserModel(
-					nickname: msg.source.name,
-					realname: realname,
-				));
+				network.users.getOrInitUser(msg.source.name).realname = realname;
 			}
 
 			if (client.isMyNick(msg.source.name)) {
@@ -641,10 +635,7 @@ class ClientController {
 				_db.storeBuffer(buffer.entry);
 			}
 
-			network.users.updateUser(UserModel(
-				nickname: msg.source.name,
-				realname: realname,
-			));
+			network.users.getOrInitUser(msg.source.name).realname = realname;
 			break;
 		case RPL_LOGGEDIN:
 			var account = msg.params[2];
