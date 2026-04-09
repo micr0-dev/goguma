@@ -524,6 +524,110 @@ class IrcException implements Exception {
 	}
 }
 
+/// A high-level, fully parsed message.
+///
+/// One specific class is defined per message type. Messages are immutable.
+///
+/// A roundtrip through fromRaw and toRaw is lossy: it only retains known
+/// pieces of metadata (e.g. may erase some message tags).
+/// TODO: we could easily store the original raw message and avoid this, should
+/// we?
+abstract class IrcMessageSpecimen {
+	final IrcSource? source;
+	final DateTime? time;
+	final String? msgid;
+
+	/// Convert to a raw IRC message.
+	IrcMessage toRaw();
+
+	const IrcMessageSpecimen._() :
+		source = null,
+		time = null,
+		msgid = null;
+
+	IrcMessageSpecimen._fromRaw(IrcMessage msg) :
+		source = msg.source,
+		time = msg.tags['time'] != null ? DateTime.parse(msg.tags['time']!) : null,
+		msgid = msg.tags['msgid'];
+
+	static IrcMessageSpecimen? fromRaw(IrcMessage msg) {
+		if ((msg.cmd == 'PRIVMSG' || msg.cmd == 'TAGMSG') && msg.tags['+draft/react'] != null && msg.inReplyTo != null) {
+			return IrcReactMessage._fromRaw(msg);
+		}
+
+		switch (msg.cmd) {
+		case 'PRIVMSG':
+			return IrcPrivmsg._fromRaw(msg);
+		default:
+			return null;
+		}
+	}
+
+	IrcMessage _toRaw(String cmd, List<String> params, {
+		Map<String, String?> tags = const {},
+	}) {
+		Map<String, String?> rawTags = {
+			if (time != null) 'time': formatIrcTime(time!),
+			if (msgid != null) 'msgid': msgid,
+		};
+		rawTags.addAll(tags);
+
+		return IrcMessage(cmd, params, tags: rawTags, source: source);
+	}
+}
+
+/// A PRIVMSG message.
+class IrcPrivmsg extends IrcMessageSpecimen {
+	final String target;
+	final String text;
+	final String? reply;
+
+	const IrcPrivmsg({
+		required this.target,
+		required this.text,
+		this.reply,
+	}) : super._();
+
+	IrcPrivmsg._fromRaw(super.msg) :
+		assert(msg.cmd == 'PRIVMSG'),
+		target = msg.params[0],
+		text = msg.params[1],
+		reply = msg.inReplyTo,
+		super._fromRaw();
+
+	@override
+	IrcMessage toRaw() => _toRaw('PRIVMSG', [target, text], tags: {
+		if (reply != null) 'reply': reply,
+	});
+}
+
+/// A react message. Can be either TAGMSG or PRIVMSG.
+class IrcReactMessage extends IrcMessageSpecimen {
+	final String target;
+	final String text;
+	final String reply;
+
+	const IrcReactMessage({
+		required this.target,
+		required this.text,
+		required this.reply,
+	}) : super._();
+
+	IrcReactMessage._fromRaw(super.msg) :
+		assert(msg.cmd == 'TAGMSG' || msg.cmd == 'PRIVMSG'),
+		target = msg.params[0],
+		text = msg.tags['+draft/react']!,
+		reply = msg.inReplyTo!,
+		super._fromRaw();
+
+	@override
+	IrcMessage toRaw() => _toRaw('TAGMSG', [target], tags: {
+		'+reply': reply,
+		'+draft/reply': reply,
+		'+draft/react': text,
+	});
+}
+
 class IrcAvailableCapRegistry {
 	final Map<String, String?> _raw = {};
 
