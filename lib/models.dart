@@ -769,7 +769,6 @@ class UserListModel extends ChangeNotifier {
 		}
 		if (updatedUser.realname != null) {
 			user.realname = updatedUser.realname;
-			notifyListeners();
 		}
 	}
 
