@@ -527,15 +527,12 @@ class IrcException implements Exception {
 /// A high-level, fully parsed message.
 ///
 /// One specific class is defined per message type. Messages are immutable.
-///
-/// A roundtrip through fromRaw and toRaw is lossy: it only retains known
-/// pieces of metadata (e.g. may erase some message tags).
-/// TODO: we could easily store the original raw message and avoid this, should
-/// we?
 abstract class IrcMessageSpecimen {
 	final IrcSource? source;
 	final DateTime? time;
 	final String? msgid;
+
+	final IrcMessage? _raw;
 
 	/// Convert to a raw IRC message.
 	IrcMessage toRaw();
@@ -543,12 +540,14 @@ abstract class IrcMessageSpecimen {
 	const IrcMessageSpecimen._() :
 		source = null,
 		time = null,
-		msgid = null;
+		msgid = null,
+		_raw = null;
 
 	IrcMessageSpecimen._fromRaw(IrcMessage msg) :
 		source = msg.source,
 		time = msg.tags['time'] != null ? DateTime.parse(msg.tags['time']!) : null,
-		msgid = msg.tags['msgid'];
+		msgid = msg.tags['msgid'],
+		_raw = msg;
 
 	static IrcMessageSpecimen? fromRaw(IrcMessage msg) {
 		if ((msg.cmd == 'PRIVMSG' || msg.cmd == 'TAGMSG') && msg.tags['+draft/react'] != null && msg.inReplyTo != null) {
@@ -566,6 +565,13 @@ abstract class IrcMessageSpecimen {
 	IrcMessage _toRaw(String cmd, List<String> params, {
 		Map<String, String?> tags = const {},
 	}) {
+		// Return original raw message if we've stored one, to avoid loosing
+		// metadata we don't parse. High-level messages are immutable so it's
+		// safe to ignore this function's arguments.
+		if (_raw != null) {
+			return _raw!;
+		}
+
 		Map<String, String?> rawTags = {
 			if (time != null) 'time': formatIrcTime(time!),
 			if (msgid != null) 'msgid': msgid,
