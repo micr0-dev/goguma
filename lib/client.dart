@@ -143,7 +143,7 @@ class Client {
 	final Set<String> _requestCaps;
 	ConnectParams _params;
 	ConnectionTask<Socket>? _connectionTask;
-	Socket? _socket;
+	IrcSocket? _socket;
 	String _nick;
 	String _realname;
 	final String? _pinnedCertSHA1;
@@ -265,18 +265,11 @@ class Client {
 		}
 
 		_log('Connection opened');
-		_socket = socket;
+		_socket = IrcSocket(socket);
 		_setState(ClientState.connected);
 		_monitorSocket(socket);
 
-		var decoder = Utf8Decoder(allowMalformed: true);
-		var text = decoder.bind(socket);
-		var lines = text.transform(const LineSplitter());
-
-		lines.listen((l) {
-			var msg = IrcMessage.parse(l);
-			_handleMessage(msg);
-		}, onDone: () {
+		_socket!.listen(_handleMessage, onDone: () {
 			// This callback is invoked when the incoming side of the
 			// bi-directional connection is closed. We close the outgoing side
 			// here.
@@ -777,7 +770,7 @@ class Client {
 		if (kDebugMode) {
 			_log('-> ' + msg.toString());
 		}
-		_socket!.write(msg.toString() + '\r\n');
+		_socket!.add(msg);
 	}
 
 	bool isChannel(String name) {

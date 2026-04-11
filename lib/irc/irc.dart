@@ -10,6 +10,7 @@ export 'isupport.dart';
 export 'message.dart';
 export 'mode.dart';
 export 'numerics.dart';
+export 'socket.dart';
 export 'uri.dart';
 export 'who.dart';
 
