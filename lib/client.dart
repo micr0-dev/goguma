@@ -1415,4 +1415,9 @@ class ChatHistoryTarget {
 	final String time;
 
 	const ChatHistoryTarget._(this.name, this.time);
+
+	@override
+	String toString() {
+		return 'CHATHISTORY TARGETS $name $time';
+	}
 }
