@@ -34,7 +34,7 @@ class Logger {
 		if (error != null) {
 			msg += ': $error';
 		}
-		debugPrint(msg);
+		debugPrint('[${DateTime.now().toString()}] $msg');
 	}
 
 	void reportFlutterError(FlutterErrorDetails details) async {
