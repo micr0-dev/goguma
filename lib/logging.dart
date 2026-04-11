@@ -15,6 +15,11 @@ class Logger {
 	bool Function() isSentryEnabled = () => true;
 
 	Future<void> init() async {
+		if (Platform.isLinux) {
+			// Use sync logging on Linux.
+			debugPrint = debugPrintSynchronously;
+		}
+
 		if (_sentryDsn == '') {
 			return;
 		}
