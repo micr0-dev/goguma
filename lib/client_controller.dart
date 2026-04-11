@@ -1173,7 +1173,7 @@ class ClientController {
 				var batch = await client.fetchChatHistoryBetween(target.name, from, to, max);
 				await readMarkerFuture;
 				await _handleChatMessages(target.name, batch.messages);
-				if (batch.messages.length < max) {
+				if (batch.messages.length < max || batch.tags.containsKey('draft/chathistory-end')) {
 					done = true;
 					break;
 				}
