@@ -48,7 +48,7 @@ tasks:
       fi
   - analyze: |
       cd goguma
-      flutter analyze --no-fatal-infos
+      flutter analyze
   - test: |
       cd goguma
       flutter test --reporter expanded
