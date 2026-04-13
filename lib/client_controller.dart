@@ -362,6 +362,8 @@ class ClientController {
 
 	String? _prevLastDeliveredTime;
 	bool _gotInitialBouncerNetworksBatch = false;
+	Map<String, List<ClientMessage>> _pendingChatMessages = {};
+	late StreamSubscription<void> _messagesSub;
 
 	Client get client => _client;
 	NetworkModel get network => _network;
@@ -389,6 +391,7 @@ class ClientController {
 					}
 				}
 				_gotInitialBouncerNetworksBatch = false;
+				_pendingChatMessages = {};
 				break;
 			case ClientState.connecting:
 				// TODO: drop _getLastDeliveredTime() in a future release
@@ -402,12 +405,11 @@ class ClientController {
 			}
 		});
 
-		late StreamSubscription<void> messagesSub;
-		messagesSub = client.messages.listen((msg) {
+		_messagesSub = client.messages.listen((msg) {
 			var future = _handleMessage(msg);
 			if (future != null) {
-				messagesSub.pause();
-				future.whenComplete(() => messagesSub.resume());
+				_messagesSub.pause();
+				future.whenComplete(() => _messagesSub.resume());
 			}
 		});
 
@@ -527,6 +529,18 @@ class ClientController {
 
 			if (_prevLastDeliveredTime != null) {
 				var to = msg.tags['time'] ?? formatIrcTime(DateTime.now());
+
+				// Clamp the upper bound to the first received pending chat
+				// message, to avoid fetching duplicates
+				for (var messages in _pendingChatMessages.values) {
+					for (var pendingMsg in messages) {
+						var t = pendingMsg.tags['time'];
+						if (t != null && t.compareTo(to) < 0) {
+							to = t;
+						}
+					}
+				}
+
 				syncFutures.add(_fetchBacklog(_prevLastDeliveredTime!, to));
 			}
 
@@ -542,6 +556,22 @@ class ClientController {
 					return; // disconnected in the meantime
 				}
 				network.state = NetworkState.online;
+
+				var pendingChatMessages = _pendingChatMessages;
+				_pendingChatMessages = {};
+
+				try {
+					_messagesSub.pause();
+					for (var entry in pendingChatMessages.entries) {
+						try {
+							await _handleChatMessages(entry.key, entry.value);
+						} on Exception catch (err) {
+							log.print('Failed to handle buffered chat messages for ${entry.key}', error: err);
+						}
+					}
+				} finally {
+					_messagesSub.resume();
+				}
 			}();
 			break;
 		case 'JOIN':
@@ -837,6 +867,14 @@ class ClientController {
 		}
 
 		var isHistory = messages.first.batchByType('chathistory') != null;
+		if (!isHistory && network.state != NetworkState.online) {
+			// We've received standalone chat messages during chat history
+			// synchronization. If we handle them now, we'd bump last delivered
+			// timestamps even if synchronization ends up failing. Instead,
+			// buffer them and process them once we're done synchonizing.
+			_pendingChatMessages.putIfAbsent(target, () => []).addAll(messages);
+			return;
+		}
 
 		var createNewBuffer = false;
 		List<ClientMessage> notices = [];
