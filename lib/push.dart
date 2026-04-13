@@ -81,14 +81,10 @@ Future<void> handlePushMessage(DB db, WebPushSubscriptionEntry sub, List<int> ci
 			}
 		}
 
+		// Don't create a new buffer here: this would desync any in-memory
+		// state in the main Isolate
 		var bufferEntry = await _fetchBuffer(db, target, networkEntry);
-		if (bufferEntry == null) {
-			bufferEntry = BufferEntry(name: target, network: sub.network);
-			await db.storeBuffer(bufferEntry);
-		}
-
-		var buffer = BufferModel(entry: bufferEntry, network: network);
-		if (buffer.muted) {
+		if (bufferEntry != null && bufferEntry.muted) {
 			break;
 		}
 
