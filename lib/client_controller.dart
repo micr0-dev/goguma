@@ -797,7 +797,8 @@ class ClientController {
 				break;
 			}
 
-			_notifController.cancelAllWithBuffer(buffer, DateTime.parse(time));
+			var notifBuffer = NotificationBuffer.fromModel(buffer);
+			_notifController.cancelAllWithBuffer(notifBuffer, DateTime.parse(time));
 
 			buffer.entry.lastReadTime = time;
 			return _db.storeBuffer(buffer.entry).then((_) {
@@ -1109,11 +1110,12 @@ class ClientController {
 			return;
 		}
 
+		var notifBuffer = NotificationBuffer.fromModel(buffer);
 		var messages = entries.map((entry) => entry.msg).toList();
 		if (isChannel) {
-			await _notifController.showHighlight(messages, buffer);
+			await _notifController.showHighlight(messages, notifBuffer);
 		} else {
-			await _notifController.showDirectMessage(messages, buffer);
+			await _notifController.showDirectMessage(messages, notifBuffer);
 		}
 	}
 

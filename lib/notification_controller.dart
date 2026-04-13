@@ -11,6 +11,17 @@ var _nextId = 1;
 var _launchSelectionPopped = false;
 const _maxId = 0x7FFFFFFF; // 2^31 - 1
 
+class NotificationBuffer {
+	final int networkId;
+	final String name;
+
+	const NotificationBuffer({ required this.networkId, required this.name });
+
+	NotificationBuffer.fromModel(BufferModel model) :
+		networkId = model.network.networkId,
+		name = model.name;
+}
+
 class _NotificationChannel {
 	final String id;
 	final String name;
@@ -166,11 +177,12 @@ class NotificationController {
 		_selectionsController.add(resp.payload);
 	}
 
-	String _bufferTag(BufferModel buffer) {
-		return 'buffer:${buffer.id}';
+	String _bufferTag(NotificationBuffer buffer) {
+		// Note, the buffer might not exist in the database at this point
+		return 'buffer:${buffer.networkId}/${buffer.name}';
 	}
 
-	Future<void> showDirectMessage(List<IrcMessage> messages, BufferModel buffer) async {
+	Future<void> showDirectMessage(List<IrcMessage> messages, NotificationBuffer buffer) async {
 		var msg = messages.first;
 		String tag = _bufferTag(buffer);
 		_ActiveNotification? replace = _getActiveWithTag(tag);
@@ -195,7 +207,7 @@ class NotificationController {
 		);
 	}
 
-	Future<void> showHighlight(List<IrcMessage> messages, BufferModel buffer) async {
+	Future<void> showHighlight(List<IrcMessage> messages, NotificationBuffer buffer) async {
 		var msg = messages.first;
 		String tag = _bufferTag(buffer);
 		_ActiveNotification? replace = _getActiveWithTag(tag);
@@ -244,7 +256,7 @@ class NotificationController {
 		return '$total$suffix';
 	}
 
-	MessagingStyleInformation _buildMessagingStyleInfo(List<Message> messages, BufferModel buffer, bool isChannel) {
+	MessagingStyleInformation _buildMessagingStyleInfo(List<Message> messages, NotificationBuffer buffer, bool isChannel) {
 		// TODO: Person.key, Person.bot, Person.uri
 		return MessagingStyleInformation(
 			Person(name: buffer.name),
@@ -287,7 +299,7 @@ class NotificationController {
 		return latest;
 	}
 
-	Future<void> cancelAllWithBuffer(BufferModel buffer, DateTime? before) async {
+	Future<void> cancelAllWithBuffer(NotificationBuffer buffer, DateTime? before) async {
 		var tag = _bufferTag(buffer);
 		var prevActive = [..._active]; // copy to be able to remove while iterating
 		List<Future<void>> futures = [];
