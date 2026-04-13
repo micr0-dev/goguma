@@ -92,12 +92,10 @@ Future<void> handlePushMessage(DB db, WebPushSubscriptionEntry sub, List<int> ci
 			break;
 		}
 
-		var msgEntry = MessageEntry(msg, bufferEntry.id!);
-
 		if (isChannel) {
-			await notifController.showHighlight([msgEntry], buffer);
+			await notifController.showHighlight([msg], buffer);
 		} else {
-			await notifController.showDirectMessage([msgEntry], buffer);
+			await notifController.showDirectMessage([msg], buffer);
 		}
 		break;
 	case 'INVITE':

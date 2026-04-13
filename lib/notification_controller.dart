@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import 'ansi.dart';
-import 'database.dart';
 import 'irc/irc.dart';
 import 'logging.dart';
 import 'models.dart';
@@ -171,52 +170,52 @@ class NotificationController {
 		return 'buffer:${buffer.id}';
 	}
 
-	Future<void> showDirectMessage(List<MessageEntry> entries, BufferModel buffer) async {
-		var entry = entries.first;
+	Future<void> showDirectMessage(List<IrcMessage> messages, BufferModel buffer) async {
+		var msg = messages.first;
 		String tag = _bufferTag(buffer);
 		_ActiveNotification? replace = _getActiveWithTag(tag);
 
 		String title;
 		if (replace == null) {
-			title = 'New message from ${entry.msg.source!.name}';
+			title = 'New message from ${msg.source!.name}';
 		} else {
-			title = _incrementTitleCount(replace.title, entries.length, ' messages from ${entry.msg.source!.name}');
+			title = _incrementTitleCount(replace.title, messages.length, ' messages from ${msg.source!.name}');
 		}
 
-		List<Message> messages = replace?.messagingStyleInfo?.messages ?? [];
-		messages.addAll(entries.map(_buildMessage));
+		List<Message> notifMessages = replace?.messagingStyleInfo?.messages ?? [];
+		notifMessages.addAll(messages.map(_buildMessage));
 
 		await _show(
 			title: title,
-			body: _getMessageBody(entry),
+			body: _getMessageBody(msg),
 			channel: _directMessageChannel,
-			dateTime: _getLatestMessageTimestamp(messages),
-			messagingStyleInfo: _buildMessagingStyleInfo(messages, buffer, false),
+			dateTime: _getLatestMessageTimestamp(notifMessages),
+			messagingStyleInfo: _buildMessagingStyleInfo(notifMessages, buffer, false),
 			tag: _bufferTag(buffer),
 		);
 	}
 
-	Future<void> showHighlight(List<MessageEntry> entries, BufferModel buffer) async {
-		var entry = entries.first;
+	Future<void> showHighlight(List<IrcMessage> messages, BufferModel buffer) async {
+		var msg = messages.first;
 		String tag = _bufferTag(buffer);
 		_ActiveNotification? replace = _getActiveWithTag(tag);
 
 		String title;
 		if (replace == null) {
-			title = '${entry.msg.source!.name} mentioned you in ${buffer.name}';
+			title = '${msg.source!.name} mentioned you in ${buffer.name}';
 		} else {
-			title = _incrementTitleCount(replace.title, entries.length, ' mentions in ${buffer.name}');
+			title = _incrementTitleCount(replace.title, messages.length, ' mentions in ${buffer.name}');
 		}
 
-		List<Message> messages = replace?.messagingStyleInfo?.messages ?? [];
-		messages.addAll(entries.map(_buildMessage));
+		List<Message> notifMessages = replace?.messagingStyleInfo?.messages ?? [];
+		notifMessages.addAll(messages.map(_buildMessage));
 
 		await _show(
 			title: title,
-			body: _getMessageBody(entry),
+			body: _getMessageBody(msg),
 			channel: _highlightChannel,
-			dateTime: _getLatestMessageTimestamp(messages),
-			messagingStyleInfo: _buildMessagingStyleInfo(messages, buffer, true),
+			dateTime: _getLatestMessageTimestamp(notifMessages),
+			messagingStyleInfo: _buildMessagingStyleInfo(notifMessages, buffer, true),
 			tag: _bufferTag(buffer),
 		);
 	}
@@ -255,19 +254,20 @@ class NotificationController {
 		);
 	}
 
-	Message _buildMessage(MessageEntry entry) {
+	Message _buildMessage(IrcMessage msg) {
+		var time = msg.tags['time'];
 		return Message(
-			_getMessageBody(entry),
-			entry.dateTime,
-			Person(name: entry.msg.source!.name),
+			_getMessageBody(msg),
+			time != null ? DateTime.parse(time) : DateTime.now(),
+			Person(name: msg.source!.name),
 		);
 	}
 
-	String _getMessageBody(MessageEntry entry) {
-		var sender = entry.msg.source!.name;
-		var ctcp = CtcpMessage.parse(entry.msg);
+	String _getMessageBody(IrcMessage msg) {
+		var sender = msg.source!.name;
+		var ctcp = CtcpMessage.parse(msg);
 		if (ctcp == null) {
-			return stripAnsiFormatting(entry.msg.params[1]);
+			return stripAnsiFormatting(msg.params[1]);
 		}
 		if (ctcp.cmd == 'ACTION') {
 			var action = stripAnsiFormatting(ctcp.param ?? '');

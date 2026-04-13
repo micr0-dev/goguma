@@ -1109,10 +1109,11 @@ class ClientController {
 			return;
 		}
 
+		var messages = entries.map((entry) => entry.msg).toList();
 		if (isChannel) {
-			await _notifController.showHighlight(entries, buffer);
+			await _notifController.showHighlight(messages, buffer);
 		} else {
-			await _notifController.showDirectMessage(entries, buffer);
+			await _notifController.showDirectMessage(messages, buffer);
 		}
 	}
 
