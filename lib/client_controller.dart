@@ -1153,11 +1153,13 @@ class ClientController {
 			chatHistoryLimit = 1000;
 		}
 
-		var targets = LinkedHashMap<String, ChatHistoryTarget>();
+		LinkedHashMap<String, ChatHistoryTarget> targets = LinkedHashMap();
 		while (true) {
 			var page = await client.fetchChatHistoryTargets(t1, t2, chatHistoryLimit);
 
-			page.forEach((t) => targets.putIfAbsent(t.name, () => t));
+			for (var t in page) {
+				targets.putIfAbsent(t.name, () => t);
+			}
 
 			if (page.length < chatHistoryLimit) {
 				// This page wasn't full, so there's nothing
