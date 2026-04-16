@@ -88,6 +88,15 @@ class BadCertException implements Exception {
 	}
 }
 
+class _DisconnectedException extends IOException {
+	_DisconnectedException();
+
+	@override
+	String toString() {
+		return 'Disconnected from server';
+	}
+}
+
 Set<String> _getDefaultCaps(ConnectParams params) {
 	var caps = {
 		'away-notify',
@@ -383,7 +392,7 @@ class Client {
 		FutureOr<ClientMessage> Function()? onTimeout,
 	}) {
 		if (state != ClientState.connected) {
-			return Future.error(Exception('Disconnected from server'));
+			return Future.error(_DisconnectedException());
 		}
 
 		// We need to manually track the Future completion state, because the
@@ -395,7 +404,7 @@ class Client {
 
 		var statesSub = states.listen((state) {
 			if (state == ClientState.disconnected && !completed) {
-				completer.completeError(Exception('Disconnected from server'));
+				completer.completeError(_DisconnectedException());
 				completed = true;
 			}
 		});
