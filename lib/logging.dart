@@ -68,5 +68,5 @@ class Logger {
 }
 
 bool _isSentryException(Object exception) {
-	return !(exception is TimeoutException);
+	return !(exception is TimeoutException) && !(exception is IOException);
 }
