@@ -268,7 +268,8 @@ Future<void> _syncChatHistory(ClientProvider clientProvider, NetworkListModel ne
 			try {
 				await _waitNetworkOnline(network);
 			} on Exception catch (err) {
-				throw Exception('Failed to bring network "${network.serverEntry.host}" online: $err');
+				log.print('Failed to bring network "${network.serverEntry.host}" online', error: err);
+				rethrow;
 			}
 		}));
 
