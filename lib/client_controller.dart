@@ -536,9 +536,12 @@ class ClientController {
 					await Future.wait(syncFutures);
 				} on Exception catch (err) {
 					log.print('Failed to synchronize network', error: err);
-				} finally {
-					network.state = NetworkState.online;
 				}
+
+				if (network.state != NetworkState.synchronizing) {
+					return; // disconnected in the meantime
+				}
+				network.state = NetworkState.online;
 			}();
 			break;
 		case 'JOIN':
