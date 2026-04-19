@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../client.dart';
 import '../client_controller.dart';
-import '../irc.dart';
+import '../irc/irc.dart';
 import '../models.dart';
 import 'emoji_sheet.dart';
 

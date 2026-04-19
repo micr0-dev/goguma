@@ -15,7 +15,7 @@ import 'package:share_handler/share_handler.dart';
 import '../client.dart';
 import '../commands.dart';
 import '../database.dart';
-import '../irc.dart';
+import '../irc/irc.dart';
 import '../logging.dart';
 import '../models.dart';
 import '../prefs.dart';

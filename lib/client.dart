@@ -6,7 +6,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:hex/hex.dart';
 
-import 'irc.dart';
+import 'irc/irc.dart';
 import 'logging.dart';
 
 class SaslPlainCredentials {

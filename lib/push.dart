@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert' show utf8;
 
 import 'database.dart';
-import 'irc.dart';
+import 'irc/irc.dart';
 import 'logging.dart';
 import 'models.dart';
 import 'notification_controller.dart';

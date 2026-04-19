@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 
 import 'client.dart';
 import 'database.dart';
-import 'irc.dart';
+import 'irc/irc.dart';
 import 'models.dart';
 
 typedef CommandIsAvailable = bool Function(BuildContext context);

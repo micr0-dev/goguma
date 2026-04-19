@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import '../ansi.dart';
 import '../client.dart';
 import '../emoji.dart';
-import '../irc.dart';
+import '../irc/irc.dart';
 import '../linkify.dart';
 import '../models.dart';
 import '../prefs.dart';

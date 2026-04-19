@@ -9,7 +9,7 @@ import 'package:workmanager/workmanager.dart';
 
 import 'client.dart';
 import 'database.dart';
-import 'irc.dart';
+import 'irc/irc.dart';
 import 'logging.dart';
 import 'models.dart';
 import 'notification_controller.dart';

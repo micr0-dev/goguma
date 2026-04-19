@@ -12,7 +12,7 @@ import 'ansi.dart';
 import 'client.dart';
 import 'client_controller.dart';
 import 'dialog/authenticate.dart';
-import 'irc.dart';
+import 'irc/irc.dart';
 import 'logging.dart';
 import 'models.dart';
 import 'network_state_aggregator.dart';

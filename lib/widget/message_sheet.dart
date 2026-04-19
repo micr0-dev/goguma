@@ -6,7 +6,7 @@ import '../ansi.dart';
 import '../client.dart';
 import '../client_controller.dart';
 import '../database.dart';
-import '../irc.dart';
+import '../irc/irc.dart';
 import '../models.dart';
 import '../page/buffer.dart';
 import '../page/buffer_details.dart';

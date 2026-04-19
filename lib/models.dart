@@ -5,7 +5,7 @@ import 'package:characters/characters.dart';
 import 'package:flutter/foundation.dart';
 
 import 'database.dart';
-import 'irc.dart';
+import 'irc/irc.dart';
 
 // This file contains models. Models are data structures which are can be
 // listened to by UI elements so that the UI is updated whenever they change.
