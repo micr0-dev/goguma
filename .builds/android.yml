@@ -6,6 +6,7 @@ packages:
   - android-sdk-platform-tools
   - clang
   - jdk21-openjdk
+  - cmake
   # for flutter
   - unzip
 sources:
