@@ -63,5 +63,9 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
 
+dependency_overrides:
+  # https://github.com/google/webcrypto.dart/pull/336
+  native_toolchain_cmake: ^0.3.0
+
 flutter:
   uses-material-design: true
