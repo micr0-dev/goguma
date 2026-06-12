@@ -41,7 +41,7 @@ class IrcIsupportRegistry {
 	int get usernameLen => _usernameLen ?? _defaultUsernameLen;
 	int get hostnameLen => _hostnameLen ?? _defaultHostnameLen;
 	int get lineLen => _lineLen ?? _defaultLineLen;
-	int get chathistoryLimit => _chathistoryLimit ?? (throw StateError('CHATHISTORY ISUPPORT was not given'));
+	int get chathistoryLimit => _chathistoryLimit ?? 0;
 	List<String> get chanModes => UnmodifiableListView(_chanModes ?? _defaultChanModes);
 	IrcIsupportElist? get elist => _elist;
 	String? get vapid => _raw['VAPID'];
