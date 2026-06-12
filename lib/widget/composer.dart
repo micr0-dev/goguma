@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert' show utf8;
 import 'dart:io';
 
 import 'package:file_selector/file_selector.dart';
@@ -546,7 +547,24 @@ class ComposerState extends State<Composer> {
 			await req.addStream(file.openRead());
 			var resp = await req.close();
 			if (resp.statusCode != 201) {
-				throw Exception('HTTP error ${resp.statusCode} (expected 201)');
+				if (resp.statusCode / 100 == 2) {
+					throw Exception('Bad HTTP status code: expected 201, got ${resp.statusCode}');
+				}
+				var msg = 'HTTP error ${resp.statusCode}';
+				var mimeType = resp.headers.contentType?.mimeType;
+				if (mimeType == null || mimeType == 'text/plain') {
+					try {
+						var details = await resp.transform(utf8.decoder).join();
+						details = details.trim();
+						if (details.length > 500) {
+							details = details.substring(0, 500);
+						}
+						msg += ': $details';
+					} on Exception catch (_) {
+						// ignore
+					}
+				}
+				throw Exception(msg);
 			}
 
 			var location = resp.headers.value('Location');
