@@ -21,6 +21,15 @@ class IrcParamList extends UnmodifiableListView<String> {
 			throw FormatException('Invalid $_cmd message: missing parameter at index $index');
 		}
 	}
+
+	@override
+	List<String> sublist(int start, [int? end]) {
+		try {
+			return super.sublist(start, end);
+		} on RangeError {
+			throw FormatException('Invalid $_cmd message: missing parameters at indices $start..$end');
+		}
+	}
 }
 
 class IrcMessage {
