@@ -37,7 +37,7 @@ dependencies:
   path: ^1.8.1
   path_provider: ^2.1.5
   provider: ^6.0.1
-  record: ^6.0.0
+  record: ^7.1.0
   # TODO: drop this unmaintained library
   scrollable_positioned_list:
     git:
