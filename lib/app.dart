@@ -258,40 +258,42 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 		if (payload == null) {
 			return;
 		}
-		if (payload.startsWith('buffer:')) {
-			_handleSelectBufferNotification(payload.replaceFirst('buffer:', ''));
-		} else if (payload.startsWith('invite:')) {
-			_handleSelectInviteNotification(payload.replaceFirst('invite:', ''));
-		} else {
-			throw FormatException('Invalid payload: $payload');
+		var (kind, buffer) = NotificationController.parsePayload(payload);
+		switch (kind) {
+		case NotificationKind.message:
+			_handleSelectMessageNotification(buffer);
+			break;
+		case NotificationKind.invite:
+			_handleSelectInviteNotification(buffer);
+			break;
 		}
 	}
 
-	void _handleSelectBufferNotification(String payload) {
-		var bufferId = int.parse(payload);
+	void _handleSelectMessageNotification(NotificationBuffer notifBuffer) {
 		var bufferList = context.read<BufferListModel>();
-		var navigatorState = _navigatorKey.currentState!;
-		var buffer = bufferList.byId(bufferId);
+		var networkList = context.read<NetworkListModel>();
+		var network = networkList.byId(notifBuffer.networkId);
+		if (network == null) {
+			return; // maybe removed by the user in-between
+		}
+		var buffer = bufferList.get(notifBuffer.name, network);
 		if (buffer == null) {
 			return; // maybe closed by the user in-between
 		}
 		var until = ModalRoute.withName(BufferListPage.routeName);
 		var args = BufferPageArguments(buffer: buffer);
+		var navigatorState = _navigatorKey.currentState!;
 		navigatorState.pushNamedAndRemoveUntil(BufferPage.routeName, until, arguments: args);
 	}
 
-	void _handleSelectInviteNotification(String payload) {
-		var i = payload.indexOf(':');
-		if (i < 0) {
-			throw FormatException('Invalid invite payload: $payload');
-		}
-		var networkId = int.parse(payload.substring(0, i));
-		var channel = payload.substring(i + 1);
-
+	void _handleSelectInviteNotification(NotificationBuffer notifBuffer) {
 		var networkList = context.read<NetworkListModel>();
-		var network = networkList.byId(networkId)!;
+		var network = networkList.byId(notifBuffer.networkId);
+		if (network == null) {
+			return; // maybe removed by the user in-between
+		}
 
-		BufferPage.open(_navigatorKey.currentState!.context, channel, network);
+		BufferPage.open(_navigatorKey.currentState!.context, notifBuffer.name, network);
 	}
 
 	void _handleNetworkStateChange() {

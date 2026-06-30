@@ -22,6 +22,8 @@ class NotificationBuffer {
 		name = model.name;
 }
 
+enum NotificationKind { message, invite }
+
 class _NotificationChannel {
 	final String id;
 	final String name;
@@ -177,14 +179,50 @@ class NotificationController {
 		_selectionsController.add(resp.payload);
 	}
 
-	String _bufferTag(NotificationBuffer buffer) {
+	String _generateTag(NotificationKind kind, NotificationBuffer buffer) {
+		String kindStr;
+		switch (kind) {
+		case NotificationKind.message:
+			kindStr = 'message';
+			break;
+		case NotificationKind.invite:
+			kindStr = 'invite';
+			break;
+		}
+
 		// Note, the buffer might not exist in the database at this point
-		return 'buffer:${buffer.networkId}/${buffer.name}';
+		// (e.g. for invites or push messages from another user)
+		return '$kindStr:${buffer.networkId}/${buffer.name}';
+	}
+
+	static (NotificationKind, NotificationBuffer) parsePayload(String payload) {
+		NotificationKind kind;
+		if (payload.startsWith('message:')) {
+			kind = NotificationKind.message;
+			payload = payload.replaceFirst('message:', '');
+		} else if (payload.startsWith('invite:')) {
+			kind = NotificationKind.invite;
+			payload = payload.replaceFirst('invite:', '');
+		} else {
+			throw FormatException('Invalid notification payload: malformed header: $payload');
+		}
+
+		var i = payload.indexOf('/');
+		if (i < 0) {
+			throw FormatException('Invalid notification payload: malformed body: $payload');
+		}
+		var networkId = int.tryParse(payload.substring(0, i));
+		if (networkId == null) {
+			throw FormatException('Invalid notification payload: malformed network ID: $payload');
+		}
+		var name = payload.substring(i + 1);
+
+		return (kind, NotificationBuffer(networkId: networkId, name: name));
 	}
 
 	Future<void> showDirectMessage(List<IrcMessage> messages, NotificationBuffer buffer) async {
 		var msg = messages.first;
-		String tag = _bufferTag(buffer);
+		String tag = _generateTag(NotificationKind.message, buffer);
 		_ActiveNotification? replace = _getActiveWithTag(tag);
 
 		String title;
@@ -203,13 +241,13 @@ class NotificationController {
 			channel: _directMessageChannel,
 			dateTime: _getLatestMessageTimestamp(notifMessages),
 			messagingStyleInfo: _buildMessagingStyleInfo(notifMessages, buffer, false),
-			tag: _bufferTag(buffer),
+			tag: tag,
 		);
 	}
 
 	Future<void> showHighlight(List<IrcMessage> messages, NotificationBuffer buffer) async {
 		var msg = messages.first;
-		String tag = _bufferTag(buffer);
+		String tag = _generateTag(NotificationKind.message, buffer);
 		_ActiveNotification? replace = _getActiveWithTag(tag);
 
 		String title;
@@ -228,7 +266,7 @@ class NotificationController {
 			channel: _highlightChannel,
 			dateTime: _getLatestMessageTimestamp(notifMessages),
 			messagingStyleInfo: _buildMessagingStyleInfo(notifMessages, buffer, true),
-			tag: _bufferTag(buffer),
+			tag: tag,
 		);
 	}
 
@@ -241,7 +279,7 @@ class NotificationController {
 			title: '${msg.source!.name} invited you to $channel',
 			channel: _inviteChannel,
 			dateTime: time != null ? DateTime.tryParse(time) : null,
-			tag: 'invite:${network.networkEntry.id}:$channel',
+			tag: _generateTag(NotificationKind.invite, NotificationBuffer(networkId: network.networkId, name: channel)),
 		);
 	}
 
@@ -300,7 +338,7 @@ class NotificationController {
 	}
 
 	Future<void> cancelAllWithBuffer(NotificationBuffer buffer, DateTime? before) async {
-		var tag = _bufferTag(buffer);
+		var tag = _generateTag(NotificationKind.message, buffer);
 		var prevActive = [..._active]; // copy to be able to remove while iterating
 		List<Future<void>> futures = [];
 		for (var notif in prevActive) {
