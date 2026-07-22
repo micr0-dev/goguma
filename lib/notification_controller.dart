@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import 'ansi.dart';
@@ -100,14 +101,21 @@ class NotificationController {
 			onDidReceiveNotificationResponse: _handleNotificationResponse,
 		);
 
-		var androidPlugin = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
-		if (androidPlugin != null) {
-			try {
-				var activeNotifs = await androidPlugin.getActiveNotifications();
-				_populateActive(androidPlugin, activeNotifs);
-			} on Exception catch (err) {
+		List<ActiveNotification>? activeNotifs;
+		try {
+			activeNotifs = await _plugin.getActiveNotifications();
+		} on UnimplementedError catch (err) {
+			log.print('Note: platform doesn\'t support listing active notifications', error: err);
+		} on Exception catch (err) {
+			if ((err is PlatformException) && err.code == 'unsupported_os_version') {
+				log.print('Note: platform too old for listing active notifications', error: err);
+			} else {
 				log.print('Failed to list active notifications', error: err);
 			}
+		}
+
+		if (activeNotifs != null) {
+			_populateActive(activeNotifs);
 		}
 	}
 
@@ -138,7 +146,9 @@ class NotificationController {
 		return launchDetails.notificationResponse?.payload;
 	}
 
-	void _populateActive(AndroidFlutterLocalNotificationsPlugin androidPlugin, List<ActiveNotification> activeNotifs) async {
+	void _populateActive(List<ActiveNotification> activeNotifs) async {
+		var androidPlugin = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+
 		for (var notif in activeNotifs) {
 			if (notif.id == null) {
 				continue; // not created by the flutter_local_notifications plugin
@@ -156,7 +166,7 @@ class NotificationController {
 
 			MessagingStyleInformation? messagingStyleInfo;
 			try {
-				messagingStyleInfo = await androidPlugin.getActiveNotificationMessagingStyle(
+				messagingStyleInfo = await androidPlugin?.getActiveNotificationMessagingStyle(
 					id: notif.id!,
 					tag: notif.tag,
 				);
