@@ -115,7 +115,7 @@ class NotificationController {
 		}
 
 		if (activeNotifs != null) {
-			_populateActive(activeNotifs);
+			await _populateActive(activeNotifs);
 		}
 	}
 
@@ -146,7 +146,7 @@ class NotificationController {
 		return launchDetails.notificationResponse?.payload;
 	}
 
-	void _populateActive(List<ActiveNotification> activeNotifs) async {
+	Future<void> _populateActive(List<ActiveNotification> activeNotifs) async {
 		var androidPlugin = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
 
 		for (var notif in activeNotifs) {
