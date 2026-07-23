@@ -1,6 +1,6 @@
 import 'dart:collection';
 
-final defaultCaseMapping = _caseMappingByName('rfc1459')!;
+final defaultCaseMapping = CaseMapping.rfc1459;
 
 final _defaultMemberships = [
 	IrcIsupportMembership('q', '~'),
@@ -291,24 +291,27 @@ class CaseMapping {
 		// Fast path in case both strings are identical
 		return a == b || canonicalize(a) == canonicalize(b);
 	}
+
+	static CaseMapping _fromCaseMapChar(String Function(String s) caseMapChar) {
+		return CaseMapping._((String s) => s.split('').map(caseMapChar).join(''));
+	}
+
+	static CaseMapping ascii = _fromCaseMapChar(_caseMapCharAscii);
+	static CaseMapping rfc1459 = _fromCaseMapChar(_caseMapCharRfc1459);
+	static CaseMapping rfc1459Strict = _fromCaseMapChar(_caseMapCharRfc1459Strict);
 }
 
 CaseMapping? _caseMappingByName(String s) {
-	String Function(String s) caseMapChar;
 	switch (s) {
 	case 'ascii':
-		caseMapChar = _caseMapCharAscii;
-		break;
+		return CaseMapping.ascii;
 	case 'rfc1459':
-		caseMapChar = _caseMapCharRfc1459;
-		break;
+		return CaseMapping.rfc1459;
 	case 'rfc1459-strict':
-		caseMapChar = _caseMapCharRfc1459Strict;
-		break;
+		return CaseMapping.rfc1459Strict;
 	default:
 		return null;
 	}
-	return CaseMapping._((String s) => s.split('').map(caseMapChar).join(''));
 }
 
 String _caseMapCharRfc1459(String ch) {
