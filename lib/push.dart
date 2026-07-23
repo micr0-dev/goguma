@@ -88,7 +88,7 @@ Future<void> handlePushMessage(DB db, WebPushSubscriptionEntry sub, List<int> ci
 			break;
 		}
 
-		var buffer = NotificationBuffer(networkId: network.networkId, name: target);
+		var buffer = NotificationBuffer.withNetwork(network, target);
 		if (isChannel) {
 			await notifController.showHighlight([msg], buffer);
 		} else {
@@ -118,7 +118,7 @@ Future<void> handlePushMessage(DB db, WebPushSubscriptionEntry sub, List<int> ci
 		// against the main Isolate, which also receives MARKREAD via the TCP
 		// connection and isn't aware about notifications opened via push
 
-		var buffer = NotificationBuffer(networkId: network.networkId, name: target);
+		var buffer = NotificationBuffer.withNetwork(network, target);
 		await notifController.cancelAllWithBuffer(buffer, time);
 		break;
 	default:

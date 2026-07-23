@@ -16,11 +16,19 @@ class NotificationBuffer {
 	final int networkId;
 	final String name;
 
-	const NotificationBuffer({ required this.networkId, required this.name });
+	NotificationBuffer({
+		required this.networkId,
+		required String name,
+		required CaseMapping caseMapping,
+	}) : name = caseMapping.canonicalize(name);
 
-	NotificationBuffer.fromModel(BufferModel model) :
-		networkId = model.network.networkId,
-		name = model.name;
+	NotificationBuffer.withNetwork(NetworkModel network, String name) : this(
+		networkId: network.networkId,
+		name: name,
+		caseMapping: network.networkEntry.isupport.caseMapping,
+	);
+
+	NotificationBuffer.fromModel(BufferModel model) : this.withNetwork(model.network, model.name);
 }
 
 enum NotificationKind { message, invite }
@@ -227,7 +235,8 @@ class NotificationController {
 		}
 		var name = payload.substring(i + 1);
 
-		return (kind, NotificationBuffer(networkId: networkId, name: name));
+		var buffer = NotificationBuffer(networkId: networkId, name: name, caseMapping: CaseMapping.ascii);
+		return (kind, buffer);
 	}
 
 	Future<void> showDirectMessage(List<IrcMessage> messages, NotificationBuffer buffer) async {
@@ -289,7 +298,7 @@ class NotificationController {
 			title: '${msg.source!.name} invited you to $channel',
 			channel: _inviteChannel,
 			dateTime: time != null ? DateTime.tryParse(time) : null,
-			tag: _generateTag(NotificationKind.invite, NotificationBuffer(networkId: network.networkId, name: channel)),
+			tag: _generateTag(NotificationKind.invite, NotificationBuffer.withNetwork(network, channel)),
 		);
 	}
 
