@@ -669,7 +669,6 @@ class Client {
 		case RPL_WELCOME:
 			_serverSource = msg.source;
 			_nick = msg.params[0];
-			isupport.clear();
 			break;
 		case RPL_ISUPPORT:
 			var tokens = msg.params.sublist(1, msg.params.length - 1);
