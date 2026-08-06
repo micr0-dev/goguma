@@ -589,6 +589,10 @@ class ClientController {
 			if (client.isMyNick(msg.source.name)) {
 				return _createBuffer(channel).then((buffer) {
 					buffer.joined = true;
+
+					// If we have a member list, it's from a previous
+					// connection so it's stale
+					buffer.members = null;
 				});
 			} else {
 				_bufferList.get(channel, network)?.members?.set(msg.source.name, '');
