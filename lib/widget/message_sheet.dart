@@ -82,7 +82,7 @@ class MessageSheet extends StatelessWidget {
 		// TODO: we can redact if we are channel operator too
 		var canRedact = canSendMessage && client.caps.enabled.contains('draft/message-redaction') && ircMsg.tags['msgid'] != null && isOwn && !message.entry.redacted;
 		var reactions = message.reactionsByText;
-		var canReact = canSendMessage && message.entry.networkMsgid != null && client.canReact;
+		var canReact = canSendMessage && message.entry.networkMsgid != null && client.canReact && !message.entry.redacted;
 
 		return SafeArea(child: Column(mainAxisSize: MainAxisSize.min, children: [
 			if (canReact) Container(
@@ -144,7 +144,7 @@ class MessageSheet extends StatelessWidget {
 					_handleViewProfile(context, sender);
 				},
 			),
-			ListTile(
+			if (!message.entry.redacted) ListTile(
 				title: Text('Copy'),
 				leading: Icon(Icons.content_copy),
 				onTap: () async {
