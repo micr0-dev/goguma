@@ -78,6 +78,7 @@ class _BufferListPageState extends State<BufferListPage> {
 			}
 
 			buffer.unreadCount = 0;
+			buffer.unreadMentions = 0;
 			buffer.entry.lastReadTime = buffer.lastDeliveredTime!;
 			db.storeBuffer(buffer.entry);
 
@@ -328,7 +329,23 @@ class _BufferItem extends AnimatedWidget {
 				color: Theme.of(context).textTheme.bodySmall!.color,
 			));
 		}
-		if (buffer.unreadCount != 0) {
+		if (buffer.unreadMentions > 0) {
+			// Amber "mention" badge takes precedence over the plain count.
+			var theme = Theme.of(context);
+			trailing.add(Container(
+				padding: const EdgeInsets.all(3),
+				decoration: BoxDecoration(
+					color: buffer.muted ? theme.textTheme.bodySmall!.color : const Color(0xFFE3B341),
+					borderRadius: BorderRadius.circular(20),
+				),
+				constraints: const BoxConstraints(minWidth: 22, minHeight: 22),
+				child: Text(
+					'${buffer.unreadMentions}',
+					style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+					textAlign: TextAlign.center,
+				),
+			));
+		} else if (buffer.unreadCount != 0) {
 			var theme = Theme.of(context);
 			trailing.add(Container(
 				padding: EdgeInsets.all(3),

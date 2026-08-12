@@ -91,6 +91,12 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 	final _userScrollListener = ScrollOffsetListener.create(recordProgrammaticScrolls: false);
 	final _dateIndicatorValue = ValueNotifier<DateTime?>(null);
 	final _showJumpToBottomValue = ValueNotifier<bool>(false);
+	final _searchController = TextEditingController();
+	final _searchFocusNode = FocusNode();
+	bool _searching = false;
+	List<int> _searchResultIds = [];
+	int _searchIndex = -1;
+	int? _searchCurrentMsgId;
 	final _listKey = GlobalKey();
 	final GlobalKey<ComposerState> _composerKey = GlobalKey();
 	final GlobalKey<DateIndicatorState> _dateIndicatorKey = GlobalKey();
@@ -170,6 +176,95 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 
 	void _handleUserScroll(double value) {
 		_dateIndicatorKey.currentState?.show();
+	}
+
+	void _toggleSearch() {
+		setState(() {
+			_searching = !_searching;
+			if (!_searching) {
+				_searchResultIds = [];
+				_searchIndex = -1;
+				_searchCurrentMsgId = null;
+				_searchController.clear();
+			}
+		});
+		if (_searching) {
+			_searchFocusNode.requestFocus();
+		}
+	}
+
+	void _onSearchChanged(String value) {
+		var q = value.trim().toLowerCase();
+		var messages = context.read<BufferModel>().messages;
+		List<int> ids = [];
+		if (q.isNotEmpty) {
+			for (var m in messages) {
+				var text = stripAnsiFormatting(m.msg.params.join(' ')).toLowerCase();
+				if (text.contains(q)) {
+					ids.add(m.id);
+				}
+			}
+		}
+		setState(() {
+			_searchResultIds = ids;
+			_searchIndex = -1;
+			_searchCurrentMsgId = null;
+		});
+		if (ids.isNotEmpty) {
+			WidgetsBinding.instance.addPostFrameCallback((_) {
+				_seekToResult(1);
+			});
+		}
+	}
+
+	void _seekToResult(int dir) {
+		if (_searchResultIds.isEmpty) {
+			return;
+		}
+		_searchIndex = (_searchIndex + dir) % _searchResultIds.length;
+		if (_searchIndex < 0) {
+			_searchIndex += _searchResultIds.length;
+		}
+		var id = _searchResultIds[_searchIndex];
+		var messages = context.read<BufferModel>().messages;
+		var msgIndex = messages.indexWhere((m) => m.id == id);
+		if (msgIndex < 0) {
+			return;
+		}
+		var scrollIndex = messages.length - 1 - msgIndex;
+		setState(() {
+			_searchCurrentMsgId = id;
+		});
+		_itemScrollController.jumpTo(index: scrollIndex, alignment: 0.5);
+	}
+
+	Widget _buildSearchBar(BuildContext context) {
+		var scheme = Theme.of(context).colorScheme;
+		var dim = Theme.of(context).textTheme.bodySmall?.color ?? scheme.onSurface;
+		return Material(
+			color: scheme.surfaceContainerHigh,
+			child: Padding(
+				padding: const EdgeInsets.symmetric(horizontal: 8),
+				child: Row(children: [
+					Icon(Icons.search, color: dim),
+					Expanded(child: TextField(
+						controller: _searchController,
+						focusNode: _searchFocusNode,
+						autofocus: true,
+						onChanged: _onSearchChanged,
+						textInputAction: TextInputAction.search,
+						decoration: const InputDecoration(hintText: 'Search in this conversation', border: InputBorder.none),
+					)),
+					if (_searchResultIds.isNotEmpty) Padding(
+						padding: const EdgeInsets.symmetric(horizontal: 8),
+						child: Text('${_searchIndex + 1}/${_searchResultIds.length}', style: TextStyle(color: dim)),
+					),
+					IconButton(tooltip: 'Previous', icon: const Icon(Icons.arrow_upward), onPressed: () => _seekToResult(-1)),
+					IconButton(tooltip: 'Next', icon: const Icon(Icons.arrow_downward), onPressed: () => _seekToResult(1)),
+					IconButton(tooltip: 'Close search', icon: const Icon(Icons.close), onPressed: _toggleSearch),
+				]),
+			),
+		);
 	}
 
 	void _fetchMetadata() async {
@@ -281,6 +376,8 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 	void dispose() {
 		_itemPositionsListener.itemPositions.removeListener(_handleScroll);
 		_userScrollSubscription.cancel();
+		_searchController.dispose();
+		_searchFocusNode.dispose();
 		WidgetsBinding.instance.removeObserver(this);
 		super.dispose();
 	}
@@ -351,6 +448,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 			}
 		}
 		buffer.unreadCount = 0;
+		buffer.unreadMentions = 0;
 
 		notifController.cancelAllWithBuffer(NotificationBuffer.fromModel(buffer), null);
 	}
@@ -470,7 +568,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 						};
 					}
 
-					return CompactMessageItem(
+					Widget item = CompactMessageItem(
 						key: key,
 						msg: msg,
 						prevMsg: prevMsg,
@@ -478,6 +576,13 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 						onReply: onReply,
 						last: msgIndex == messages.length - 1,
 					);
+					if (msg.id == _searchCurrentMsgId) {
+						item = Container(
+							color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.16),
+							child: item,
+						);
+					}
+					return item;
 				},
 			),
 			);
@@ -567,6 +672,11 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 					},
 				),
 				actions: [
+					IconButton(
+						tooltip: 'Search conversation',
+						icon: Icon(_searching ? Icons.search : Icons.search),
+						onPressed: _toggleSearch,
+					),
 					PopupMenuButton<String>(
 						onSelected: (key) {
 							var bufferList = context.read<BufferListModel>();
@@ -625,6 +735,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 			),
 			body: NetworkIndicator(network: network, child: Column(children: [
 				if (banner != null) banner,
+				if (_searching) _buildSearchBar(context),
 				Expanded(child: SafeArea(child: Stack(children: [
 					msgList,
 					jumpToBottom,

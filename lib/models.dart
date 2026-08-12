@@ -411,6 +411,7 @@ class BufferModel extends ChangeNotifier {
 	final BufferEntry entry;
 	final NetworkModel network;
 	int _unreadCount = 0;
+	int _unreadMentions = 0;
 	String? _lastDeliveredTime;
 	bool _messageHistoryLoaded = false;
 	List<MessageModel> _messages = [];
@@ -438,6 +439,9 @@ class BufferModel extends ChangeNotifier {
 	int get id => entry.id!;
 	String get name => entry.name;
 	int get unreadCount => _unreadCount;
+
+	/// Number of unread messages in this buffer that mention our nickname.
+	int get unreadMentions => _unreadMentions;
 	String? get lastDeliveredTime => _lastDeliveredTime;
 	bool get messageHistoryLoaded => _messageHistoryLoaded;
 	bool get pinned => entry.pinned;
@@ -487,6 +491,11 @@ class BufferModel extends ChangeNotifier {
 
 	set unreadCount(int n) {
 		_unreadCount = n;
+		notifyListeners();
+	}
+
+	set unreadMentions(int n) {
+		_unreadMentions = n;
 		notifyListeners();
 	}
 
@@ -620,6 +629,15 @@ class BufferModel extends ChangeNotifier {
 		} else if (!l.isEmpty) {
 			_prependMessages(l);
 		}
+		notifyListeners();
+	}
+
+	/// Clear the messages currently shown for this buffer. History is kept
+	/// in the database and will be reloaded if the buffer is reopened.
+	void clearMessages() {
+		_messages.clear();
+		_messagesByNetworkMsgid.clear();
+		_messageHistoryLoaded = false;
 		notifyListeners();
 	}
 

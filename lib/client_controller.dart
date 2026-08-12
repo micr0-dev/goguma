@@ -983,6 +983,16 @@ class ClientController {
 
 		if (!buf.focused) {
 			buf.unreadCount += unread.length;
+			// Count how many of the unread messages mention our nickname, so
+			// the conversation list can surface an explicit "mention" badge.
+			var isChannelBuf = client.isChannel(buf.name);
+			var mentions = 0;
+			for (var entry in unread) {
+				if (!isChannelBuf || findTextHighlights(entry.msg.params[1], client.nick).isNotEmpty) {
+					mentions++;
+				}
+			}
+			buf.unreadMentions += mentions;
 			_openNotifications(buf, unread);
 		} else if (buf.entry.lastReadTime == null || buf.entry.lastReadTime!.compareTo(t) < 0) {
 			buf.entry.lastReadTime = t;

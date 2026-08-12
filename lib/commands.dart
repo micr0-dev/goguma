@@ -1,4 +1,6 @@
-import 'package:flutter/widgets.dart';
+import 'dart:async';
+
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'client.dart';
@@ -105,6 +107,109 @@ String? _me(BuildContext context, String? param) {
 	return CtcpMessage('ACTION', param).format();
 }
 
+String? _msg(BuildContext context, String? param) {
+	var split = _chompParam(_requireParam(param));
+	if (split.length < 2) {
+		throw CommandException('Usage: /msg <nickname> <message>');
+	}
+	context.read<Client>().send(IrcMessage('PRIVMSG', split));
+	return null;
+}
+
+String? _notice(BuildContext context, String? param) {
+	var split = _chompParam(_requireParam(param));
+	if (split.length < 2) {
+		throw CommandException('Usage: /notice <target> <message>');
+	}
+	context.read<Client>().send(IrcMessage('NOTICE', split));
+	return null;
+}
+
+String? _topic(BuildContext context, String? param) {
+	var client = context.read<Client>();
+	var buffer = context.read<BufferModel>();
+	client.send(IrcMessage('TOPIC', [buffer.name, _requireParam(param)]));
+	return null;
+}
+
+String? _away(BuildContext context, String? param) {
+	var client = context.read<Client>();
+	client.send(IrcMessage('AWAY', param == null ? [] : [param]));
+	return null;
+}
+
+String? _nick(BuildContext context, String? param) {
+	var client = context.read<Client>();
+	var nick = _requireParam(param).split(' ').first;
+	client.setNickname(nick).catchError((Object err) {
+		if (context.mounted) {
+			ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to change nickname: $err')));
+		}
+	});
+	return null;
+}
+
+String? _clear(BuildContext context, String? param) {
+	context.read<BufferModel>().clearMessages();
+	return null;
+}
+
+String? _close(BuildContext context, String? param) {
+	var client = context.read<Client>();
+	var bufferList = context.read<BufferListModel>();
+	var buffer = context.read<BufferModel>();
+	var db = context.read<DB>();
+	if (client.isChannel(buffer.name)) {
+		client.send(IrcMessage('PART', [buffer.name]));
+	} else {
+		client.unmonitor([buffer.name]);
+	}
+	bufferList.setArchived(buffer, true);
+	db.storeBuffer(buffer.entry);
+	return null;
+}
+
+String? _names(BuildContext context, String? param) {
+	var client = context.read<Client>();
+	unawaited(client.names(_requireParam(param)).then<void>((v) {}, onError: (Object err) {
+		if (context.mounted) {
+			ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err.toString())));
+		}
+	}));
+	return null;
+}
+
+String? _modeChannel(BuildContext context, String? param, String mode) {
+	var client = context.read<Client>();
+	var buffer = context.read<BufferModel>();
+	client.send(IrcMessage('MODE', [buffer.name, mode, ..._requireParam(param).split(' ')]));
+	return null;
+}
+
+String? _op(BuildContext context, String? param) => _modeChannel(context, param, '+o');
+String? _deop(BuildContext context, String? param) => _modeChannel(context, param, '-o');
+String? _voice(BuildContext context, String? param) => _modeChannel(context, param, '+v');
+String? _devoice(BuildContext context, String? param) => _modeChannel(context, param, '-v');
+String? _ban(BuildContext context, String? param) => _modeChannel(context, param, '+b');
+String? _unban(BuildContext context, String? param) => _modeChannel(context, param, '-b');
+
+String? _help(BuildContext context, String? param) {
+	var items = commands.entries
+		.map((e) => '/${e.key} ${e.value.usage}')
+		.join('\n');
+	showDialog<void>(
+		context: context,
+		builder: (context) => AlertDialog(
+			title: const Text('Commands'),
+			content: SingleChildScrollView(child: Text(items, style: const TextStyle(fontFamily: 'monospace'))),
+			actions: [
+				TextButton(child: const Text('OK'), onPressed: () => Navigator.pop(context)),
+			],
+		),
+	);
+	return null;
+}
+
 String? _mode(BuildContext context, String? param) {
 	var client = context.read<Client>();
 	var buffer = context.read<BufferModel>();
@@ -152,12 +257,27 @@ String? _quote(BuildContext context, String? param) {
 }
 
 const Map<String, Command> commands = {
-	'invite': Command(_invite, usage: '<nickname> [channel]', description: 'Invite a user to the channel', isAvailable: _availableInChannels),
 	'join': Command(_join, usage: '<channel>', description: 'Join a channel', isAvailable: _availableIfChannelsAreSupported),
-	'kick': Command(_kick, usage: '<nickname> [reason]', description: 'Remove another user from the channel', isAvailable: _availableInChannels),
-	'me': Command(_me, usage: '<message>', description: 'Send an action message'),
-	'mode': Command(_mode, usage: '±<mode> [args...]', description: 'Change a channel or user mode'),
-	'oper': Command(_oper, usage: '<name> <password>', description: 'Obtain server operator privileges'),
 	'part': Command(_part, usage: '[reason]', description: 'Leave a channel', isAvailable: _availableInChannels),
+	'quit': Command(_close, usage: '[reason]', description: 'Close the current conversation'),
+	'msg': Command(_msg, usage: '<nickname> <message>', description: 'Send a private message'),
+	'notice': Command(_notice, usage: '<target> <message>', description: 'Send a NOTICE'),
+	'me': Command(_me, usage: '<message>', description: 'Send an action message'),
+	'nick': Command(_nick, usage: '<nickname>', description: 'Change your nickname'),
+	'away': Command(_away, usage: '[reason]', description: 'Set your away status'),
+	'topic': Command(_topic, usage: '<topic>', description: 'Change the channel topic', isAvailable: _availableInChannels),
+	'names': Command(_names, usage: '[channel]', description: 'List the users in a channel', isAvailable: _availableIfChannelsAreSupported),
+	'op': Command(_op, usage: '<nickname>', description: 'Give a user channel operator status', isAvailable: _availableInChannels),
+	'deop': Command(_deop, usage: '<nickname>', description: 'Remove channel operator status', isAvailable: _availableInChannels),
+	'voice': Command(_voice, usage: '<nickname>', description: 'Voice a user', isAvailable: _availableInChannels),
+	'devoice': Command(_devoice, usage: '<nickname>', description: 'Devoice a user', isAvailable: _availableInChannels),
+	'ban': Command(_ban, usage: '<mask>', description: 'Ban a user or mask', isAvailable: _availableInChannels),
+	'unban': Command(_unban, usage: '<mask>', description: 'Remove a ban', isAvailable: _availableInChannels),
+	'mode': Command(_mode, usage: '±<mode> [args...]', description: 'Change a channel or user mode'),
+	'kick': Command(_kick, usage: '<nickname> [reason]', description: 'Remove another user from the channel', isAvailable: _availableInChannels),
+	'invite': Command(_invite, usage: '<nickname> [channel]', description: 'Invite a user to the channel', isAvailable: _availableInChannels),
+	'oper': Command(_oper, usage: '<name> <password>', description: 'Obtain server operator privileges'),
 	'quote': Command(_quote, usage: '<command> [args...]', description: 'Execute a raw IRC command'),
+	'help': Command(_help, usage: '', description: 'Show available commands'),
+	'clear': Command(_clear, usage: '', description: 'Clear the current conversation view'),
 };
