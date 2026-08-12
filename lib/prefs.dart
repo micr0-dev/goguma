@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 const _showTimestampsKey = 'show_timestamps';
 const _monoFontKey = 'mono_font';
+const _highlightWordsKey = 'highlight_words';
 const _typingIndicatorKey = 'typing_indicator';
 const _nicknameKey = 'nickname';
 const _realnameKey = 'realname';
@@ -28,6 +29,14 @@ class Prefs extends ChangeNotifier {
 
 	/// Use the bundled monospaced terminal font instead of the default one.
 	bool get monoFont => _prefs.getBool(_monoFontKey) ?? true;
+
+	/// Comma-separated extra words to highlight in messages (besides our nick).
+	String get highlightWords => _prefs.getString(_highlightWordsKey) ?? '';
+	List<String> get highlightWordsList => highlightWords
+		.split(',')
+		.map((s) => s.trim())
+		.where((s) => s.isNotEmpty)
+		.toList();
 	bool get typingIndicator => _prefs.getBool(_typingIndicatorKey) ?? false;
 	String get nickname => _prefs.getString(_nicknameKey) ?? 'user';
 	String? get realname => _prefs.getString(_realnameKey);
@@ -43,6 +52,11 @@ class Prefs extends ChangeNotifier {
 
 	set monoFont(bool enabled) {
 		_prefs.setBool(_monoFontKey, enabled);
+		notifyListeners();
+	}
+
+	set highlightWords(String words) {
+		_prefs.setString(_highlightWordsKey, words);
 		notifyListeners();
 	}
 

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../ansi.dart';
-import '../cached_network_image.dart';
+import '../client.dart';
 import '../client_controller.dart';
 import '../database.dart';
 import '../models.dart';
@@ -11,6 +11,8 @@ import '../page/join.dart';
 import '../page/settings.dart';
 import '../widget/network_indicator.dart';
 import 'buffer.dart';
+import 'network_details.dart';
+import 'search.dart';
 
 class BufferListPage extends StatefulWidget {
 	static const routeName = '/';
@@ -19,17 +21,6 @@ class BufferListPage extends StatefulWidget {
 
 	@override
 	State<BufferListPage> createState() => _BufferListPageState();
-}
-
-String _initials(String name) {
-	for (var r in name.runes) {
-		var ch = String.fromCharCode(r);
-		if (ch == '#') {
-			continue;
-		}
-		return ch.toUpperCase();
-	}
-	return '';
 }
 
 Color networkStateColor(NetworkState state) {
@@ -44,6 +35,19 @@ class _BufferListPageState extends State<BufferListPage> {
 	String? _searchQuery;
 	final TextEditingController _searchController = TextEditingController();
 	final _listKey = GlobalKey();
+	BufferModel? _splitBuffer;
+	bool _wide = false;
+
+	void _openBuffer(BufferModel buffer) {
+		if (_wide) {
+			setState(() {
+				_splitBuffer = buffer;
+			});
+		} else {
+			Navigator.popUntil(context, ModalRoute.withName(BufferListPage.routeName));
+			Navigator.pushNamed(context, BufferPage.routeName, arguments: BufferPageArguments(buffer: buffer));
+		}
+	}
 
 	@override
 	void dispose() {
@@ -165,13 +169,19 @@ class _BufferListPageState extends State<BufferListPage> {
 				key: _listKey,
 				children: groups.entries.expand((group) => [
 					_NetworkHeader(network: group.key),
-					...group.value.map((buffer) => _BufferItem(buffer: buffer)),
+					...group.value.map((buffer) => _BufferItem(buffer: buffer, onSelected: () => _openBuffer(buffer))),
 				]).toList(),
 			);
 		}
 
-		return Scaffold(
-			appBar: AppBar(
+		var listPane = NetworkListIndicator(
+			child: _BackgroundServicePermissionBanner(child: body),
+		);
+
+		return LayoutBuilder(builder: (context, constraints) {
+			_wide = constraints.maxWidth >= 900;
+
+			var appBar = AppBar(
 				leading: _searchQuery != null ? CloseButton() : null,
 				title: Builder(builder: (context) {
 					if (_searchQuery != null) {
@@ -203,6 +213,9 @@ class _BufferListPageState extends State<BufferListPage> {
 							case 'mark-all-read':
 								_markAllBuffersRead();
 								break;
+							case 'search-messages':
+								Navigator.pushNamed(context, SearchPage.routeName);
+								break;
 							case 'settings':
 								Navigator.pushNamed(context, SettingsPage.routeName);
 								break;
@@ -211,17 +224,50 @@ class _BufferListPageState extends State<BufferListPage> {
 						itemBuilder: (context) {
 							return [
 								PopupMenuItem(value: 'join', child: Text('New conversation')),
+								PopupMenuItem(value: 'search-messages', child: Text('Search messages')),
 								if (hasUnreadBuffer) PopupMenuItem(value: 'mark-all-read', child: Text('Mark all as read')),
 								PopupMenuItem(value: 'settings', child: Text('Settings')),
 							];
 						},
 					),
 				],
-			),
-			body: NetworkListIndicator(
-				child: _BackgroundServicePermissionBanner(child: body)
-			),
-		);
+			);
+
+			if (!_wide) {
+				return Scaffold(appBar: appBar, body: listPane);
+			}
+
+			// Desktop/tablet: master-detail split with the chat on the right.
+			Widget pane;
+			var split = _splitBuffer;
+			if (split == null) {
+				pane = Center(child: Text(
+					'Select a conversation',
+					style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color),
+				));
+			} else {
+				pane = MultiProvider(
+					providers: [
+						ChangeNotifierProvider<BufferModel>.value(value: split),
+						ChangeNotifierProvider<NetworkModel>.value(value: split.network),
+						Provider<Client>.value(value: context.read<ClientProvider>().get(split.network)),
+					],
+					child: BufferPage(
+						unreadMarkerTime: split.entry.lastReadTime,
+						onClose: () => setState(() => _splitBuffer = null),
+					),
+				);
+			}
+
+			return Scaffold(
+				appBar: appBar,
+				body: Row(children: [
+					SizedBox(width: 340, child: listPane),
+					const VerticalDivider(width: 1),
+					Expanded(child: pane),
+				]),
+			);
+		});
 	}
 }
 
@@ -296,8 +342,9 @@ class _BackgroundServicePermissionBanner extends StatelessWidget {
 
 class _BufferItem extends AnimatedWidget {
 	final BufferModel buffer;
+	final VoidCallback? onSelected;
 
-	const _BufferItem({ required this.buffer }) : super(listenable: buffer);
+	const _BufferItem({ required this.buffer, this.onSelected }) : super(listenable: buffer);
 
 	@override
 	Widget build(BuildContext context) {
@@ -368,13 +415,6 @@ class _BufferItem extends AnimatedWidget {
 		var height = (dense ? 64.0 : 72.0) + theme.visualDensity.baseSizeAdjustment.dy;
 
 		return Container(alignment: Alignment.center, height: height, child: ListTile(
-			leading: CircleAvatar(
-				foregroundImage: buffer.avatar == null ? null : CachedNetworkImage(buffer.avatar!),
-				child: Text(
-					_initials(buffer.name),
-					semanticsLabel: ''
-				)
-			),
 			trailing: trailing.isEmpty ? null : Wrap(
 				spacing: 5,
 				children: trailing,
@@ -386,7 +426,7 @@ class _BufferItem extends AnimatedWidget {
 				softWrap: false,
 				style: buffer.draft == null ? null : TextStyle(fontStyle: FontStyle.italic),
 			),
-			onTap: () {
+			onTap: onSelected ?? () {
 				Navigator.popUntil(context, ModalRoute.withName(BufferListPage.routeName));
 				Navigator.pushNamed(context, BufferPage.routeName, arguments: BufferPageArguments(buffer: buffer));
 			},
@@ -409,26 +449,31 @@ class _NetworkHeader extends StatelessWidget {
 				var stateColor = networkStateColor(network.state);
 				var stateLabel = networkStateDescription(network.state);
 
-				return Container(
-					color: scheme.surfaceContainerLow,
-					padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
-					child: Row(children: [
-						Icon(Icons.dns, size: 16, color: dim),
-						const SizedBox(width: 8),
-						Expanded(child: Text(
-							network.displayName,
-							style: const TextStyle(fontWeight: FontWeight.bold),
-							overflow: TextOverflow.ellipsis,
-						)),
-						const SizedBox(width: 8),
-						Container(
-							width: 8,
-							height: 8,
-							decoration: BoxDecoration(color: stateColor, shape: BoxShape.circle),
-						),
-						const SizedBox(width: 6),
-						Text(stateLabel, style: TextStyle(color: dim, fontSize: 12)),
-					]),
+				return InkWell(
+					onTap: () {
+						Navigator.pushNamed(context, NetworkDetailsPage.routeName, arguments: network);
+					},
+					child: Container(
+						color: scheme.surfaceContainerLow,
+						padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+						child: Row(children: [
+							Icon(Icons.dns, size: 16, color: dim),
+							const SizedBox(width: 8),
+							Expanded(child: Text(
+								network.displayName,
+								style: const TextStyle(fontWeight: FontWeight.bold),
+								overflow: TextOverflow.ellipsis,
+							)),
+							const SizedBox(width: 8),
+							Container(
+								width: 8,
+								height: 8,
+								decoration: BoxDecoration(color: stateColor, shape: BoxShape.circle),
+							),
+							const SizedBox(width: 6),
+							Text(stateLabel, style: TextStyle(color: dim, fontSize: 12)),
+						]),
+					),
 				);
 			},
 		);

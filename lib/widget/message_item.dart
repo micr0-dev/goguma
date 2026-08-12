@@ -436,6 +436,7 @@ class CompactMessageItem extends StatelessWidget {
 	final MessageModel? prevMsg;
 	final String? unreadMarkerTime;
 	final VoidCallback? onReply;
+	final VoidCallback? onQuote;
 	final bool last;
 
 	const CompactMessageItem({
@@ -444,6 +445,7 @@ class CompactMessageItem extends StatelessWidget {
 		this.prevMsg,
 		this.unreadMarkerTime,
 		this.onReply,
+		this.onQuote,
 		this.last = false,
 	});
 
@@ -477,7 +479,7 @@ class CompactMessageItem extends StatelessWidget {
 		var nameTap = TapGestureRecognizer()
 			..onTap = () {
 				var buffer = context.read<BufferModel>();
-				MessageSheet.open(context, buffer, msg, onReply);
+				MessageSheet.open(context, buffer, msg, onReply, onQuote: onQuote);
 			};
 
 		// Compose the line as a single selectable block in the classic IRC
@@ -503,6 +505,8 @@ class CompactMessageItem extends StatelessWidget {
 			content.add(const TextSpan(text: ' '));
 		}
 
+		var extraHighlights = prefs.highlightWordsList;
+		var ownNick = context.read<NetworkModel>().nickname;
 		List<TextSpan> body;
 		if (entry.redacted) {
 			body = [TextSpan(
@@ -516,12 +520,13 @@ class CompactMessageItem extends StatelessWidget {
 		} else {
 			body = applyAnsiFormatting(ircMsg.params[1], TextStyle(color: bodyColor));
 		}
-
-		body = body.map((span) {
-			var linkSpan = linkify(context, span.text ?? '',
-				linkStyle: TextStyle(decoration: TextDecoration.underline, color: scheme.primary));
-			return TextSpan(style: span.style, children: [linkSpan]);
-		}).toList();
+		body = body.map((span) => _formatWithHighlights(
+			context,
+			span.text ?? '',
+			span.style ?? TextStyle(color: bodyColor),
+			[ownNick, ...extraHighlights],
+			TextStyle(decoration: TextDecoration.underline, color: scheme.primary),
+		)).toList();
 		content.addAll(body);
 
 		var fg = scheme.secondaryContainer;
@@ -621,6 +626,63 @@ String _formatDate(DateTime dt) {
 	return '$yyyy-$mm-$dd';
 }
 
+// Formats a message by linkifying it and visually highlighting occurrences
+// of the given words (e.g. our own nickname + user-configured highlight
+// words), keeping the provided [style] so ANSI formatting is preserved.
+TextSpan _formatWithHighlights(BuildContext context, String text, TextStyle style, List<String> words, TextStyle linkStyle) {
+	var lower = text.toLowerCase();
+	List<(int, int)> ranges = [];
+	for (var word in words) {
+		var wl = word.toLowerCase();
+		if (wl.isEmpty) {
+			continue;
+		}
+		var start = 0;
+		while (true) {
+			var i = lower.indexOf(wl, start);
+			if (i < 0) {
+				break;
+			}
+			ranges.add((i, i + word.length));
+			start = i + word.length;
+		}
+	}
+	if (ranges.isEmpty) {
+		return TextSpan(style: style, children: [linkify(context, text, linkStyle: linkStyle)]);
+	}
+	ranges.sort((a, b) => a.$1.compareTo(b.$1));
+	List<(int, int)> merged = [];
+	for (var r in ranges) {
+		if (merged.isEmpty || r.$1 >= merged.last.$2) {
+			merged.add(r);
+		}
+	}
+
+	List<InlineSpan> children = [];
+	var pos = 0;
+	for (var r in merged) {
+		if (r.$1 > pos) {
+			children.add(linkify(context, text.substring(pos, r.$1), linkStyle: linkStyle));
+		}
+		children.add(WidgetSpan(
+			alignment: PlaceholderAlignment.middle,
+			child: Builder(builder: (context) => Container(
+				padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+				decoration: BoxDecoration(
+					color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.35),
+					borderRadius: BorderRadius.circular(4),
+				),
+				child: Text(text.substring(r.$1, r.$2), style: style),
+			)),
+		));
+		pos = r.$2;
+	}
+	if (pos < text.length) {
+		children.add(linkify(context, text.substring(pos), linkStyle: linkStyle));
+	}
+	return TextSpan(style: style, children: children);
+}
+
 TextSpan _formatText(BuildContext context, String text, {
 	required String nick,
 	required TextStyle linkStyle,
@@ -653,25 +715,8 @@ TextSpan _formatText(BuildContext context, String text, {
 	return TextSpan(children: children);
 }
 
-// Terminal-flavored palette (inspired by common IRC/ANSI colors) that stays
-// readable on the dark scrollback. Indexed by nickname so the same nick
-// always gets the same colour.
-const _terminalNickColors = [
-	Color(0xFFF7768E), // red
-	Color(0xFFFF9E64), // orange
-	Color(0xFFE0AF68), // yellow
-	Color(0xFF9ECE6A), // green
-	Color(0xFF73DACA), // teal
-	Color(0xFF7AA2F7), // blue
-	Color(0xFFBB9AF7), // purple
-	Color(0xFFB4F9F8), // cyan
-	Color(0xFFD5A0C0), // pink
-	Color(0xFF9DB2FF), // periwinkle
-];
-
 Color _getNickColor(String nickname, Brightness brightness) {
-	var color = _terminalNickColors[nickname.hashCode.abs() % _terminalNickColors.length];
-	// Lighten slightly for light backgrounds so names stay legible.
-	return brightness == Brightness.dark ? color : Color.lerp(color, Colors.white, 0.25)!;
+	var colorSwatch = Colors.primaries[nickname.hashCode.abs() % Colors.primaries.length];
+	return brightness == Brightness.dark ? colorSwatch.shade400 : colorSwatch.shade800;
 }
 

@@ -808,6 +808,21 @@ class DB {
 		return l;
 	}
 
+	/// Search the raw text of all messages across every conversation.
+	Future<List<MessageEntry>> searchMessagesGlobal(String query, {int limit = 100}) async {
+		var escaped = query
+			.replaceAll('\\', '\\\\')
+			.replaceAll('%', '\\%')
+			.replaceAll('_', '\\_');
+		var entries = await _db.rawQuery('''
+			SELECT *
+			FROM Message
+			WHERE raw LIKE ? ESCAPE '\\'
+			ORDER BY time DESC LIMIT ?
+		''', ['%$escaped%', limit]);
+		return entries.map((m) => MessageEntry.fromMap(m)).toList();
+	}
+
 	Future<Map<String, MessageEntry>> fetchMessageSetByNetworkMsgid(int buffer, List<String> msgids) async {
 		var inList = List.filled(msgids.length, '?').join(', ');
 		var entries = await _db.rawQuery('''

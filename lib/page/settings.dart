@@ -29,6 +29,7 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
 	late bool _showTimestamps;
 	late bool _monoFont;
+	late String _highlightWords;
 	late bool _typing;
 	late bool _linkPreview;
 	late bool _linkExtApp;
@@ -43,6 +44,7 @@ class _SettingsPageState extends State<SettingsPage> {
 		var prefs = context.read<Prefs>();
 		_showTimestamps = prefs.showTimestamps;
 		_monoFont = prefs.monoFont;
+		_highlightWords = prefs.highlightWords;
 		_typing = prefs.typingIndicator;
 		_linkPreview = prefs.linkPreview;
 		_linkExtApp = prefs.linkExtApp;
@@ -187,6 +189,39 @@ class _SettingsPageState extends State<SettingsPage> {
 						context.read<Prefs>().monoFont = enabled;
 						setState(() {
 							_monoFont = enabled;
+						});
+					},
+				),
+				ListTile(
+					title: Text('Highlight words'),
+					subtitle: Text(_highlightWords.isEmpty
+						? 'No custom words. Messages mentioning your nickname are highlighted by default.'
+						: _highlightWords),
+					leading: Icon(Icons.alternate_email),
+					onTap: () async {
+						var prefs = context.read<Prefs>();
+						var controller = TextEditingController(text: _highlightWords);
+						var saved = await showDialog<String>(
+							context: context,
+							builder: (context) => AlertDialog(
+								title: const Text('Highlight words'),
+								content: TextField(
+									controller: controller,
+									decoration: const InputDecoration(hintText: 'comma, separated, words'),
+									autofocus: true,
+								),
+								actions: [
+									TextButton(child: const Text('CANCEL'), onPressed: () => Navigator.pop(context)),
+									ElevatedButton(child: const Text('SAVE'), onPressed: () => Navigator.pop(context, controller.text)),
+								],
+							),
+						);
+						if (saved == null) {
+							return;
+						}
+						prefs.highlightWords = saved;
+						setState(() {
+							_highlightWords = saved;
 						});
 					},
 				),

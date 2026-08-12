@@ -17,10 +17,11 @@ const _defaultReactions = ['❤️', '👍', '👎', '😂', '😮', '😢'];
 class MessageSheet extends StatelessWidget {
 	final MessageModel message;
 	final VoidCallback? onReply;
+	final VoidCallback? onQuote;
 
-	const MessageSheet({ super.key, required this.message, this.onReply });
+	const MessageSheet({ super.key, required this.message, this.onReply, this.onQuote });
 
-	static void open(BuildContext context, BufferModel buffer, MessageModel message, VoidCallback? onReply) {
+	static void open(BuildContext context, BufferModel buffer, MessageModel message, VoidCallback? onReply, {VoidCallback? onQuote}) {
 		showModalBottomSheet<void>(
 			context: context,
 			showDragHandle: true,
@@ -32,9 +33,56 @@ class MessageSheet extends StatelessWidget {
 						ChangeNotifierProvider<NetworkModel>.value(value: buffer.network),
 						Provider<Client>.value(value: client),
 					],
-					child: MessageSheet(message: message, onReply: onReply),
+					child: MessageSheet(message: message, onReply: onReply, onQuote: onQuote),
 				);
 			},
+		);
+	}
+
+	Future<void> _handleWhois(BuildContext context, String nick) async {
+		var client = context.read<Client>();
+		Whois whois;
+		try {
+			whois = await client.whois(nick);
+		} on Exception catch (err) {
+			if (context.mounted) {
+				ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Whois failed: $err')));
+			}
+			return;
+		}
+		if (!context.mounted) {
+			return;
+		}
+		await showDialog<void>(
+			context: context,
+			builder: (context) => AlertDialog(
+				title: Text(whois.nickname),
+				content: SingleChildScrollView(child: Column(
+					crossAxisAlignment: CrossAxisAlignment.start,
+					children: [
+						if (whois.source != null) _whoisRow('User', '${whois.source!.user}@${whois.source!.host}'),
+						if (whois.realname != null) _whoisRow('Real name', whois.realname!),
+						if (whois.account != null) _whoisRow('Account', whois.account!),
+						if (whois.server != null) _whoisRow('Server', whois.server!),
+						if (whois.away != null) _whoisRow('Away', whois.away!),
+						if (whois.op) _whoisRow('Op', 'yes'),
+						if (whois.secureConnection) _whoisRow('Connection', 'secure (TLS)'),
+						if (whois.bot) _whoisRow('Type', 'bot'),
+						if (!whois.channels.isEmpty) _whoisRow('Channels', whois.channels.keys.join(' ')),
+					],
+				)),
+				actions: [TextButton(child: const Text('OK'), onPressed: () => Navigator.pop(context))],
+			),
+		);
+	}
+
+	Widget _whoisRow(String label, String value) {
+		return Padding(
+			padding: const EdgeInsets.symmetric(vertical: 2),
+			child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+				SizedBox(width: 90, child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold))),
+				Expanded(child: Text(value)),
+			]),
 		);
 	}
 
@@ -125,6 +173,22 @@ class MessageSheet extends StatelessWidget {
 				onTap: () {
 					Navigator.pop(context);
 					onReply!();
+				},
+			),
+			if (onQuote != null && !isOwn) ListTile(
+				title: Text('Quote'),
+				leading: Icon(Icons.format_quote),
+				onTap: () {
+					Navigator.pop(context);
+					onQuote!();
+				},
+			),
+			if (!isOwn) ListTile(
+				title: Text('Whois'),
+				leading: Icon(Icons.badge_outlined),
+				onTap: () {
+					Navigator.pop(context);
+					_handleWhois(context, sender);
 				},
 			),
 			if (!isOwn) ListTile(

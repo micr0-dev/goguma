@@ -38,8 +38,9 @@ class BufferPage extends StatefulWidget {
 
 	final String? unreadMarkerTime;
 	final SharedMedia? sharedMedia;
+	final VoidCallback? onClose;
 
-	const BufferPage({ super.key, this.unreadMarkerTime, this.sharedMedia });
+	const BufferPage({ super.key, this.unreadMarkerTime, this.sharedMedia, this.onClose });
 
 	@override
 	State<BufferPage> createState() => _BufferPageState();
@@ -91,6 +92,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 	final _userScrollListener = ScrollOffsetListener.create(recordProgrammaticScrolls: false);
 	final _dateIndicatorValue = ValueNotifier<DateTime?>(null);
 	final _showJumpToBottomValue = ValueNotifier<bool>(false);
+	final _showJumpToUnreadValue = ValueNotifier<bool>(false);
 	final _searchController = TextEditingController();
 	final _searchFocusNode = FocusNode();
 	bool _searching = false;
@@ -165,6 +167,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 
 		var showJumpToBottom = positions.any((pos) => pos.index >= 20) && !isAtBottom;
 		_showJumpToBottomValue.value = showJumpToBottom;
+		_showJumpToUnreadValue.value = buffer.unreadCount > 0 && !isAtBottom;
 
 		// Workaround for the last messages becoming hidden when the virtual
 		// keyboard is opened: reset the alignment to 0.
@@ -176,6 +179,21 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 
 	void _handleUserScroll(double value) {
 		_dateIndicatorKey.currentState?.show();
+	}
+
+	void _jumpToUnread() {
+		var buffer = context.read<BufferModel>();
+		var lastRead = buffer.entry.lastReadTime;
+		if (lastRead == null) {
+			return;
+		}
+		var messages = buffer.messages;
+		for (var i = 0; i < messages.length; i++) {
+			if (messages[i].entry.time.compareTo(lastRead) > 0) {
+				_itemScrollController.jumpTo(index: messages.length - 1 - i, alignment: 0);
+				return;
+			}
+		}
 	}
 
 	void _toggleSearch() {
@@ -574,6 +592,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 						prevMsg: prevMsg,
 						unreadMarkerTime: widget.unreadMarkerTime,
 						onReply: onReply,
+						onQuote: () => _composerKey.currentState?.quoteMessage(msg),
 						last: msgIndex == messages.length - 1,
 					);
 					if (msg.id == _searchCurrentMsgId) {
@@ -631,6 +650,22 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 			},
 		);
 
+		Widget jumpToUnread = ValueListenableBuilder(
+			valueListenable: _showJumpToUnreadValue,
+			builder: (context, showJumpToUnread, _) {
+				if (!showJumpToUnread) return Container();
+				return Positioned(
+					left: 15,
+					bottom: 15,
+					child: FilledButton.tonalIcon(
+						onPressed: _jumpToUnread,
+						icon: const Icon(Icons.arrow_upward, size: 16),
+						label: const Text('Unread'),
+					),
+				);
+			},
+		);
+
 		Widget dateIndicator = Container(
 			padding: EdgeInsets.only(top: 10),
 			alignment: Alignment.topCenter,
@@ -639,6 +674,11 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 
 		var scaffold = Scaffold(
 			appBar: AppBar(
+				leading: widget.onClose == null ? null : IconButton(
+					icon: const Icon(Icons.close),
+					tooltip: 'Close conversation',
+					onPressed: widget.onClose,
+				),
 				title: InkResponse(
 					child: Row(
 						children: [
@@ -739,6 +779,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 				Expanded(child: SafeArea(child: Stack(children: [
 					msgList,
 					jumpToBottom,
+					jumpToUnread,
 					dateIndicator,
 				]))),
 			])),

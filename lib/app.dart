@@ -24,6 +24,7 @@ import 'page/edit_bouncer_network.dart';
 import 'page/gallery.dart';
 import 'page/join.dart';
 import 'page/network_details.dart';
+import 'page/search.dart';
 import 'page/settings.dart';
 import 'page/share.dart';
 import 'prefs.dart';
@@ -468,6 +469,9 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 			break;
 		case JoinPage.routeName:
 			builder = (context) => JoinPage();
+			break;
+		case SearchPage.routeName:
+			builder = (context) => SearchPage();
 			break;
 		case SettingsPage.routeName:
 			builder = (context) => SettingsPage();

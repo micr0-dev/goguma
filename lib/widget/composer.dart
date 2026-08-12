@@ -13,6 +13,7 @@ import 'package:provider/provider.dart';
 import 'package:record/record.dart';
 import 'package:share_handler/share_handler.dart';
 
+import '../ansi.dart';
 import '../client.dart';
 import '../commands.dart';
 import '../database.dart';
@@ -42,6 +43,7 @@ class ComposerState extends State<Composer> {
 	bool _isCommand = false;
 	bool _locationServiceAvailable = false;
 	bool _addMenuLoading = false;
+	bool _showFormatBar = false;
 
 	DateTime? _ownTyping;
 	MessageModel? _replyTo;
@@ -422,6 +424,55 @@ class ComposerState extends State<Composer> {
 		return Draft(text: _controller.text, replyTo: _replyTo?.id);
 	}
 
+	void quoteMessage(MessageModel msg) {
+		var sender = msg.msg.source?.name ?? '';
+		var body = stripAnsiFormatting(msg.msg.params.length > 1 ? msg.msg.params[1] : '');
+		var quote = '> $sender: $body\n';
+		_controller.text = quote + _controller.text;
+		_controller.selection = TextSelection.collapsed(offset: _controller.text.length);
+		_focusNode.requestFocus();
+		setState(() {
+			_isCommand = false;
+		});
+	}
+
+	void _insertFormat(String open, String close) {
+		var value = _controller.text;
+		var sel = _controller.selection;
+		var selected = value.substring(sel.start, sel.end);
+		var newText = value.replaceRange(sel.start, sel.end, '$open$selected$close');
+		_controller.value = _controller.value.copyWith(
+			text: newText,
+			selection: TextSelection.collapsed(offset: sel.start + open.length + selected.length + close.length),
+		);
+		setState(() {
+			_isCommand = false;
+		});
+	}
+
+	Future<void> _pickColor() async {
+		const colors = [
+			[0, 0xFFFFFFFF], [1, 0xFF000000], [2, 0xFF00007F], [3, 0xFF009300],
+			[4, 0xFFFF0000], [5, 0xFF7F0000], [6, 0xFF9C009C], [7, 0xFFFC7F00],
+			[8, 0xFFFFFF00], [9, 0xFF00FC00], [10, 0xFF009393], [11, 0xFF00FFFF],
+			[12, 0xFF0000FC], [13, 0xFFFF00FF], [14, 0xFF7F7F7F], [15, 0xFF2D2D2D],
+		];
+		var picked = await showDialog<int>(
+			context: context,
+			builder: (context) => AlertDialog(
+				title: const Text('Text color'),
+				content: Wrap(spacing: 8, runSpacing: 8, children: colors.map((c) => InkWell(
+					onTap: () => Navigator.pop(context, c[0]),
+					child: Container(width: 40, height: 40, decoration: BoxDecoration(color: Color(c[1]), shape: BoxShape.circle, border: Border.all(color: Colors.white24))),
+				)).toList()),
+				actions: [TextButton(child: const Text('CANCEL'), onPressed: () => Navigator.pop(context))],
+			),
+		);
+		if (picked != null) {
+			_insertFormat('\x03${picked.toString().padLeft(2, '0')}', '\x03');
+		}
+	}
+
 	void setReplyTo(MessageModel msg) async {
 		var buffer = context.read<BufferModel>();
 		var client = context.read<Client>();
@@ -501,6 +552,14 @@ class ComposerState extends State<Composer> {
 
 	Future<void> _uploadFile(XFile file) async {
 		var client = context.read<Client>();
+		if (client.isupport.filehost == null) {
+			if (mounted) {
+				ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+					content: Text('File sharing is not supported on this server.'),
+				));
+			}
+			return;
+		}
 		var filehostUrl = Uri.parse(client.isupport.filehost!);
 
 		if (client.params.tls && filehostUrl.scheme != 'https') {
@@ -731,12 +790,6 @@ class ComposerState extends State<Composer> {
 
 	@override
 	Widget build(BuildContext context) {
-		var client = context.read<Client>();
-		var buffer = context.watch<BufferModel>();
-		var network = context.watch<NetworkModel>();
-
-		var canSendMessage = canSendMessageToBuffer(buffer, network);
-		var canUploadFiles = client.isupport.filehost != null && canSendMessage;
 
 		if (_recorder != null) {
 			return SafeArea(child: Row(children: [
@@ -804,8 +857,7 @@ class ComposerState extends State<Composer> {
 				margin: EdgeInsets.all(10),
 				child: CircularProgressIndicator(strokeWidth: 2),
 			);
-		} else if (_locationServiceAvailable || canUploadFiles) {
-			addMenu = IconButton(
+		} else {			addMenu = IconButton(
 				icon: const Icon(Icons.add),
 				tooltip: 'Add',
 				onPressed: () {
@@ -820,7 +872,7 @@ class ComposerState extends State<Composer> {
 									_runAddMenuTask(_shareLocation);
 								}
 							),
-							if (canUploadFiles) ListTile(
+							ListTile(
 								title: Text('Share from gallery'),
 								leading: Icon(Icons.add_photo_alternate),
 								onTap: () async {
@@ -833,7 +885,7 @@ class ComposerState extends State<Composer> {
 									}
 								},
 							),
-							if (canUploadFiles) ListTile(
+							ListTile(
 								title: Text('Share a file'),
 								leading: Icon(Icons.upload_file),
 								onTap: () async {
@@ -846,7 +898,7 @@ class ComposerState extends State<Composer> {
 									}
 								},
 							),
-							if (canUploadFiles && _imagePicker.supportsImageSource(ImageSource.camera)) ListTile(
+							if (_imagePicker.supportsImageSource(ImageSource.camera)) ListTile(
 								title: Text('Take a picture'),
 								leading: Icon(Icons.photo_camera),
 								onTap: () async {
@@ -859,7 +911,7 @@ class ComposerState extends State<Composer> {
 									}
 								},
 							),
-							if (canUploadFiles) ListTile(
+							ListTile(
 								title: Text('Record audio'),
 								leading: Icon(Icons.mic),
 								onTap: () async {
@@ -873,18 +925,63 @@ class ComposerState extends State<Composer> {
 			);
 		}
 
-		return SafeArea(child: Form(key: _formKey, child: Row(children: [
-			Expanded(child: RawAutocomplete(
-				optionsBuilder: _buildOptions,
-				displayStringForOption: _displayStringForOption,
-				fieldViewBuilder: _buildTextField,
-				focusNode: _focusNode,
-				textEditingController: _controller,
-				optionsViewBuilder: _buildOptionsView,
-				optionsViewOpenDirection: OptionsViewOpenDirection.up,
-			)),
-			if (addMenu != null) addMenu,
-			fab,
+		var formatButtons = <Widget>[
+			IconButton(
+				tooltip: 'Bold',
+				icon: const Text('B', style: TextStyle(fontWeight: FontWeight.bold)),
+				onPressed: () => _insertFormat('\x02', '\x02'),
+			),
+			IconButton(
+				tooltip: 'Italic',
+				icon: const Text('I', style: TextStyle(fontStyle: FontStyle.italic)),
+				onPressed: () => _insertFormat('\x1D', '\x1D'),
+			),
+			IconButton(
+				tooltip: 'Underline',
+				icon: const Text('U', style: TextStyle(decoration: TextDecoration.underline)),
+				onPressed: () => _insertFormat('\x1F', '\x1F'),
+			),
+			IconButton(
+				tooltip: 'Strikethrough',
+				icon: const Text('S', style: TextStyle(decoration: TextDecoration.lineThrough)),
+				onPressed: () => _insertFormat('\x1E', '\x1E'),
+			),
+			IconButton(
+				tooltip: 'Text color',
+				icon: const Icon(Icons.palette_outlined),
+				onPressed: _pickColor,
+			),
+			IconButton(
+				tooltip: 'Remove formatting',
+				icon: const Icon(Icons.format_clear),
+				onPressed: () => _insertFormat('\x0F', ''),
+			),
+		];
+
+		return SafeArea(child: Form(key: _formKey, child: Column(mainAxisSize: MainAxisSize.min, children: [
+			if (_showFormatBar) Row(children: formatButtons),
+			Row(children: [
+					Expanded(child: RawAutocomplete(
+					optionsBuilder: _buildOptions,
+					displayStringForOption: _displayStringForOption,
+					fieldViewBuilder: _buildTextField,
+					focusNode: _focusNode,
+					textEditingController: _controller,
+					optionsViewBuilder: _buildOptionsView,
+					optionsViewOpenDirection: OptionsViewOpenDirection.up,
+				)),
+				if (_showFormatBar) IconButton(
+					tooltip: 'Hide formatting',
+					icon: const Icon(Icons.format_paint),
+					onPressed: () => setState(() => _showFormatBar = false),
+				) else IconButton(
+					tooltip: 'Formatting',
+					icon: const Icon(Icons.format_paint_outlined),
+					onPressed: () => setState(() => _showFormatBar = true),
+				),
+				addMenu,
+				fab,
+			]),
 		])));
 	}
 }
