@@ -170,7 +170,7 @@ void main() async {
 			Provider<DB>.value(value: db),
 			Provider<ClientProvider>.value(value: clientProvider),
 			Provider<NotificationController>.value(value: notifController),
-			Provider<Prefs>.value(value: prefs),
+			ChangeNotifierProvider<Prefs>.value(value: prefs),
 			Provider<AppLinks>.value(value: appLinks),
 			ChangeNotifierProvider<NetworkListModel>.value(value: networkList),
 			ChangeNotifierProvider<BufferListModel>.value(value: bufferList),

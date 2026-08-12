@@ -26,6 +26,7 @@ import 'page/join.dart';
 import 'page/network_details.dart';
 import 'page/settings.dart';
 import 'page/share.dart';
+import 'prefs.dart';
 
 class App extends StatefulWidget {
 	final IrcUri? initialUri;
@@ -560,7 +561,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 		))!];
 	}
 
-	ThemeData _terminalTheme() {
+	ThemeData _terminalTheme(bool monoFont) {
 		const background = Color(0xFF0D1116);
 		const foreground = Color(0xFFD0D7DE);
 		var scheme = ColorScheme.fromSeed(
@@ -579,7 +580,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 		);
 		return ThemeData(
 			colorScheme: scheme,
-			fontFamily: 'JetBrainsMono',
+			fontFamily: monoFont ? 'JetBrainsMono' : null,
 			useMaterial3: true,
 			scaffoldBackgroundColor: background,
 		);
@@ -587,10 +588,12 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 
 	@override
 	Widget build(BuildContext context) {
+		// Rebuild the whole app when the terminal font preference changes.
+		var monoFont = context.watch<Prefs>().monoFont;
 		return MaterialApp(
 			title: 'Goguma',
-			theme: _terminalTheme(),
-			darkTheme: _terminalTheme(),
+			theme: _terminalTheme(monoFont),
+			darkTheme: _terminalTheme(monoFont),
 			themeMode: ThemeMode.dark,
 			initialRoute: _initialRoute,
 			onGenerateRoute: _handleGenerateRoute,

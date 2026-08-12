@@ -32,6 +32,14 @@ String _initials(String name) {
 	return '';
 }
 
+Color networkStateColor(NetworkState state) {
+	return switch (state) {
+		NetworkState.online || NetworkState.synchronizing => const Color(0xFF43D17A),
+		NetworkState.connecting || NetworkState.registering => const Color(0xFFE3B341),
+		NetworkState.offline => const Color(0xFFF1766D),
+	};
+}
+
 class _BufferListPageState extends State<BufferListPage> {
 	String? _searchQuery;
 	final TextEditingController _searchController = TextEditingController();
@@ -381,11 +389,7 @@ class _NetworkHeader extends StatelessWidget {
 			builder: (context, _) {
 				var scheme = Theme.of(context).colorScheme;
 				var dim = Theme.of(context).textTheme.bodySmall!.color ?? scheme.onSurface;
-				var stateColor = switch (network.state) {
-					NetworkState.online || NetworkState.synchronizing => const Color(0xFF43D17A),
-					NetworkState.connecting || NetworkState.registering => const Color(0xFFE3B341),
-					NetworkState.offline => const Color(0xFFF1766D),
-				};
+				var stateColor = networkStateColor(network.state);
 				var stateLabel = networkStateDescription(network.state);
 
 				return Container(

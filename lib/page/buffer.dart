@@ -443,7 +443,9 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 				],
 			));
 		} else if (_initialChatHistoryLoaded) {
-			msgList = ScrollablePositionedList.builder(
+			// Long-press on a message selects the text for copy/paste.
+			msgList = SelectionArea(
+				child: ScrollablePositionedList.builder(
 				key: _listKey,
 				reverse: true,
 				itemScrollController: _itemScrollController,
@@ -477,6 +479,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 						last: msgIndex == messages.length - 1,
 					);
 				},
+			),
 			);
 		} else {
 			msgList = Container();
@@ -532,16 +535,31 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 		var scaffold = Scaffold(
 			appBar: AppBar(
 				title: InkResponse(
-					child: Column(
-						mainAxisAlignment: MainAxisAlignment.center,
-						crossAxisAlignment: CrossAxisAlignment.start,
+					child: Row(
 						children: [
-							Text(buffer.name, overflow: TextOverflow.fade),
-							if (subtitle != null) Text(
-								stripAnsiFormatting(subtitle),
-								style: TextStyle(fontSize: 12.0),
-								overflow: TextOverflow.fade,
+							Padding(
+								padding: const EdgeInsets.only(right: 8),
+								child: Container(
+									width: 10,
+									height: 10,
+									decoration: BoxDecoration(
+										color: networkStateColor(network.state),
+										shape: BoxShape.circle,
+									),
+								),
 							),
+							Expanded(child: Column(
+								mainAxisAlignment: MainAxisAlignment.center,
+								crossAxisAlignment: CrossAxisAlignment.start,
+								children: [
+									Text(buffer.name, overflow: TextOverflow.fade),
+									if (subtitle != null) Text(
+										stripAnsiFormatting(subtitle),
+										style: TextStyle(fontSize: 12.0),
+										overflow: TextOverflow.fade,
+									),
+								],
+							)),
 						],
 					),
 					onTap: () {

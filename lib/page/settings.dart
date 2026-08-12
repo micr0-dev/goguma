@@ -28,6 +28,7 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
 	late bool _showTimestamps;
+	late bool _monoFont;
 	late bool _typing;
 	late bool _linkPreview;
 	late bool _linkExtApp;
@@ -41,6 +42,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
 		var prefs = context.read<Prefs>();
 		_showTimestamps = prefs.showTimestamps;
+		_monoFont = prefs.monoFont;
 		_typing = prefs.typingIndicator;
 		_linkPreview = prefs.linkPreview;
 		_linkExtApp = prefs.linkExtApp;
@@ -173,6 +175,18 @@ class _SettingsPageState extends State<SettingsPage> {
 						context.read<Prefs>().showTimestamps = enabled;
 						setState(() {
 							_showTimestamps = enabled;
+						});
+					},
+				),
+				SwitchListTile(
+					title: Text('Monospace font'),
+					subtitle: Text('Use the bundled terminal font (JetBrains Mono) instead of the default one.'),
+					secondary: Icon(Icons.terminal),
+					value: _monoFont,
+					onChanged: (bool enabled) {
+						context.read<Prefs>().monoFont = enabled;
+						setState(() {
+							_monoFont = enabled;
 						});
 					},
 				),

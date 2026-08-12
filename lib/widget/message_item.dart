@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -470,6 +471,15 @@ class CompactMessageItem extends StatelessWidget {
 		var isAction = ctcp != null && ctcp.cmd == 'ACTION';
 		var isOtherCtcp = ctcp != null && !isAction;
 
+		// Tapping the sender's name opens the message actions/details sheet.
+		// Long-press elsewhere selects the message text (see SelectionArea in
+		// the buffer page).
+		var nameTap = TapGestureRecognizer()
+			..onTap = () {
+				var buffer = context.read<BufferModel>();
+				MessageSheet.open(context, buffer, msg, onReply);
+			};
+
 		// Compose the line as a single selectable block in the classic IRC
 		// format: "HH:MM <nick> message". The angle brackets are rendered
 		// (near) invisible on screen but remain part of the text, so that
@@ -484,11 +494,11 @@ class CompactMessageItem extends StatelessWidget {
 
 		if (isAction) {
 			content.add(TextSpan(text: '* ', style: TextStyle(color: dimColor)));
-			content.add(TextSpan(text: sender, style: TextStyle(color: senderColor, fontWeight: FontWeight.bold)));
+			content.add(TextSpan(text: sender, recognizer: nameTap, style: TextStyle(color: senderColor, fontWeight: FontWeight.bold)));
 			content.add(const TextSpan(text: ' '));
 		} else {
 			content.add(const TextSpan(text: '<', style: _hiddenBracketStyle));
-			content.add(TextSpan(text: sender, style: TextStyle(color: senderColor, fontWeight: FontWeight.bold)));
+			content.add(TextSpan(text: sender, recognizer: nameTap, style: TextStyle(color: senderColor, fontWeight: FontWeight.bold)));
 			content.add(const TextSpan(text: '>', style: _hiddenBracketStyle));
 			content.add(const TextSpan(text: ' '));
 		}
@@ -525,15 +535,9 @@ class CompactMessageItem extends StatelessWidget {
 			);
 		}).toList();
 
-		var line = GestureDetector(
-			onLongPress: () {
-				var buffer = context.read<BufferModel>();
-				MessageSheet.open(context, buffer, msg, onReply);
-			},
-			child: Text.rich(
-				TextSpan(children: content),
-				textScaler: TextScaler.linear(1.05),
-			),
+		var line = Text.rich(
+			TextSpan(children: content),
+			textScaler: TextScaler.linear(1.05),
 		);
 
 		Widget message = line;
@@ -649,9 +653,25 @@ TextSpan _formatText(BuildContext context, String text, {
 	return TextSpan(children: children);
 }
 
-// _getNickColor returns a color for the given nickname. The same nickname will always get the same color. The color is chosen from the primary colors of the current theme. The brightness parameter is used to choose a lighter or darker shade of the color.
+// Terminal-flavored palette (inspired by common IRC/ANSI colors) that stays
+// readable on the dark scrollback. Indexed by nickname so the same nick
+// always gets the same colour.
+const _terminalNickColors = [
+	Color(0xFFF7768E), // red
+	Color(0xFFFF9E64), // orange
+	Color(0xFFE0AF68), // yellow
+	Color(0xFF9ECE6A), // green
+	Color(0xFF73DACA), // teal
+	Color(0xFF7AA2F7), // blue
+	Color(0xFFBB9AF7), // purple
+	Color(0xFFB4F9F8), // cyan
+	Color(0xFFD5A0C0), // pink
+	Color(0xFF9DB2FF), // periwinkle
+];
+
 Color _getNickColor(String nickname, Brightness brightness) {
-	var colorSwatch = Colors.primaries[nickname.hashCode % Colors.primaries.length];
-	return brightness == Brightness.dark ? colorSwatch.shade400 : colorSwatch.shade800;
+	var color = _terminalNickColors[nickname.hashCode.abs() % _terminalNickColors.length];
+	// Lighten slightly for light backgrounds so names stay legible.
+	return brightness == Brightness.dark ? color : Color.lerp(color, Colors.white, 0.25)!;
 }
 

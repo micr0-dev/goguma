@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const _showTimestampsKey = 'show_timestamps';
+const _monoFontKey = 'mono_font';
 const _typingIndicatorKey = 'typing_indicator';
 const _nicknameKey = 'nickname';
 const _realnameKey = 'realname';
@@ -12,7 +14,7 @@ const _uploadErrorReportsKey = 'upload_error_reports';
 
 const _maxRecentReactions = 14;
 
-class Prefs {
+class Prefs extends ChangeNotifier {
 	final SharedPreferences _prefs;
 
 	Prefs._(this._prefs);
@@ -23,6 +25,9 @@ class Prefs {
 
 	/// Whether to display a timestamp on every message line.
 	bool get showTimestamps => _prefs.getBool(_showTimestampsKey) ?? true;
+
+	/// Use the bundled monospaced terminal font instead of the default one.
+	bool get monoFont => _prefs.getBool(_monoFontKey) ?? true;
 	bool get typingIndicator => _prefs.getBool(_typingIndicatorKey) ?? false;
 	String get nickname => _prefs.getString(_nicknameKey) ?? 'user';
 	String? get realname => _prefs.getString(_realnameKey);
@@ -34,6 +39,11 @@ class Prefs {
 
 	set showTimestamps(bool enabled) {
 		_prefs.setBool(_showTimestampsKey, enabled);
+	}
+
+	set monoFont(bool enabled) {
+		_prefs.setBool(_monoFontKey, enabled);
+		notifyListeners();
 	}
 
 	set typingIndicator(bool enabled) {
