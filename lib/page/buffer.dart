@@ -94,7 +94,6 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 	final _listKey = GlobalKey();
 	final GlobalKey<ComposerState> _composerKey = GlobalKey();
 	final GlobalKey<DateIndicatorState> _dateIndicatorKey = GlobalKey();
-	late final AnimationController _blinkMsgController;
 	late final StreamSubscription<double> _userScrollSubscription;
 
 	bool _activated = true;
@@ -104,7 +103,6 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 	bool _isAtBottom = false;
 
 	bool _initialChatHistoryLoaded = false;
-	int? _blinkMsgIndex;
 
 	@override
 	void initState() {
@@ -114,12 +112,6 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 
 		_itemPositionsListener.itemPositions.addListener(_handleScroll);
 		_userScrollSubscription = _userScrollListener.changes.listen(_handleUserScroll);
-
-		_blinkMsgController = AnimationController(
-			vsync: this,
-			duration: const Duration(milliseconds: 200),
-			value: 1,
-		);
 
 		var buffer = context.read<BufferModel>();
 		if (buffer.messages.length >= 1000) {
@@ -289,7 +281,6 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 	void dispose() {
 		_itemPositionsListener.itemPositions.removeListener(_handleScroll);
 		_userScrollSubscription.cancel();
-		_blinkMsgController.dispose();
 		WidgetsBinding.instance.removeObserver(this);
 		super.dispose();
 	}
@@ -364,40 +355,6 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 		notifController.cancelAllWithBuffer(NotificationBuffer.fromModel(buffer), null);
 	}
 
-	void _handleMsgRefTap(int id) {
-		var buffer = context.read<BufferModel>();
-
-		int? index;
-		for (var i = 0; i < buffer.messages.length; i++) {
-			if (buffer.messages[i].id == id) {
-				index = buffer.messages.length - i - 1;
-				break;
-			}
-		}
-		if (index == null) {
-			return;
-		}
-
-		setState(() {
-			_blinkMsgIndex = index;
-		});
-
-		_itemScrollController.jumpTo(
-			index: index,
-			alignment: 0.5,
-		);
-		_blinkMsgController.repeat(reverse: true);
-		Timer(_blinkMsgController.duration! * 4, () {
-			if (!mounted) {
-				return;
-			}
-			_blinkMsgController.animateTo(1);
-			setState(() {
-				_blinkMsgIndex = null;
-			});
-		});
-	}
-
 	@override
 	Widget build(BuildContext context) {
 		var client = context.read<Client>();
@@ -411,7 +368,6 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 		var isChannel = client.isChannel(buffer.name);
 		var messages = buffer.messages;
 
-		var compact = prefs.bufferCompact;
 		var showTyping = prefs.typingIndicator;
 		if (!client.caps.enabled.contains('message-tags')) {
 			showTyping = false;
@@ -512,32 +468,14 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 						};
 					}
 
-					if (compact) {
-						return CompactMessageItem(
-							key: key,
-							msg: msg,
-							prevMsg: prevMsg,
-							unreadMarkerTime: widget.unreadMarkerTime,
-							onReply: onReply,
-							last: msgIndex == messages.length - 1,
-						);
-					}
-
-					var nextMsg = msgIndex + 1 < messages.length ? messages[msgIndex + 1] : null;
-
-					Widget msgWidget = RegularMessageItem(
+					return CompactMessageItem(
 						key: key,
 						msg: msg,
 						prevMsg: prevMsg,
-						nextMsg: nextMsg,
 						unreadMarkerTime: widget.unreadMarkerTime,
 						onReply: onReply,
-						onMsgRefTap: _handleMsgRefTap,
+						last: msgIndex == messages.length - 1,
 					);
-					if (index == _blinkMsgIndex) {
-						msgWidget = FadeTransition(opacity: _blinkMsgController, child: msgWidget);
-					}
-					return msgWidget;
 				},
 			);
 		} else {

@@ -1,6 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
-const _bufferCompactKey = 'buffer_compact';
+const _showTimestampsKey = 'show_timestamps';
 const _typingIndicatorKey = 'typing_indicator';
 const _nicknameKey = 'nickname';
 const _realnameKey = 'realname';
@@ -21,7 +21,8 @@ class Prefs {
 		return Prefs._(await SharedPreferences.getInstance());
 	}
 
-	bool get bufferCompact => _prefs.getBool(_bufferCompactKey) ?? false;
+	/// Whether to display a timestamp on every message line.
+	bool get showTimestamps => _prefs.getBool(_showTimestampsKey) ?? true;
 	bool get typingIndicator => _prefs.getBool(_typingIndicatorKey) ?? false;
 	String get nickname => _prefs.getString(_nicknameKey) ?? 'user';
 	String? get realname => _prefs.getString(_realnameKey);
@@ -31,8 +32,8 @@ class Prefs {
 	List<String> get recentReactions => _prefs.getStringList(_recentReactionsKey) ?? [];
 	bool get uploadErrorReports => _prefs.getBool(_uploadErrorReportsKey) ?? true;
 
-	set bufferCompact(bool enabled) {
-		_prefs.setBool(_bufferCompactKey, enabled);
+	set showTimestamps(bool enabled) {
+		_prefs.setBool(_showTimestampsKey, enabled);
 	}
 
 	set typingIndicator(bool enabled) {

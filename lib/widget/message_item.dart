@@ -456,93 +456,65 @@ class CompactMessageItem extends StatelessWidget {
 		var ctcp = CtcpMessage.parse(ircMsg);
 		assert(ircMsg.cmd == 'PRIVMSG' || ircMsg.cmd == 'NOTICE');
 
-		var prevIrcMsg = prevMsg?.msg;
 		var prevEntry = prevMsg?.entry;
-		var prevMsgSameSender = prevIrcMsg != null && ircMsg.source!.name == prevIrcMsg.source!.name;
 		var showUnreadMarker = prevEntry != null && unreadMarkerTime != null && unreadMarkerTime!.compareTo(entry.time) < 0 && unreadMarkerTime!.compareTo(prevEntry.time) >= 0;
 		var showDateMarker = prevEntry == null || !_isSameDate(localDateTime, prevEntry.dateTime.toLocal());
 
-		var unreadMarkerColor = Theme.of(context).colorScheme.secondary;
-		var textStyle = TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color);
+		var scheme = Theme.of(context).colorScheme;
+		var bodyTheme = Theme.of(context).textTheme;
+		var bodyColor = bodyTheme.bodyLarge?.color ?? scheme.onSurface;
+		var unreadMarkerColor = scheme.secondary;
+		var dimColor = (bodyTheme.bodySmall?.color ?? bodyColor).withValues(alpha: 0.72);
+		var senderColor = _getNickColor(sender, scheme.brightness);
 
-		String? text;
-		List<TextSpan> textSpans;
-		if (ctcp != null) {
-			textStyle = textStyle.apply(fontStyle: FontStyle.italic);
+		var isAction = ctcp != null && ctcp.cmd == 'ACTION';
+		var isOtherCtcp = ctcp != null && !isAction;
 
-			if (ctcp.cmd == 'ACTION') {
-				text = ctcp.param;
-				textSpans = applyAnsiFormatting(text ?? '', textStyle);
-			} else {
-				textSpans = [TextSpan(text: 'has sent a CTCP "${ctcp.cmd}" command', style: textStyle)];
-			}
-		} else if (entry.redacted) {
-			textSpans = [TextSpan(
-				text: 'This message has been deleted.',
-				style: TextStyle(fontStyle: FontStyle.italic),
-			)];
-		} else {
-			text = ircMsg.params[1];
-			textSpans = applyAnsiFormatting(text, textStyle);
-		}
-
-		textSpans = textSpans.map((span) {
-			var linkSpan = linkify(context, span.text!, linkStyle: TextStyle(decoration: TextDecoration.underline));
-			return TextSpan(style: span.style, children: [linkSpan]);
-		}).toList();
-
-		List<Widget> stack = [];
+		// Compose the line as a single selectable block in the classic IRC
+		// format: "HH:MM <nick> message". The angle brackets are rendered
+		// (near) invisible on screen but remain part of the text, so that
+		// copy/paste yields the conventional <nick> form.
 		List<InlineSpan> content = [];
 
-		if (!prevMsgSameSender) {
-			var senderStyle = TextStyle(
-				color: _getNickColor(sender, Theme.of(context).colorScheme.brightness),
-				fontWeight: FontWeight.bold,
-			);
-			stack.add(Positioned(
-				top: 0,
-				left: 0,
-				child: Text(sender, style: senderStyle),
-			));
-			content.add(WidgetSpan(
-				alignment: PlaceholderAlignment.top,
-				child: SelectionContainer.disabled(
-					child: Text(
-						sender,
-						style: senderStyle.apply(color: Color(0x00000000)),
-						semanticsLabel: '', // Make screen reader quiet
-						textScaler: TextScaler.noScaling,
-					),
-				),
-			));
-		}
-
-		content.addAll(textSpans);
-
-		if (!prevMsgSameSender || prevEntry == null || entry.dateTime.difference(prevEntry.dateTime) > Duration(minutes: 2)) {
+		if (prefs.showTimestamps) {
 			var hh = localDateTime.hour.toString().padLeft(2, '0');
 			var mm = localDateTime.minute.toString().padLeft(2, '0');
-			var timeText = '\u00A0[$hh:$mm]';
-			var timeStyle = TextStyle(color: Theme.of(context).textTheme.bodySmall!.color);
-			stack.add(Positioned(
-				bottom: 0,
-				right: 0,
-				child: Text(timeText, style: timeStyle),
-			));
-			content.add(WidgetSpan(
-				alignment: PlaceholderAlignment.top,
-				child: SelectionContainer.disabled(
-					child: Text(
-						timeText,
-						style: timeStyle.apply(color: Color(0x00000000)),
-						semanticsLabel: '', // Make screen reader quiet
-						textScaler: TextScaler.noScaling,
-					),
-				),
-			));
+			content.add(TextSpan(text: '$hh:$mm ', style: TextStyle(color: dimColor)));
 		}
 
-		var fg = Theme.of(context).colorScheme.secondaryContainer;
+		if (isAction) {
+			content.add(TextSpan(text: '* ', style: TextStyle(color: dimColor)));
+			content.add(TextSpan(text: sender, style: TextStyle(color: senderColor, fontWeight: FontWeight.bold)));
+			content.add(const TextSpan(text: ' '));
+		} else {
+			content.add(const TextSpan(text: '<', style: _hiddenBracketStyle));
+			content.add(TextSpan(text: sender, style: TextStyle(color: senderColor, fontWeight: FontWeight.bold)));
+			content.add(const TextSpan(text: '>', style: _hiddenBracketStyle));
+			content.add(const TextSpan(text: ' '));
+		}
+
+		List<TextSpan> body;
+		if (entry.redacted) {
+			body = [TextSpan(
+				text: 'This message has been deleted.',
+				style: TextStyle(fontStyle: FontStyle.italic, color: dimColor),
+			)];
+		} else if (isOtherCtcp) {
+			body = [TextSpan(text: 'has sent a CTCP "${ctcp.cmd}" command', style: TextStyle(color: bodyColor))];
+		} else if (isAction) {
+			body = applyAnsiFormatting(ctcp.param ?? '', TextStyle(color: bodyColor, fontStyle: FontStyle.italic));
+		} else {
+			body = applyAnsiFormatting(ircMsg.params[1], TextStyle(color: bodyColor));
+		}
+
+		body = body.map((span) {
+			var linkSpan = linkify(context, span.text ?? '',
+				linkStyle: TextStyle(decoration: TextDecoration.underline, color: scheme.primary));
+			return TextSpan(style: span.style, children: [linkSpan]);
+		}).toList();
+		content.addAll(body);
+
+		var fg = scheme.secondaryContainer;
 		var reactions = msg.reactionsByText.entries.map((reactionEntry) {
 			return _ReactionChip(
 				text: reactionEntry.key,
@@ -553,64 +525,74 @@ class CompactMessageItem extends StatelessWidget {
 			);
 		}).toList();
 
-		stack.add(Container(
-			margin: EdgeInsets.only(left: 4),
-			child: Stack(children: [
-				Container(
-					margin: reactions.isEmpty ? null : EdgeInsets.only(bottom: 30),
-					child: GestureDetector(
-						onLongPress: () {
-							var buffer = context.read<BufferModel>();
-							MessageSheet.open(context, buffer, msg, onReply);
-						},
-						child: Text.rich(
-							TextSpan(
-								children: content,
-							),
-						),
-					),
-				),
-				if (!reactions.isEmpty) Positioned(bottom: 4, child: Row(spacing: 2, children: reactions)),
-			]),
-		));
+		var line = GestureDetector(
+			onLongPress: () {
+				var buffer = context.read<BufferModel>();
+				MessageSheet.open(context, buffer, msg, onReply);
+			},
+			child: Text.rich(
+				TextSpan(children: content),
+				textScaler: TextScaler.linear(1.05),
+			),
+		);
+
+		Widget message = line;
+		if (!reactions.isEmpty) {
+			message = Padding(
+				padding: const EdgeInsets.only(bottom: 26),
+				child: Stack(children: [
+					line,
+					Positioned(bottom: -22, left: 4, child: Row(spacing: 2, children: reactions)),
+				]),
+			);
+		}
 
 		Widget? linkPreview;
-		if (prefs.linkPreview && text != null) {
-			var body = stripAnsiFormatting(text);
+		if (prefs.linkPreview && !entry.redacted && ircMsg.cmd == 'PRIVMSG' && !isAction) {
+			var bodyText = stripAnsiFormatting(ircMsg.params[1]);
 			linkPreview = LinkPreview(
-				text: body,
+				text: bodyText,
 				builder: (context, child) {
-					return Align(alignment: Alignment.center, child: Container(
-						margin: EdgeInsets.symmetric(vertical: 5),
-						child: ClipRRect(
-							borderRadius: BorderRadius.circular(10),
-							child: child,
-						),
+					return Align(alignment: Alignment.centerLeft, child: Container(
+						margin: const EdgeInsets.only(top: 6),
+						child: child,
 					));
 				},
 			);
 		}
 
-		return Column(children: [
-			if (showUnreadMarker) Row(children: [
-				Expanded(child: Divider(color: unreadMarkerColor)),
-				SizedBox(width: 10),
-				Text('Unread messages', style: TextStyle(color: unreadMarkerColor)),
-				SizedBox(width: 10),
-				Expanded(child: Divider(color: unreadMarkerColor)),
-			]),
-			if (showDateMarker)
-				Container(
-					margin: EdgeInsets.only(top: 2.5),
-					alignment: Alignment.center,
-					child: Text(_formatDate(localDateTime), style: textStyle),
+		return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+			if (showUnreadMarker) Container(
+				margin: const EdgeInsets.only(top: 10, bottom: 4),
+				child: Row(children: [
+					Expanded(child: Divider(color: unreadMarkerColor)),
+					const SizedBox(width: 10),
+					Text('Unread messages', style: TextStyle(color: unreadMarkerColor)),
+					const SizedBox(width: 10),
+					Expanded(child: Divider(color: unreadMarkerColor)),
+				]),
+			),
+			if (showDateMarker) Container(
+				margin: const EdgeInsets.only(top: 14, bottom: 6),
+				alignment: Alignment.center,
+				child: Text(
+					'—  ${_formatDate(localDateTime)}  —',
+					style: TextStyle(color: dimColor),
 				),
-			Container(
-				margin: EdgeInsets.only(top: prevMsgSameSender ? 0 : 2.5, bottom: last ? 10 : 0, left: 4, right: 5),
+			),
+			Padding(
+				padding: EdgeInsets.only(
+					top: showDateMarker ? 2 : 5,
+					bottom: last ? 16 : 5,
+					left: 12,
+					right: 12,
+				),
 				child: DefaultTextStyle.merge(
-					style: TextStyle(height: 1.15),
+					// Generous line height gives the classic scrollback feel
+					// and clearer separation between messages.
+					style: TextStyle(height: 1.45, color: bodyColor),
 					child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-						Stack(children: stack),
+						message,
 						if (linkPreview != null) linkPreview,
 					]),
 				),
@@ -618,6 +600,11 @@ class CompactMessageItem extends StatelessWidget {
 		]);
 	}
 }
+
+// Rendered virtually invisible (kept small so it doesn't open up a visible
+// gap between the name and the message), but still selectable/copyable so
+// copied lines read as "<nick> message".
+const _hiddenBracketStyle = TextStyle(color: Color(0x00000000), fontSize: 1);
 
 bool _isSameDate(DateTime a, DateTime b) {
 	return a.year == b.year && a.month == b.month && a.day == b.day;

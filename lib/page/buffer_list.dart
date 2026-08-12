@@ -105,10 +105,8 @@ class _BufferListPageState extends State<BufferListPage> {
 			buffers = filtered;
 		}
 
-		Map<String, int> bufferNames = {};
 		var hasUnreadBuffer = false;
 		for (var buffer in buffers) {
-			bufferNames.update(buffer.name.toLowerCase(), (n) => n + 1, ifAbsent: () => 1);
 			if (buffer.unreadCount > 0) {
 				hasUnreadBuffer = true;
 			}
@@ -148,16 +146,18 @@ class _BufferListPageState extends State<BufferListPage> {
 				);
 			}
 		} else {
-			body = ListView.builder(
+			// Group the conversation list by server (network). Each network
+			// becomes a header with its chats listed underneath it.
+			Map<NetworkModel, List<BufferModel>> groups = {};
+			for (var buffer in buffers) {
+				groups.putIfAbsent(buffer.network, () => []).add(buffer);
+			}
+			body = ListView(
 				key: _listKey,
-				itemCount: buffers.length,
-				itemBuilder: (context, index) {
-					var buffer = buffers[index];
-					return _BufferItem(
-						buffer: buffer,
-						showNetworkName: bufferNames[buffer.name.toLowerCase()]! > 1,
-					);
-				},
+				children: groups.entries.expand((group) => [
+					_NetworkHeader(network: group.key),
+					...group.value.map((buffer) => _BufferItem(buffer: buffer)),
+				]).toList(),
 			);
 		}
 
@@ -287,9 +287,8 @@ class _BackgroundServicePermissionBanner extends StatelessWidget {
 
 class _BufferItem extends AnimatedWidget {
 	final BufferModel buffer;
-	final bool showNetworkName;
 
-	const _BufferItem({ required this.buffer, this.showNetworkName = false }) : super(listenable: buffer);
+	const _BufferItem({ required this.buffer }) : super(listenable: buffer);
 
 	@override
 	Widget build(BuildContext context) {
@@ -297,21 +296,7 @@ class _BufferItem extends AnimatedWidget {
 			? (buffer.topic ?? buffer.realname)
 			: 'Draft: ${buffer.draft!.text}';
 
-		Widget title;
-		if (showNetworkName) {
-			title = Text.rich(
-				TextSpan(children: [
-					TextSpan(text: buffer.name),
-					TextSpan(
-						text: ' on ${buffer.network.displayName}',
-						style: TextStyle(color: Theme.of(context).textTheme.bodySmall!.color),
-					),
-				]),
-				overflow: TextOverflow.fade,
-			);
-		} else {
-			title = Text(buffer.name, overflow: TextOverflow.ellipsis);
-		}
+		var title = Text(buffer.name, overflow: TextOverflow.ellipsis);
 
 		List<Widget> trailing = [];
 		if (buffer.muted) {
@@ -381,6 +366,51 @@ class _BufferItem extends AnimatedWidget {
 				Navigator.pushNamed(context, BufferPage.routeName, arguments: BufferPageArguments(buffer: buffer));
 			},
 		));
+	}
+}
+
+class _NetworkHeader extends StatelessWidget {
+	final NetworkModel network;
+
+	const _NetworkHeader({ required this.network });
+
+	@override
+	Widget build(BuildContext context) {
+		return ListenableBuilder(
+			listenable: network,
+			builder: (context, _) {
+				var scheme = Theme.of(context).colorScheme;
+				var dim = Theme.of(context).textTheme.bodySmall!.color ?? scheme.onSurface;
+				var stateColor = switch (network.state) {
+					NetworkState.online || NetworkState.synchronizing => const Color(0xFF43D17A),
+					NetworkState.connecting || NetworkState.registering => const Color(0xFFE3B341),
+					NetworkState.offline => const Color(0xFFF1766D),
+				};
+				var stateLabel = networkStateDescription(network.state);
+
+				return Container(
+					color: scheme.surfaceContainerLow,
+					padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+					child: Row(children: [
+						Icon(Icons.dns, size: 16, color: dim),
+						const SizedBox(width: 8),
+						Expanded(child: Text(
+							network.displayName,
+							style: const TextStyle(fontWeight: FontWeight.bold),
+							overflow: TextOverflow.ellipsis,
+						)),
+						const SizedBox(width: 8),
+						Container(
+							width: 8,
+							height: 8,
+							decoration: BoxDecoration(color: stateColor, shape: BoxShape.circle),
+						),
+						const SizedBox(width: 6),
+						Text(stateLabel, style: TextStyle(color: dim, fontSize: 12)),
+					]),
+				);
+			},
+		);
 	}
 }
 

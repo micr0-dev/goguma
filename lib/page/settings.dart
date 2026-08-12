@@ -27,7 +27,7 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-	late bool _compact;
+	late bool _showTimestamps;
 	late bool _typing;
 	late bool _linkPreview;
 	late bool _linkExtApp;
@@ -40,7 +40,7 @@ class _SettingsPageState extends State<SettingsPage> {
 		super.initState();
 
 		var prefs = context.read<Prefs>();
-		_compact = prefs.bufferCompact;
+		_showTimestamps = prefs.showTimestamps;
 		_typing = prefs.typingIndicator;
 		_linkPreview = prefs.linkPreview;
 		_linkExtApp = prefs.linkExtApp;
@@ -165,13 +165,14 @@ class _SettingsPageState extends State<SettingsPage> {
 				),
 				Divider(),
 				SwitchListTile(
-					title: Text('Compact message list'),
-					secondary: Icon(Icons.reorder),
-					value: _compact,
+					title: Text('Show timestamps'),
+					subtitle: Text('Display the time on every message.'),
+					secondary: Icon(Icons.schedule),
+					value: _showTimestamps,
 					onChanged: (bool enabled) {
-						context.read<Prefs>().bufferCompact = enabled;
+						context.read<Prefs>().showTimestamps = enabled;
 						setState(() {
-							_compact = enabled;
+							_showTimestamps = enabled;
 						});
 					},
 				),

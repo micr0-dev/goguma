@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:app_links/app_links.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:share_handler/share_handler.dart';
@@ -27,8 +26,6 @@ import 'page/join.dart';
 import 'page/network_details.dart';
 import 'page/settings.dart';
 import 'page/share.dart';
-
-const _themeMode = ThemeMode.system;
 
 class App extends StatefulWidget {
 	final IrcUri? initialUri;
@@ -563,48 +560,44 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 		))!];
 	}
 
+	ThemeData _terminalTheme() {
+		const background = Color(0xFF0D1116);
+		const foreground = Color(0xFFD0D7DE);
+		var scheme = ColorScheme.fromSeed(
+			seedColor: const Color(0xFF43D17A),
+			brightness: Brightness.dark,
+		).copyWith(
+			surface: background,
+			onSurface: foreground,
+			surfaceContainerLowest: const Color(0xFF07090D),
+			surfaceContainerLow: const Color(0xFF10151B),
+			surfaceContainer: const Color(0xFF161C23),
+			surfaceContainerHigh: const Color(0xFF1B222B),
+			surfaceContainerHighest: const Color(0xFF222A34),
+			outline: const Color(0xFF3D444D),
+			outlineVariant: const Color(0xFF2B333D),
+		);
+		return ThemeData(
+			colorScheme: scheme,
+			fontFamily: 'JetBrainsMono',
+			useMaterial3: true,
+			scaffoldBackgroundColor: background,
+		);
+	}
+
 	@override
 	Widget build(BuildContext context) {
-		return DynamicColorBuilder(builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
-			ColorScheme lightColorScheme, darkColorScheme;
-			if (lightDynamic != null && darkDynamic != null) {
-				// Workaround for a bug in dynamic_color where surface
-				// container colors and its variants are the same color as
-				// surface. This makes message bubbles on Android the same
-				// color as the background they are being drawn on.
-				// https://github.com/material-foundation/flutter-packages/issues/649
-				lightColorScheme = ColorScheme.fromSeed(
-					seedColor: Color(lightDynamic.primary.toARGB32()),
-					brightness: Brightness.light,
-				).harmonized();
-				darkColorScheme = ColorScheme.fromSeed(
-					seedColor: Color(darkDynamic.primary.toARGB32()),
-					brightness: Brightness.dark,
-				).harmonized();
-			} else {
-				// Fallback in case dynamic color is not available
-				lightColorScheme = ColorScheme.fromSeed(
-					seedColor: Colors.indigo,
-					brightness: Brightness.light,
-				);
-				darkColorScheme = ColorScheme.fromSeed(
-					seedColor: Colors.indigo,
-					brightness: Brightness.dark,
-				);
-			}
-
-			return MaterialApp(
-				title: 'Goguma',
-				theme: ThemeData(colorScheme: lightColorScheme),
-				darkTheme: ThemeData(colorScheme: darkColorScheme),
-				themeMode: _themeMode,
-				initialRoute: _initialRoute,
-				onGenerateRoute: _handleGenerateRoute,
-				onGenerateInitialRoutes: _handleGenerateInitialRoutes,
-				navigatorKey: _navigatorKey,
-				scaffoldMessengerKey: _scaffoldMessengerKey,
-				debugShowCheckedModeBanner: false,
-			);
-		});
+		return MaterialApp(
+			title: 'Goguma',
+			theme: _terminalTheme(),
+			darkTheme: _terminalTheme(),
+			themeMode: ThemeMode.dark,
+			initialRoute: _initialRoute,
+			onGenerateRoute: _handleGenerateRoute,
+			onGenerateInitialRoutes: _handleGenerateInitialRoutes,
+			navigatorKey: _navigatorKey,
+			scaffoldMessengerKey: _scaffoldMessengerKey,
+			debugShowCheckedModeBanner: false,
+		);
 	}
 }
